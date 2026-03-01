@@ -2,12 +2,22 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
+#include <oct/Octarine.h>
 #include "Constants.h"
 
 #ifndef nullptr
 #define nullptr NULL
 #endif // nullptr
 
+// Types
+typedef struct Character_s Character;
+typedef bool (*AlarmCallback)(Character *);
+typedef bool (*ItemEnterInventoryCallback)(Character *);
+typedef bool (*ItemExitInventoryCallback)(Character *);
+typedef bool (*ItemUseCallback)(Character *);
+typedef int32_t Position[2];
+
+// Stats are a mess, just collapse them in your editor
 typedef struct Statblock_s {
     // Base stats can be accessed via their name or base_stat[BASE_STAT_TYPE_*]
     union {
@@ -97,15 +107,48 @@ typedef enum {
     MARTIAL_STAT_TYPE_MAX      = 4
 } MartialStatType;
 
-typedef int32_t Position[2];
+typedef enum {
+    DRAWN_TYPE_SPRITE = 0,
+    DRAWN_TYPE_TEXTURE = 1,
+} DrawnType;
+
+// Information about any in-game object, like sprite and name and traits
+typedef struct ObjectInfo_s {
+    // Every object has a name
+    const char *name;
+
+    // Objects are either sprites or textures
+    DrawnType drawn_type;
+    union {
+        struct {
+            Oct_Sprite sprite;
+            Oct_SpriteInstance sprite_instance;
+        };
+        Oct_Texture texture;
+    };
+
+    // These matter for skills and items and other things
+    struct {
+        bool human;
+        bool occult;
+    } Traits;
+} ObjectInfo;
+
+typedef struct Item_s {
+    ObjectInfo info;
+    ItemEnterInventoryCallback enter_inventory_callback;
+    ItemExitInventoryCallback exit_inventory_callback;
+    ItemUseCallback use_callback;
+} Item;
 
 typedef struct Alarm_s {
     int32_t turns_left;
-    bool (*alarm_callback)(void *);
+    AlarmCallback callback;
 } Alarm;
 
 // A character in the game
-typedef struct Character_s {
+struct Character_s {
+    ObjectInfo info;
     Position pos;
     Statblock initial_statblock; // this should never change
     Statblock bonus_statblock; // additive to base
@@ -123,4 +166,4 @@ typedef struct Character_s {
     // Max hp and mana are derived from the current statblock
     int32_t current_hp;
     int32_t current_mana;
-} Character;
+};
