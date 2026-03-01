@@ -12,5 +12,8 @@ add_executable(${PROJECT_NAME}
         src/Game.c
         src/Constants.c
         src/Character.c
+        src/Util.c
+        src/Menu.c
+        src/Level.c
 )
 target_link_libraries(${PROJECT_NAME} OctarineEngine)

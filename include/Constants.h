@@ -8,3 +8,6 @@ extern const char *WITS_STAT_NAMES[4];
 extern const char *MARTIAL_STAT_NAMES[4];
 
 #define MAX_ALARMS 100
+#define INVENTORY_SIZE 5
+#define MAX_CHARACTERS 100
+#define MAX_ITEMS 100

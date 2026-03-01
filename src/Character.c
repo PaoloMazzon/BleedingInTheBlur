@@ -1,5 +1,6 @@
 #include <string.h>
 #include "Character.h"
+#include "Util.h"
 
 void character_create(Statblock *starting_stats, Character *out) {
     memset(out, 0, sizeof(Character));
@@ -44,4 +45,14 @@ int32_t character_crit_chance(Character *c) {
     Statblock current_statblock;
     character_get_current_stats(c, &current_statblock);
     return c->bonus_crit_chance + current_statblock.martial;
+}
+
+int32_t character_take_damage(Character *c, int32_t damage, Traits *source_traits) {
+    const int32_t initial = c->current_hp;
+    c->current_hp = non_negative(c->current_hp - damage);
+    return initial - c->current_hp;
+}
+
+bool character_alive(Character *c) {
+    return c->current_hp > 0 || c->info.traits.undying;
 }

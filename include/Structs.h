@@ -108,9 +108,34 @@ typedef enum {
 } MartialStatType;
 
 typedef enum {
-    DRAWN_TYPE_SPRITE = 0,
+    LEVEL_INDEX_MENU        = 0,
+    LEVEL_INDEX_FLOOR_1     = 1,
+    LEVEL_INDEX_FLOOR_2     = 2,
+    LEVEL_INDEX_FLOOR_3     = 3,
+    LEVEL_INDEX_FLOOR_4     = 4,
+    LEVEL_INDEX_FLOOR_5     = 5,
+    LEVEL_INDEX_FLOOR_FINAL = 6,
+    LEVEL_INDEX_QUIT        = 7, // quit the game
+} LevelIndex;
+
+typedef enum {
+    DRAWN_TYPE_SPRITE  = 0,
     DRAWN_TYPE_TEXTURE = 1,
 } DrawnType;
+
+typedef enum {
+    TILE_CONTENTS_TYPE_NONE      = 0,
+    TILE_CONTENTS_TYPE_CHARACTER = 1,
+    TILE_CONTENTS_TYPE_ITEM      = 2,
+    TILE_CONTENTS_TYPE_WALL      = 3,
+} TileContentsType;
+
+// These should all be bools
+typedef struct Traits_s {
+    bool human;
+    bool occult;
+    bool undying; // doesn't die
+} Traits;
 
 // Information about any in-game object, like sprite and name and traits
 typedef struct ObjectInfo_s {
@@ -128,11 +153,15 @@ typedef struct ObjectInfo_s {
     };
 
     // These matter for skills and items and other things
-    struct {
-        bool human;
-        bool occult;
-    } Traits;
+    Traits traits;
 } ObjectInfo;
+
+// Something like a wall or door or trap
+typedef struct Tile_s {
+    int32_t index; // index in the tileset
+    int32_t max_hp;
+    int32_t current_hp; // some tiles can be destroyed
+} Tile;
 
 typedef struct Item_s {
     ObjectInfo info;
@@ -153,6 +182,7 @@ struct Character_s {
     Statblock initial_statblock; // this should never change
     Statblock bonus_statblock; // additive to base
     Alarm alarms[MAX_ALARMS];
+    Item items[INVENTORY_SIZE];
 
     // At 100 the character gets an extra turn
     int32_t cumulative_movement;
@@ -167,3 +197,32 @@ struct Character_s {
     int32_t current_hp;
     int32_t current_mana;
 };
+
+// Things that can be on a tile in the dungeon
+typedef struct TileContents_s {
+    TileContentsType type;
+    union {
+        Character *character;
+        Item *item;
+        Tile tile; // tiles are owned by the TileContents they reside in
+    };
+} TileContents;
+
+typedef struct Level_s {
+    // Array of tile contents representing the whole level grid, size is width * height
+    TileContents *tiles;
+    int32_t level_width;
+    int32_t level_height;
+
+    Character characters[MAX_CHARACTERS];
+    Item items[MAX_ITEMS];
+} Level;
+
+typedef struct Game_s {
+    // Level in the dungeon
+    Level current_level;
+    LevelIndex level_index;
+
+    // Single source of truth for the player, everything else is a reference to this
+    Character player;
+} Game;
