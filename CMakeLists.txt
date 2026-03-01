@@ -5,7 +5,12 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(extern/Octarine/OctarineEngine)
-include_directories(extern/Octarine/OctarineEngine/include)
+include_directories(extern/Octarine/OctarineEngine/include include/)
 
-add_executable(${PROJECT_NAME} main.c Game.c)
+add_executable(${PROJECT_NAME}
+        main.c
+        src/Game.c
+        src/Constants.c
+        src/Character.c
+)
 target_link_libraries(${PROJECT_NAME} OctarineEngine)
