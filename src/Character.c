@@ -1,6 +1,69 @@
 #include <string.h>
+#include <assert.h>
 #include "Character.h"
 #include "Util.h"
+
+void random_statblock(Statblock *out) {
+    memset(out, 0, sizeof(Statblock));
+
+    // Pick base stats first
+    for (int i = 0; i < STARTING_BASE_STAT_POINTS;) {
+        const int32_t stat = random_int(0, 4);
+        if (out->base_stats[stat] >= BASE_STAT_MAX) continue;
+        out->base_stats[stat] += 1;
+        i++;
+    }
+
+    // Pick skill pips
+    for (int i = 0; i < STARTING_SKILL_PIPS; i++) {
+        const int32_t base_stat = random_int(0, 4);
+        const int32_t skill = random_int(0, 4);
+        int32_t *skill_stat = get_skill_pip(out, base_stat, skill);
+        *skill_stat += 1;
+    }
+}
+
+void print_statblock(Statblock *s) {
+    char skill_score[26] = "=========================";
+    char skill_name_offset[13] = "            ";
+    for (int base_stat = 0; base_stat < 4; base_stat++) {
+        oct_Log("---------- %s: %i", BASE_STAT_NAMES[base_stat], s->base_stats[base_stat]);
+        for (int skill = 0; skill < 4; skill++) {
+            const int32_t skill_pips = *get_skill_pip(s, base_stat, skill);
+            const char *skill_name = get_skill_name(base_stat, skill);
+            skill_score[skill_pips] = '\0';
+            skill_name_offset[12 - strlen(skill_name)] = '\0'; // might cause problems on a rename
+            // If this fails that means a name was changed without updating the skill_name_offset size
+            assert(strlen(skill_name) <= 12);
+            oct_Log("%s%s |%s", skill_name_offset, skill_name, skill_score);
+            skill_score[skill_pips] = '=';
+            skill_name_offset[12 - strlen(skill_name)] = ' ';
+        }
+    }
+    oct_Log("----------");
+}
+
+int32_t *get_skill_pip(Statblock *s, int32_t base_stat_index, int32_t skill_index) {
+    if (base_stat_index == BASE_STAT_TYPE_GRIT) {
+        return &s->grit_stats[skill_index];
+    } else if (base_stat_index == BASE_STAT_TYPE_LEARNING) {
+        return &s->learning_stats[skill_index];
+    } else if (base_stat_index == BASE_STAT_TYPE_WITS) {
+        return &s->wits_stats[skill_index];
+    }
+    return &s->martial_stats[skill_index];
+}
+
+const char *get_skill_name(int32_t base_stat_index, int32_t skill_index) {
+    if (base_stat_index == BASE_STAT_TYPE_GRIT) {
+        return GRIT_STAT_NAMES[skill_index];
+    } else if (base_stat_index == BASE_STAT_TYPE_LEARNING) {
+        return LEARNING_STAT_NAMES[skill_index];
+    } else if (base_stat_index == BASE_STAT_TYPE_WITS) {
+        return WITS_STAT_NAMES[skill_index];
+    }
+    return MARTIAL_STAT_NAMES[skill_index];
+}
 
 void character_create(Statblock *starting_stats, Character *out) {
     memset(out, 0, sizeof(Character));
@@ -55,4 +118,10 @@ int32_t character_take_damage(Character *c, int32_t damage, Traits *source_trait
 
 bool character_alive(Character *c) {
     return c->current_hp > 0 || c->info.traits.undying;
+}
+
+int32_t character_evade_pips(Character *c) {
+    Statblock current_statblock;
+    character_get_current_stats(c, &current_statblock);
+    return current_statblock.evade + c->weapons[c->active_weapon].bonus_evade;
 }

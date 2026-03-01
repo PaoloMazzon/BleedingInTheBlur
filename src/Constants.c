@@ -10,7 +10,7 @@ const char *BASE_STAT_NAMES[4] = {
 const char *GRIT_STAT_NAMES[4] = {
         "Suffer",
         "Healing",
-        "Deaths_door",
+        "Death's Door",
         "Attrition"
 };
 
@@ -34,3 +34,9 @@ const char *MARTIAL_STAT_NAMES[4] = {
         "Grappler",
         "Evade"
 };
+
+const int32_t SOUL_BOUND_WEAPON_SLOT = 1;
+const int32_t STARTING_WEAPON_SLOT = 0;
+const int32_t STARTING_BASE_STAT_POINTS = 15;
+const int32_t BASE_STAT_MAX = 10;
+const int32_t STARTING_SKILL_PIPS = 22;

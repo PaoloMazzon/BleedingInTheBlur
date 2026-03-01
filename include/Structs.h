@@ -175,6 +175,13 @@ typedef struct Alarm_s {
     AlarmCallback callback;
 } Alarm;
 
+typedef struct Weapon_s {
+    int32_t bonus_evade;
+    int32_t damage;
+    int32_t range;
+    Traits traits;
+} Weapon;
+
 // A character in the game
 struct Character_s {
     ObjectInfo info;
@@ -183,6 +190,17 @@ struct Character_s {
     Statblock bonus_statblock; // additive to base
     Alarm alarms[MAX_ALARMS];
     Item items[INVENTORY_SIZE];
+
+    // Weapons
+    union {
+        struct {
+            Weapon starting_weapon;
+            Weapon soul_bound_weapon;
+        };
+        Weapon weapons[2];
+    };
+    int32_t active_weapon;
+    bool has_soul_bound_weapon;
 
     // At 100 the character gets an extra turn
     int32_t cumulative_movement;

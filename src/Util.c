@@ -1,5 +1,11 @@
+#include <math.h>
 #include "Util.h"
 
 int32_t non_negative(int32_t x) {
     return x < 0 ? 0 : x;
+}
+
+int32_t random_int(int32_t lower, int32_t upper) {
+    const float r = oct_Random((float)lower, (float)upper - 0.01f);
+    return (int32_t)floorf(r);
 }

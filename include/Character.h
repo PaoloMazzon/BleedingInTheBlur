@@ -2,6 +2,18 @@
 #pragma once
 #include "Structs.h"
 
+// Returns a random statblock, obeying stat allocation rules
+void random_statblock(Statblock *out);
+
+// Prints a statblock to the console
+void print_statblock(Statblock *s);
+
+// Returns a pointer to the skill pip in the stat block for the given base stat and skill index
+int32_t *get_skill_pip(Statblock *s, int32_t base_stat_index, int32_t skill_index);
+
+// Returns skill name given the base stat and skill index
+const char *get_skill_name(int32_t base_stat_index, int32_t skill_index);
+
 // Does boilerplate to create a character in place
 void character_create(Statblock *starting_stats, Character *out);
 
@@ -25,3 +37,6 @@ bool character_alive(Character *c);
 
 // Returns actual damage taken
 int32_t character_take_damage(Character *c, int32_t damage, Traits *source_traits);
+
+// Returns actual evade pips
+int32_t character_evade_pips(Character *c);
