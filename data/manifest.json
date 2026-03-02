@@ -4,6 +4,10 @@
     {
       "name": "ttf_pixel",
       "files": ["pixel.ttf"]
+    },
+    {
+      "name": "ttf_small",
+      "files": ["small.ttf"]
     }
   ],
   "font atlases":
@@ -11,7 +15,13 @@
     {
       "name": "fnt_pixel",
       "font": "ttf_pixel",
-      "size": 14,
+      "size": 16,
+      "unicode ranges": [[32, 128], [1024, 1279]]
+    },
+    {
+      "name": "fnt_small",
+      "font": "ttf_small",
+      "size": 8,
       "unicode ranges": [[32, 128], [1024, 1279]]
     }
   ]

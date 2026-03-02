@@ -11,16 +11,23 @@ void player_update() {
 
     // Should only be 1/-1 in both directions
     Position movement_direction = {0};
-    if (oct_KeyPressed(OCT_KEY_LEFT)) movement_direction[0] = -1;
-    else if (oct_KeyPressed(OCT_KEY_RIGHT)) movement_direction[0] = 1;
-    else if (oct_KeyPressed(OCT_KEY_UP)) movement_direction[1] = -1;
-    else if (oct_KeyPressed(OCT_KEY_DOWN)) movement_direction[1] = 1;
+    bool player_has_taken_actions = false;
+    if (g_game.current_level.state == LEVEL_STATE_PLAYER_INTERACTION) {
+        if (oct_KeyPressed(OCT_KEY_LEFT)) movement_direction[0] = -1;
+        else if (oct_KeyPressed(OCT_KEY_RIGHT)) movement_direction[0] = 1;
+        else if (oct_KeyPressed(OCT_KEY_UP)) movement_direction[1] = -1;
+        else if (oct_KeyPressed(OCT_KEY_DOWN)) movement_direction[1] = 1;
 
-    else if (oct_KeyPressed(OCT_KEY_SPACE))
-        create_label("fuck you", player->pos, (Oct_Colour){1, 1, 1, 1}, false);
+        if (oct_KeyPressed(OCT_KEY_X)) {
+            g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
+        }
 
-    // Player is considered to have taken their turn if they actually did something
-    if (movement_direction[0] != 0 || movement_direction[1] != 0) {
+        player_has_taken_actions = movement_direction[0] != 0 || movement_direction[1] != 0;
+    }
+
+    // Final check to unwind the player's actions for the turn, causing their effects to take
+    // place and pass the state to the enemy turn
+    if (player_has_taken_actions) {
         // World gets to take a turn unless player has accumulated enough movement to get
         // an extra turn
         if (g_game.player.cumulative_movement == 100) {
@@ -36,6 +43,8 @@ void player_update() {
                 g_game.player.pos[1] + movement_direction[1],
         };
         character_move(&g_game.player, target_position);
+
+        g_game.current_level.state = LEVEL_STATE_ENEMY_TURN;
     }
 }
 
@@ -83,12 +92,16 @@ void draw_tiles() {
 void draw_labels() {
     for (int i = 0; i < MAX_LABELS; i++) {
         if (g_game.current_level.labels[i].ticks_remaining > 0) {
-            oct_DrawTextColour(
-                    oct_GetAsset(g_game.assets, "fnt_pixel"),
+            const float alpha = (float)g_game.current_level.labels[i].ticks_remaining / (float)g_game.current_level.labels[i].max_ticks;
+            Oct_Colour c = g_game.current_level.labels[i].colour;
+            c.a = alpha;
+            oct_DrawTextIntColour(
+                    OCT_INTERPOLATE_ALL, LABELS_ID_START + i,
+                    oct_GetAsset(g_game.assets, "fnt_small"),
                     g_game.current_level.labels[i].position,
-                    &g_game.current_level.labels[i].colour, 1,
+                    &c, 1,
                     "%s", g_game.current_level.labels[i].label);
-            g_game.current_level.labels[i].position[1] -= 1;
+            g_game.current_level.labels[i].position[1] -= 0.5f;
 
             g_game.current_level.labels[i].ticks_remaining -= 1;
             if (g_game.current_level.labels[i].ticks_remaining == 0 && g_game.current_level.labels[i].needs_to_be_freed) {
@@ -164,8 +177,9 @@ void create_label(const char *text, Position pos, Oct_Colour colour, bool needs_
             g_game.current_level.labels[i].max_ticks = 30;
             g_game.current_level.labels[i].needs_to_be_freed = needs_to_be_freed;
             g_game.current_level.labels[i].label = text;
-            g_game.current_level.labels[i].position[0] = (float)pos[0] * CELL_WIDTH - ((float)strlen(text) * 7.0f * 0.5f);
-            g_game.current_level.labels[i].position[1] = (float)pos[1] * CELL_HEIGHT;
+            g_game.current_level.labels[i].position[0] = ((float)pos[0] * CELL_WIDTH) - ((float)strlen(text) * 6.0f * 0.5f);
+            g_game.current_level.labels[i].position[1] = ((float)pos[1] * CELL_HEIGHT);
+            return;
         }
     }
 }

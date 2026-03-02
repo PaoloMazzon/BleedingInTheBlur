@@ -264,11 +264,37 @@ typedef struct Label_s {
     Oct_Colour colour;
 } Label;
 
+typedef enum {
+    // Player may move, pause, trigger the attack view, attack an adjacent tile, or pass
+    LEVEL_STATE_PLAYER_INTERACTION = 0,
+
+    // Player is browsing their inventory
+    LEVEL_STATE_PLAYER_INVENTORY = 1,
+
+    // Player is browsing their stats
+    LEVEL_STATE_PLAYER_STATS = 2,
+
+    // Player may select a spell then move to the attack view
+    LEVEL_STATE_PLAYER_SPELLS = 3,
+
+    // Player is in attack view and may choose a tile within range to attack with a weapon or spell
+    LEVEL_STATE_PLAYER_ATTACK = 4,
+
+    // Enemies will take their turns sequentially, also has a brief pause at the start to allow player's turn to unwind
+    LEVEL_STATE_ENEMY_TURN = 5,
+
+    // Player is dead and may return to menu
+    LEVEL_STATE_PLAYER_DEATH = 6,
+} LevelState;
+
 typedef struct Level_s {
     // Array of tile contents representing the whole level grid, size is width * height
     TileContents *tiles;
     int32_t level_width;
     int32_t level_height;
+
+    // Current state of the level, user interaction and phases are FSM
+    LevelState state;
 
     // For drawing
     Oct_Tilemap tilemap;
