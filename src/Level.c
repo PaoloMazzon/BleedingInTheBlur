@@ -1,5 +1,7 @@
 #include <oct/Octarine.h>
+#include <math.h>
 #include "Game.h"
+#include "Util.h"
 #include "Character.h"
 
 void player_update() {
@@ -60,6 +62,17 @@ void draw_ui() {
     // TODO: This
 }
 
+void draw_tiles() {
+    float camera_x, camera_y;
+    get_camera_coords(&camera_x, &camera_y);
+    const int32_t start_draw_x = (int32_t)floorf((camera_x - CELL_WIDTH) / CELL_WIDTH);
+    const int32_t start_draw_y = (int32_t)floorf((camera_y - CELL_HEIGHT) / CELL_HEIGHT);
+    const int32_t tile_horizontal = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH);
+    const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH);
+
+    oct_TilemapDrawPart(g_game.current_level.tilemap, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
+}
+
 void level_begin() {
     Statblock sb;
     random_statblock(&sb);
@@ -67,17 +80,48 @@ void level_begin() {
     character_create(&sb, &g_game.player);
     g_game.player.info.drawn_type = DRAWN_TYPE_TEXTURE;
     g_game.player.info.texture = oct_GetAsset(g_game.assets, "player.png");
+
+    // Tilemap
+    g_game.current_level.tilemap = oct_CreateTilemap(
+            oct_GetAsset(g_game.assets, "tileset.png"),
+            100, 100,
+            (Oct_Vec2){CELL_WIDTH, CELL_HEIGHT});
+    for (int y = 0; y < 100; y++) {
+        for (int x = 0; x < 100; x++) {
+            oct_SetTilemap(g_game.current_level.tilemap, x, y, ((x + y) % 5) + 17);
+        }
+    }
 }
 
 LevelIndex level_update() {
+    const float window_width = oct_WindowWidth();
+    const float window_height = oct_WindowHeight();
+    float camera_x, camera_y;
+    get_camera_coords(&camera_x, &camera_y);
+    Oct_CameraUpdate camera_update = {
+            .size = {GAME_VIEW_WIDTH, GAME_VIEW_HEIGHT},
+            .screenSize = {VIRTUAL_WIDTH, VIRTUAL_HEIGHT},
+            .screenPosition = {0, 0},
+            .position = {camera_x, camera_y}
+    };
+    oct_UpdateCameraInt(OCT_INTERPOLATE_ALL, CAMERA_ID, g_game.world_camera, &camera_update);
+
+    // Update logic/turn logic
     player_update();
     characters_update();
+
+    // Drawing the world
+    oct_LockCameras(g_game.world_camera);
+    draw_tiles();
     draw_characters();
+
+    // UI drawing
+    oct_LockCameras(g_game.ui_camera);
     draw_ui();
 
     return g_game.level_index;
 }
 
 void level_end() {
-
+    oct_DestroyTilemap(g_game.current_level.tilemap);
 }

@@ -42,3 +42,7 @@ const int32_t BASE_STAT_MAX = 10;
 const int32_t STARTING_SKILL_PIPS = 22;
 const float CELL_WIDTH = 8;
 const float CELL_HEIGHT = 8;
+const float VIRTUAL_WIDTH = 320;
+const float VIRTUAL_HEIGHT = 256;
+const float GAME_VIEW_WIDTH = 160;
+const float GAME_VIEW_HEIGHT = 128;

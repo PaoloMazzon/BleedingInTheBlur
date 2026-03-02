@@ -13,8 +13,8 @@ int main(int argc, const char **argv) {
 
             // Change these to what you want
             .windowTitle = "Bleeding in the Blur",
-            .windowWidth = 1280,
-            .windowHeight = 720,
+            .windowWidth = (int32_t)VIRTUAL_WIDTH * 3,
+            .windowHeight = (int32_t)VIRTUAL_HEIGHT * 3,
             .debug = false,
     };
 

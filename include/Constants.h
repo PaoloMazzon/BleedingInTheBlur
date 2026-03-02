@@ -21,8 +21,15 @@ extern const int32_t STARTING_SKILL_PIPS;
 // Cell width/height for the rendered game
 extern const float CELL_WIDTH;
 extern const float CELL_HEIGHT;
+extern const float VIRTUAL_WIDTH;
+extern const float VIRTUAL_HEIGHT;
+extern const float GAME_VIEW_WIDTH;
+extern const float GAME_VIEW_HEIGHT;
 
 #define MAX_ALARMS 100
 #define INVENTORY_SIZE 5
 #define MAX_CHARACTERS 100
 #define MAX_ITEMS 100
+
+// These are compiler preprocessors for easy access
+#define CAMERA_ID 1

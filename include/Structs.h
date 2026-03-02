@@ -246,6 +246,9 @@ typedef struct Level_s {
     int32_t level_width;
     int32_t level_height;
 
+    // For drawing
+    Oct_Tilemap tilemap;
+
     Character characters[MAX_CHARACTERS];
     Item items[MAX_ITEMS];
 
@@ -256,6 +259,10 @@ typedef struct Level_s {
 typedef struct Game_s {
     Oct_AssetBundle assets;
     Oct_Allocator allocator;
+    Oct_Texture backbuffer; // for drawing upscaled
+    Oct_Camera world_camera; // in-game-world camera
+    Oct_Camera ui_camera; // ui camera (it'll be virtual screen size)
+    Oct_Camera render_camera; // for the final backbuffer
 
     // Level in the dungeon
     Level current_level;
