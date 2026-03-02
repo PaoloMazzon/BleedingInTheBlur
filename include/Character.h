@@ -17,6 +17,9 @@ const char *get_skill_name(int32_t base_stat_index, int32_t skill_index);
 // Does boilerplate to create a character in place
 void character_create(Statblock *starting_stats, Character *out);
 
+// Draws a character wherever specified
+void character_draw(Character *c, Oct_Vec2 position);
+
 // Returns the current statblock for a character (initial stats + bonus)
 void character_get_current_stats(Character *c, Statblock *out);
 
@@ -33,10 +36,13 @@ int32_t character_movement(Character *c);
 int32_t character_crit_chance(Character *c);
 
 // Returns false if the character is dead
-bool character_alive(Character *c);
+bool character_is_alive(Character *c);
 
 // Returns actual damage taken
 int32_t character_take_damage(Character *c, int32_t damage, Traits *source_traits);
 
 // Returns actual evade pips
 int32_t character_evade_pips(Character *c);
+
+// Moves a character (including the visual portion and not just the logic). Returns false if the character can't move
+bool character_move(Character *c, const Position new_position);

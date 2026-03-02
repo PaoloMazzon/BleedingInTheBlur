@@ -137,10 +137,19 @@ typedef struct Traits_s {
     bool undying; // doesn't die
 } Traits;
 
+// These are countdowns, above 0 means its active this turn
+typedef struct StatusEffects_s {
+    int32_t grappled; // can't move, attackers get +1D
+    int32_t poisoned; // damage each turn
+} StatusEffects;
+
 // Information about any in-game object, like sprite and name and traits
 typedef struct ObjectInfo_s {
     // Every object has a name
     const char *name;
+
+    // For Octarine interpolation
+    uint64_t id;
 
     // Objects are either sprites or textures
     DrawnType drawn_type;
@@ -151,6 +160,10 @@ typedef struct ObjectInfo_s {
         };
         Oct_Texture texture;
     };
+
+    // To easily lerp characters/items to where they should be
+    Oct_Vec2 target_position;
+    Oct_Vec2 actual_position;
 
     // These matter for skills and items and other things
     Traits traits;
@@ -190,6 +203,7 @@ struct Character_s {
     Statblock bonus_statblock; // additive to base
     Alarm alarms[MAX_ALARMS];
     Item items[INVENTORY_SIZE];
+    StatusEffects status_effects; // status effects are decremented every turn
 
     // Weapons
     union {
@@ -234,9 +248,15 @@ typedef struct Level_s {
 
     Character characters[MAX_CHARACTERS];
     Item items[MAX_ITEMS];
+
+    // If the player does something, and it isn't an extra turn, the world gets a turn
+    bool world_turn;
 } Level;
 
 typedef struct Game_s {
+    Oct_AssetBundle assets;
+    Oct_Allocator allocator;
+
     // Level in the dungeon
     Level current_level;
     LevelIndex level_index;

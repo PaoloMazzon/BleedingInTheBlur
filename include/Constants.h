@@ -18,6 +18,10 @@ extern const int32_t BASE_STAT_MAX;
 // How many skill pips players get at the start of the game
 extern const int32_t STARTING_SKILL_PIPS;
 
+// Cell width/height for the rendered game
+extern const float CELL_WIDTH;
+extern const float CELL_HEIGHT;
+
 #define MAX_ALARMS 100
 #define INVENTORY_SIZE 5
 #define MAX_CHARACTERS 100

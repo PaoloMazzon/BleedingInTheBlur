@@ -7,3 +7,6 @@ int32_t non_negative(int32_t x);
 
 // Returns a random int from [lower, upper)
 int32_t random_int(int32_t lower, int32_t upper);
+
+// Returns a new unique id for an object (starts at 1,000,000)
+uint64_t new_oct_id();

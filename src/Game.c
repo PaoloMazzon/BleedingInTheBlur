@@ -7,6 +7,10 @@ Game g_game;
 
 void *startup() {
     oct_Log("Starting the game.");
+
+    g_game.assets = oct_LoadAssetBundle("data");
+    g_game.allocator = oct_CreateHeapAllocator();
+
     menu_begin();
     return nullptr;
 }
@@ -46,5 +50,6 @@ void *update(void *ptr) {
 }
 
 void shutdown(void *ptr) {
-
+    oct_FreeAssetBundle(g_game.assets);
+    oct_FreeAllocator(g_game.allocator);
 }

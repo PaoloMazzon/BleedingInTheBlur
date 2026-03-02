@@ -65,9 +65,24 @@ const char *get_skill_name(int32_t base_stat_index, int32_t skill_index) {
     return MARTIAL_STAT_NAMES[skill_index];
 }
 
+void character_draw(Character *c, Oct_Vec2 position) {
+    if (c->info.drawn_type == DRAWN_TYPE_SPRITE) {
+        oct_DrawSpriteInt(
+                OCT_INTERPOLATE_ALL, c->info.id,
+                c->info.sprite, &c->info.sprite_instance,
+                position);
+    } else if (c->info.drawn_type == DRAWN_TYPE_TEXTURE) {
+        oct_DrawTextureInt(
+                OCT_INTERPOLATE_ALL, c->info.id,
+                c->info.texture,
+                position);
+    }
+}
+
 void character_create(Statblock *starting_stats, Character *out) {
     memset(out, 0, sizeof(Character));
     memcpy(&out->initial_statblock, starting_stats, sizeof(Statblock));
+    out->info.id = new_oct_id();
     out->current_hp = character_max_hp(out);
     out->current_mana = character_max_mana(out);
 }
@@ -116,7 +131,7 @@ int32_t character_take_damage(Character *c, int32_t damage, Traits *source_trait
     return initial - c->current_hp;
 }
 
-bool character_alive(Character *c) {
+bool character_is_alive(Character *c) {
     return c->current_hp > 0 || c->info.traits.undying;
 }
 
@@ -124,4 +139,13 @@ int32_t character_evade_pips(Character *c) {
     Statblock current_statblock;
     character_get_current_stats(c, &current_statblock);
     return current_statblock.evade + c->weapons[c->active_weapon].bonus_evade;
+}
+
+bool character_move(Character *c, const Position new_position) {
+    if (c->status_effects.grappled > 0) return false;
+    c->pos[0] = new_position[0];
+    c->pos[1] = new_position[1];
+    c->info.target_position[0] = (float)new_position[0] * CELL_WIDTH;
+    c->info.target_position[1] = (float)new_position[1] * CELL_HEIGHT;
+    return true;
 }
