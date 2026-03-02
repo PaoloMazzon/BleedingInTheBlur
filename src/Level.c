@@ -1,16 +1,23 @@
 #include <oct/Octarine.h>
 #include <math.h>
+#include <assert.h>
+#include <string.h>
 #include "Game.h"
 #include "Util.h"
 #include "Character.h"
 
 void player_update() {
+    Character *player = &g_game.player;
+
     // Should only be 1/-1 in both directions
     Position movement_direction = {0};
     if (oct_KeyPressed(OCT_KEY_LEFT)) movement_direction[0] = -1;
     else if (oct_KeyPressed(OCT_KEY_RIGHT)) movement_direction[0] = 1;
     else if (oct_KeyPressed(OCT_KEY_UP)) movement_direction[1] = -1;
     else if (oct_KeyPressed(OCT_KEY_DOWN)) movement_direction[1] = 1;
+
+    else if (oct_KeyPressed(OCT_KEY_SPACE))
+        create_label("fuck you", player->pos, (Oct_Colour){1, 1, 1, 1}, false);
 
     // Player is considered to have taken their turn if they actually did something
     if (movement_direction[0] != 0 || movement_direction[1] != 0) {
@@ -51,8 +58,8 @@ void draw_characters() {
         if (!character_is_alive(c)) continue;
 
         // Move character to where they should be
-        c_info->actual_position[0] += (c_info->target_position[0] - c_info->actual_position[0]) * 0.2f;
-        c_info->actual_position[1] += (c_info->target_position[1] - c_info->actual_position[1]) * 0.2f;
+        c_info->actual_position[0] += (c_info->target_position[0] - c_info->actual_position[0]) * 0.4f;
+        c_info->actual_position[1] += (c_info->target_position[1] - c_info->actual_position[1]) * 0.4f;
 
         character_draw(c, c_info->actual_position);
     }
@@ -73,7 +80,28 @@ void draw_tiles() {
     oct_TilemapDrawPart(g_game.current_level.tilemap, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
 }
 
+void draw_labels() {
+    for (int i = 0; i < MAX_LABELS; i++) {
+        if (g_game.current_level.labels[i].ticks_remaining > 0) {
+            oct_DrawTextColour(
+                    oct_GetAsset(g_game.assets, "fnt_pixel"),
+                    g_game.current_level.labels[i].position,
+                    &g_game.current_level.labels[i].colour, 1,
+                    "%s", g_game.current_level.labels[i].label);
+            g_game.current_level.labels[i].position[1] -= 1;
+
+            g_game.current_level.labels[i].ticks_remaining -= 1;
+            if (g_game.current_level.labels[i].ticks_remaining == 0 && g_game.current_level.labels[i].needs_to_be_freed) {
+                oct_Free(g_game.allocator, (void*)g_game.current_level.labels[i].label);
+                g_game.current_level.labels[i].label = nullptr;
+            }
+        }
+    }
+}
+
 void level_begin() {
+    memset(&g_game.current_level, 0, sizeof(Level));
+
     Statblock sb;
     random_statblock(&sb);
     print_statblock(&sb);
@@ -108,12 +136,14 @@ LevelIndex level_update() {
 
     // Update logic/turn logic
     player_update();
+    update_camera_coords();
     characters_update();
 
     // Drawing the world
     oct_LockCameras(g_game.world_camera);
     draw_tiles();
     draw_characters();
+    draw_labels();
 
     // UI drawing
     oct_LockCameras(g_game.ui_camera);
@@ -124,4 +154,34 @@ LevelIndex level_update() {
 
 void level_end() {
     oct_DestroyTilemap(g_game.current_level.tilemap);
+}
+
+void create_label(const char *text, Position pos, Oct_Colour colour, bool needs_to_be_freed) {
+    for (int i = 0; i < MAX_LABELS; i++) {
+        if (g_game.current_level.labels[i].ticks_remaining <= 0) {
+            g_game.current_level.labels[i].colour = colour;
+            g_game.current_level.labels[i].ticks_remaining = 30;
+            g_game.current_level.labels[i].max_ticks = 30;
+            g_game.current_level.labels[i].needs_to_be_freed = needs_to_be_freed;
+            g_game.current_level.labels[i].label = text;
+            g_game.current_level.labels[i].position[0] = (float)pos[0] * CELL_WIDTH - ((float)strlen(text) * 7.0f * 0.5f);
+            g_game.current_level.labels[i].position[1] = (float)pos[1] * CELL_HEIGHT;
+        }
+    }
+}
+
+Character *level_get_character_slot() {
+    for (int i = 0; i < MAX_CHARACTERS; i++)
+        if (!character_is_alive(&g_game.current_level.characters[i]))
+            return &g_game.current_level.characters[i];
+
+    // This should never happen and if it does, increase max character count
+    assert(false);
+    return nullptr;
+}
+
+TileContents *level_get_tile(int32_t x, int32_t y) {
+    if (x < 0 || x >= g_game.current_level.level_width || y < 0 || y >= g_game.current_level.level_height)
+        return nullptr;
+    return &g_game.current_level.tiles[(y * g_game.current_level.level_width) + x];
 }

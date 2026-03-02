@@ -2,6 +2,8 @@
 #include "Util.h"
 #include "Game.h"
 
+static float camera_x = 0;
+static float camera_y = 0;
 static uint64_t object_id_counter = 1000000;
 
 int32_t non_negative(int32_t x) {
@@ -17,7 +19,12 @@ uint64_t new_oct_id() {
     return object_id_counter++;
 }
 
+void update_camera_coords() {
+    camera_x += ((g_game.player.info.actual_position[0] + (CELL_WIDTH / 2)) - (GAME_VIEW_WIDTH / 2) - camera_x) * 0.4f;
+    camera_y += ((g_game.player.info.actual_position[1] + (CELL_HEIGHT / 2)) - (GAME_VIEW_HEIGHT / 2) - camera_y) * 0.4f;
+}
+
 void get_camera_coords(float *x, float *y) {
-    *x = (g_game.player.info.actual_position[0] + (CELL_WIDTH / 2)) - (GAME_VIEW_WIDTH / 2);
-    *y = (g_game.player.info.actual_position[1] + (CELL_HEIGHT / 2)) - (GAME_VIEW_HEIGHT / 2);
+    *x = camera_x;
+    *y = camera_y;
 }

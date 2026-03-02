@@ -8,6 +8,8 @@ extern const char *WITS_STAT_NAMES[4];
 extern const char *MARTIAL_STAT_NAMES[4];
 extern const int32_t SOUL_BOUND_WEAPON_SLOT;
 extern const int32_t STARTING_WEAPON_SLOT;
+extern const char *WEAPON_TYPE_NAMES[6];
+extern const char *RARITY_NAMES[4];
 
 // How many base stat points you have, no stat can have more than BASE_STAT_MAX
 extern const int32_t STARTING_BASE_STAT_POINTS;
@@ -30,6 +32,8 @@ extern const float GAME_VIEW_HEIGHT;
 #define INVENTORY_SIZE 5
 #define MAX_CHARACTERS 100
 #define MAX_ITEMS 100
+#define MAX_LABELS 100
 
 // These are compiler preprocessors for easy access
 #define CAMERA_ID 1
+#define LABELS_ID_START 100

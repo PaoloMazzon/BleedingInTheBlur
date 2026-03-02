@@ -1,0 +1,18 @@
+{
+  "fonts":
+  [
+    {
+      "name": "ttf_pixel",
+      "files": ["pixel.ttf"]
+    }
+  ],
+  "font atlases":
+  [
+    {
+      "name": "fnt_pixel",
+      "font": "ttf_pixel",
+      "size": 14,
+      "unicode ranges": [[32, 128], [1024, 1279]]
+    }
+  ]
+}

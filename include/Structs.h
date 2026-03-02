@@ -16,6 +16,7 @@ typedef bool (*ItemEnterInventoryCallback)(Character *);
 typedef bool (*ItemExitInventoryCallback)(Character *);
 typedef bool (*ItemUseCallback)(Character *);
 typedef int32_t Position[2];
+typedef int32_t IntRange[2];
 
 // Stats are a mess, just collapse them in your editor
 typedef struct Statblock_s {
@@ -106,7 +107,6 @@ typedef enum {
     MARTIAL_STAT_TYPE_EVADE    = 3,
     MARTIAL_STAT_TYPE_MAX      = 4
 } MartialStatType;
-
 typedef enum {
     LEVEL_INDEX_MENU        = 0,
     LEVEL_INDEX_FLOOR_1     = 1,
@@ -117,18 +117,32 @@ typedef enum {
     LEVEL_INDEX_FLOOR_FINAL = 6,
     LEVEL_INDEX_QUIT        = 7, // quit the game
 } LevelIndex;
-
 typedef enum {
     DRAWN_TYPE_SPRITE  = 0,
     DRAWN_TYPE_TEXTURE = 1,
 } DrawnType;
-
 typedef enum {
     TILE_CONTENTS_TYPE_NONE      = 0,
     TILE_CONTENTS_TYPE_CHARACTER = 1,
     TILE_CONTENTS_TYPE_ITEM      = 2,
     TILE_CONTENTS_TYPE_WALL      = 3,
 } TileContentsType;
+typedef enum {
+    WEAPON_TYPE_SWORD    = 0,
+    WEAPON_TYPE_SPEAR    = 1,
+    WEAPON_TYPE_BOW      = 2,
+    WEAPON_TYPE_CROSSBOW = 3,
+    WEAPON_TYPE_DAGGER   = 4,
+    WEAPON_TYPE_OTHER    = 5, // Things like monster claws
+    WEAPON_TYPE_MAX      = 6,
+} WeaponType;
+typedef enum {
+    RARITY_COMMON   = 0,
+    RARITY_UNCOMMON = 1,
+    RARITY_RARE     = 2,
+    RARITY_MYTHIC   = 3,
+    RARITY_MAX      = 4,
+} Rarity;
 
 // These should all be bools
 typedef struct Traits_s {
@@ -189,10 +203,11 @@ typedef struct Alarm_s {
 } Alarm;
 
 typedef struct Weapon_s {
-    int32_t bonus_evade;
+    ObjectInfo info;
+    WeaponType type;
+    Statblock bonus_stats;
     int32_t damage;
     int32_t range;
-    Traits traits;
 } Weapon;
 
 // A character in the game
@@ -240,6 +255,15 @@ typedef struct TileContents_s {
     };
 } TileContents;
 
+typedef struct Label_s {
+    const char *label;
+    Oct_Vec2 position;
+    bool needs_to_be_freed;
+    int32_t max_ticks;
+    int32_t ticks_remaining;
+    Oct_Colour colour;
+} Label;
+
 typedef struct Level_s {
     // Array of tile contents representing the whole level grid, size is width * height
     TileContents *tiles;
@@ -251,6 +275,7 @@ typedef struct Level_s {
 
     Character characters[MAX_CHARACTERS];
     Item items[MAX_ITEMS];
+    Label labels[MAX_LABELS];
 
     // If the player does something, and it isn't an extra turn, the world gets a turn
     bool world_turn;

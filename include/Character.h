@@ -2,6 +2,12 @@
 #pragma once
 #include "Structs.h"
 
+// For character creation and most enemies
+void get_starting_weapon(WeaponType weapon_type, Weapon *out);
+
+// For soul-bound weapons
+void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out);
+
 // Returns a random statblock, obeying stat allocation rules
 void random_statblock(Statblock *out);
 
