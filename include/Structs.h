@@ -182,6 +182,9 @@ typedef struct ObjectInfo_s {
     // To easily lerp characters/items to where they should be
     Oct_Vec2 target_position;
     Oct_Vec2 actual_position;
+    float rotation;
+    float scale_x;
+    float facing_direction;
 
     // These matter for skills and items and other things
     Traits traits;

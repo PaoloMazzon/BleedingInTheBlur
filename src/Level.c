@@ -6,6 +6,13 @@
 #include "Util.h"
 #include "Character.h"
 
+// Returns true if a given tile is within range of the player's attack range
+static inline bool tile_in_range_of_player(Position target) {
+    const int32_t x_delta = abs(g_game.player.pos[0] - target[0]);
+    const int32_t y_delta = abs(g_game.player.pos[1] - target[1]);
+    return (x_delta + y_delta) < g_game.player.weapons[g_game.player.active_weapon].range;
+}
+
 void player_update() {
     Character *player = &g_game.player;
 
@@ -20,9 +27,21 @@ void player_update() {
 
         if (oct_KeyPressed(OCT_KEY_X)) {
             g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
+            g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + 1;
+            g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
         }
 
         player_has_taken_actions = movement_direction[0] != 0 || movement_direction[1] != 0;
+    } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_ATTACK) {
+        if (oct_KeyPressed(OCT_KEY_LEFT)) movement_direction[0] = -1;
+        else if (oct_KeyPressed(OCT_KEY_RIGHT)) movement_direction[0] = 1;
+        else if (oct_KeyPressed(OCT_KEY_UP)) movement_direction[1] = -1;
+        else if (oct_KeyPressed(OCT_KEY_DOWN)) movement_direction[1] = 1;
+
+        g_game.current_level.attack_view.attack_cursor[0] += movement_direction[0];
+        g_game.current_level.attack_view.attack_cursor[1] += movement_direction[1];
+        g_game.current_level.attack_view.attack_cursor[0] = oct_Clampi(0, g_game.current_level.level_width, g_game.current_level.attack_view.attack_cursor[0]);
+        g_game.current_level.attack_view.attack_cursor[1] = oct_Clampi(0, g_game.current_level.level_height, g_game.current_level.attack_view.attack_cursor[1]);
     }
 
     // Final check to unwind the player's actions for the turn, causing their effects to take
@@ -49,9 +68,10 @@ void player_update() {
 }
 
 void characters_update() {
-    if (g_game.current_level.world_turn) {
+    // TODO: Enemy turns
+    if (g_game.current_level.world_turn && g_game.current_level.state == LEVEL_STATE_ENEMY_TURN) {
         g_game.current_level.world_turn = false;
-        // TODO: This
+        g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
     }
 }
 
@@ -67,8 +87,25 @@ void draw_characters() {
         if (!character_is_alive(c)) continue;
 
         // Move character to where they should be
-        c_info->actual_position[0] += (c_info->target_position[0] - c_info->actual_position[0]) * 0.4f;
-        c_info->actual_position[1] += (c_info->target_position[1] - c_info->actual_position[1]) * 0.4f;
+        const Oct_Vec2 velocity = {
+                (c_info->target_position[0] - c_info->actual_position[0]) * 0.4f,
+                (c_info->target_position[1] - c_info->actual_position[1]) * 0.4f,
+        };
+        c_info->actual_position[0] += velocity[0];
+        c_info->actual_position[1] += velocity[1];
+
+        // Make sure the facing value accurately reflects where the character is pointing
+        if (velocity[0] > 0)
+            c_info->facing_direction = 1;
+        else if (velocity[0] < 0)
+            c_info->facing_direction = -1;
+
+        // Cool rotation effect
+        const float speed = sqrtf(powf(velocity[0], 2) + powf(velocity[1], 2));
+        c_info->rotation = speed * c_info->facing_direction * 0.15f;
+
+        // Lerp scale to match facing
+        c_info->scale_x += (c_info->facing_direction - c_info->scale_x) * 0.35f;
 
         character_draw(c, c_info->actual_position);
     }
@@ -83,8 +120,8 @@ void draw_tiles() {
     get_camera_coords(&camera_x, &camera_y);
     const int32_t start_draw_x = (int32_t)floorf((camera_x - CELL_WIDTH) / CELL_WIDTH);
     const int32_t start_draw_y = (int32_t)floorf((camera_y - CELL_HEIGHT) / CELL_HEIGHT);
-    const int32_t tile_horizontal = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH);
-    const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH);
+    const int32_t tile_horizontal = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
+    const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
 
     oct_TilemapDrawPart(g_game.current_level.tilemap, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
 }

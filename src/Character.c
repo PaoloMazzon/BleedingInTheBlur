@@ -120,16 +120,21 @@ const char *get_skill_name(int32_t base_stat_index, int32_t skill_index) {
 }
 
 void character_draw(Character *c, Oct_Vec2 position) {
+    const float x_offset = 0;c->info.scale_x < 0 ? CELL_WIDTH * -c->info.scale_x : 0;
     if (c->info.drawn_type == DRAWN_TYPE_SPRITE) {
-        oct_DrawSpriteInt(
-                OCT_INTERPOLATE_ALL, c->info.id,
+        oct_DrawSpriteIntExt(
+                OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, c->info.id,
                 c->info.sprite, &c->info.sprite_instance,
-                position);
+                (Oct_Vec2){position[0] + 4, position[1] + 4},
+                (Oct_Vec2){c->info.scale_x, 1},
+                c->info.rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
     } else if (c->info.drawn_type == DRAWN_TYPE_TEXTURE) {
-        oct_DrawTextureInt(
-                OCT_INTERPOLATE_ALL, c->info.id,
+        oct_DrawTextureIntExt(
+                OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, c->info.id,
                 c->info.texture,
-                position);
+                (Oct_Vec2){position[0] + 4, position[1] + 4},
+                (Oct_Vec2){c->info.scale_x, 1},
+                c->info.rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
     }
 }
 
@@ -139,6 +144,8 @@ void character_create(Statblock *starting_stats, Character *out) {
     out->info.id = new_oct_id();
     out->current_hp = character_max_hp(out);
     out->current_mana = character_max_mana(out);
+    out->info.scale_x = 1;
+    out->info.facing_direction = 1;
 }
 
 void character_get_current_stats(Character *c, Statblock *out) {
