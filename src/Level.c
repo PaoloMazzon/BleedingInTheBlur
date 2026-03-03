@@ -10,7 +10,7 @@
 static inline bool tile_in_range_of_player(Position target) {
     const int32_t x_delta = abs(g_game.player.pos[0] - target[0]);
     const int32_t y_delta = abs(g_game.player.pos[1] - target[1]);
-    return (x_delta + y_delta) < g_game.player.weapons[g_game.player.active_weapon].range;
+    return (x_delta + y_delta) <= g_game.player.weapons[g_game.player.active_weapon].range;
 }
 
 void player_update() {
@@ -19,20 +19,7 @@ void player_update() {
     // Should only be 1/-1 in both directions
     Position movement_direction = {0};
     bool player_has_taken_actions = false;
-    if (g_game.current_level.state == LEVEL_STATE_PLAYER_INTERACTION) {
-        if (oct_KeyPressed(OCT_KEY_LEFT)) movement_direction[0] = -1;
-        else if (oct_KeyPressed(OCT_KEY_RIGHT)) movement_direction[0] = 1;
-        else if (oct_KeyPressed(OCT_KEY_UP)) movement_direction[1] = -1;
-        else if (oct_KeyPressed(OCT_KEY_DOWN)) movement_direction[1] = 1;
-
-        if (oct_KeyPressed(OCT_KEY_X)) {
-            g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
-            g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + 1;
-            g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
-        }
-
-        player_has_taken_actions = movement_direction[0] != 0 || movement_direction[1] != 0;
-    } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_ATTACK) {
+    if (g_game.current_level.state == LEVEL_STATE_PLAYER_ATTACK) {
         if (oct_KeyPressed(OCT_KEY_LEFT)) movement_direction[0] = -1;
         else if (oct_KeyPressed(OCT_KEY_RIGHT)) movement_direction[0] = 1;
         else if (oct_KeyPressed(OCT_KEY_UP)) movement_direction[1] = -1;
@@ -40,12 +27,44 @@ void player_update() {
 
         g_game.current_level.attack_view.attack_cursor[0] += movement_direction[0];
         g_game.current_level.attack_view.attack_cursor[1] += movement_direction[1];
-        g_game.current_level.attack_view.attack_cursor[0] = oct_Clampi(0, g_game.current_level.level_width, g_game.current_level.attack_view.attack_cursor[0]);
-        g_game.current_level.attack_view.attack_cursor[1] = oct_Clampi(0, g_game.current_level.level_height, g_game.current_level.attack_view.attack_cursor[1]);
+        g_game.current_level.attack_view.attack_cursor[0] = oct_Clampi(
+                player->pos[0] - 5,
+                player->pos[0] + 5,
+                g_game.current_level.attack_view.attack_cursor[0]);
+        g_game.current_level.attack_view.attack_cursor[1] = oct_Clampi(
+                player->pos[1] - 5,
+                player->pos[1] + 5,
+                g_game.current_level.attack_view.attack_cursor[1]);
+
+        // Let player cancel attack selection
+        if (oct_KeyPressed(OCT_KEY_X)) {
+            g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
+        }
+    } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_INTERACTION) {
+        if (oct_KeyPressed(OCT_KEY_LEFT)) movement_direction[0] = -1;
+        else if (oct_KeyPressed(OCT_KEY_RIGHT)) movement_direction[0] = 1;
+        else if (oct_KeyPressed(OCT_KEY_UP)) movement_direction[1] = -1;
+        else if (oct_KeyPressed(OCT_KEY_DOWN)) movement_direction[1] = 1;
+
+        if (oct_KeyPressed(OCT_KEY_X)) {
+            g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
+            g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
+            g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
+        }
+
+        // Process movement
+        if (movement_direction[0] != 0 || movement_direction[1] != 0) {
+            const Position target_position = {
+                    g_game.player.pos[0] + movement_direction[0],
+                    g_game.player.pos[1] + movement_direction[1],
+            };
+            if (character_move(&g_game.player, target_position))
+                player_has_taken_actions = true;
+        }
     }
 
-    // Final check to unwind the player's actions for the turn, causing their effects to take
-    // place and pass the state to the enemy turn
+    // State machine type stuff. The actual actions are taken above but this is to maintain proper
+    // usage of the state machine and also extra turns.
     if (player_has_taken_actions) {
         // World gets to take a turn unless player has accumulated enough movement to get
         // an extra turn
@@ -53,17 +72,9 @@ void player_update() {
             g_game.player.cumulative_movement = 0;
         } else {
             g_game.current_level.world_turn = true;
+            g_game.current_level.state = LEVEL_STATE_ENEMY_TURN;
         }
         g_game.player.cumulative_movement += oct_Clampi(0, 100, character_movement(&g_game.player));
-
-        // Process movement
-        const Position target_position = {
-                g_game.player.pos[0] + movement_direction[0],
-                g_game.player.pos[1] + movement_direction[1],
-        };
-        character_move(&g_game.player, target_position);
-
-        g_game.current_level.state = LEVEL_STATE_ENEMY_TURN;
     }
 }
 
@@ -124,6 +135,30 @@ void draw_tiles() {
     const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
 
     oct_TilemapDrawPart(g_game.current_level.tilemap, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
+
+    // Draw the attack view overlay
+    if (g_game.current_level.state == LEVEL_STATE_PLAYER_ATTACK) {
+        const Position cursor_pos = {
+                g_game.current_level.attack_view.attack_cursor[0],
+                g_game.current_level.attack_view.attack_cursor[1]
+        };
+        for (int y = cursor_pos[1] - 1; y <= cursor_pos[1] + 1; y++) {
+            for (int x = cursor_pos[0] - 1; x <= cursor_pos[0] + 1; x++) {
+                Oct_Texture texture = OCT_NO_ASSET;
+                const bool tile_in_range = tile_in_range_of_player((Position){x, y});
+                const bool selected_tile = x == cursor_pos[0] && y == cursor_pos[1];
+                if (tile_in_range && selected_tile)
+                    texture = oct_GetAsset(g_game.assets, "hud/green_tile.png");
+                else if (tile_in_range && !selected_tile)
+                    texture = oct_GetAsset(g_game.assets, "hud/green_tile_small.png");
+                else if (!tile_in_range && selected_tile)
+                    texture = oct_GetAsset(g_game.assets, "hud/red_tile.png");
+                else // (!tile_in_range && !selected_tile)
+                    texture = oct_GetAsset(g_game.assets, "hud/red_tile_small.png");
+                oct_DrawTexture(texture, (Oct_Vec2){(float)x * CELL_WIDTH, (float)y * CELL_HEIGHT});
+            }
+        }
+    }
 }
 
 void draw_labels() {
@@ -157,7 +192,8 @@ void level_begin() {
     print_statblock(&sb);
     character_create(&sb, &g_game.player);
     g_game.player.info.drawn_type = DRAWN_TYPE_TEXTURE;
-    g_game.player.info.texture = oct_GetAsset(g_game.assets, "player.png");
+    g_game.player.info.texture = oct_GetAsset(g_game.assets, "characters/player.png");
+    get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.player.starting_weapon);
 
     // Tilemap
     g_game.current_level.tilemap = oct_CreateTilemap(
@@ -166,7 +202,8 @@ void level_begin() {
             (Oct_Vec2){CELL_WIDTH, CELL_HEIGHT});
     for (int y = 0; y < 100; y++) {
         for (int x = 0; x < 100; x++) {
-            oct_SetTilemap(g_game.current_level.tilemap, x, y, ((x + y) % 5) + 17);
+            const int32_t tile = random_int(17, 17 + 5);
+            oct_SetTilemap(g_game.current_level.tilemap, x, y, tile);
         }
     }
 }

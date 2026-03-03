@@ -3,11 +3,11 @@
   [
     {
       "name": "ttf_pixel",
-      "files": ["pixel.ttf"]
+      "files": ["fonts/pixel.ttf"]
     },
     {
       "name": "ttf_small",
-      "files": ["small.ttf"]
+      "files": ["fonts/small.ttf"]
     }
   ],
   "font atlases":

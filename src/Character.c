@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "Character.h"
 #include "Util.h"
+#include "Game.h"
 
 void get_starting_weapon(WeaponType weapon_type, Weapon *out) {
     memset(out, 0, sizeof(Weapon));
@@ -213,10 +214,14 @@ int32_t character_evade_pips(Character *c) {
 }
 
 bool character_move(Character *c, const Position new_position) {
-    if (c->status_effects.grappled > 0) return false;
+    if (c->status_effects.grappled > 0) {
+        create_label("Grappled!", c->pos, (Oct_Colour){.r = 0.9f, .g = 0.1f, .b = 0.05f, .a = 1.0f}, false);
+        return false;
+    }
     c->pos[0] = new_position[0];
     c->pos[1] = new_position[1];
     c->info.target_position[0] = (float)new_position[0] * CELL_WIDTH;
     c->info.target_position[1] = (float)new_position[1] * CELL_HEIGHT;
+
     return true;
 }
