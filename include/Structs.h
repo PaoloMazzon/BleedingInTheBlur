@@ -292,6 +292,8 @@ typedef struct {
     union {
         struct {
             int32_t pips;
+            int32_t dc;
+            int32_t result;
         } Dice;
         struct {
             const char *message;

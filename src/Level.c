@@ -1,6 +1,5 @@
 #include <oct/Octarine.h>
 #include <math.h>
-#include <assert.h>
 #include <string.h>
 #include "Game.h"
 #include "Util.h"
@@ -187,14 +186,6 @@ void draw_labels() {
 void level_begin() {
     memset(&g_game.current_level, 0, sizeof(Level));
 
-    Statblock sb;
-    random_statblock(&sb);
-    print_statblock(&sb);
-    character_create(&sb, &g_game.player);
-    g_game.player.info.drawn_type = DRAWN_TYPE_TEXTURE;
-    g_game.player.info.texture = oct_GetAsset(g_game.assets, "characters/player.png");
-    get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.player.starting_weapon);
-
     // Tilemap
     g_game.current_level.tilemap = oct_CreateTilemap(
             oct_GetAsset(g_game.assets, "tileset.png"),
@@ -206,6 +197,17 @@ void level_begin() {
             oct_SetTilemap(g_game.current_level.tilemap, x, y, tile);
         }
     }
+    g_game.current_level.level_width = 100;
+    g_game.current_level.level_height = 100;
+    g_game.current_level.tiles = oct_Zalloc(g_game.allocator, sizeof(TileContents) * g_game.current_level.level_width * g_game.current_level.level_height);
+
+    Statblock sb;
+    random_statblock(&sb);
+    print_statblock(&sb);
+    character_create(&sb, (Position){10, 10}, &g_game.player);
+    g_game.player.info.drawn_type = DRAWN_TYPE_TEXTURE;
+    g_game.player.info.texture = oct_GetAsset(g_game.assets, "characters/player.png");
+    get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.player.starting_weapon);
 }
 
 LevelIndex level_update() {
@@ -241,6 +243,7 @@ LevelIndex level_update() {
 
 void level_end() {
     oct_DestroyTilemap(g_game.current_level.tilemap);
+    oct_Free(g_game.allocator, g_game.current_level.tiles);
 }
 
 void create_label(const char *text, Position pos, Oct_Colour colour, bool needs_to_be_freed) {
@@ -263,8 +266,7 @@ Character *level_get_character_slot() {
         if (!character_is_alive(&g_game.current_level.characters[i]))
             return &g_game.current_level.characters[i];
 
-    // This should never happen and if it does, increase max character count
-    assert(false);
+    oct_Raise(OCT_STATUS_ERROR, true, "Ran out of character slots.");
     return nullptr;
 }
 
@@ -272,4 +274,10 @@ TileContents *level_get_tile(int32_t x, int32_t y) {
     if (x < 0 || x >= g_game.current_level.level_width || y < 0 || y >= g_game.current_level.level_height)
         return nullptr;
     return &g_game.current_level.tiles[(y * g_game.current_level.level_width) + x];
+}
+
+TileContentsType level_get_tile_type(int32_t x, int32_t y) {
+    if (x < 0 || x >= g_game.current_level.level_width || y < 0 || y >= g_game.current_level.level_height)
+        return TILE_CONTENTS_TYPE_NONE;
+    return g_game.current_level.tiles[(y * g_game.current_level.level_width) + x].type;
 }

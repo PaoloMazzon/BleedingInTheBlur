@@ -20,8 +20,8 @@ int32_t *get_skill_pip(Statblock *s, int32_t base_stat_index, int32_t skill_inde
 // Returns skill name given the base stat and skill index
 const char *get_skill_name(int32_t base_stat_index, int32_t skill_index);
 
-// Does boilerplate to create a character in place
-void character_create(Statblock *starting_stats, Character *out);
+// Does boilerplate to create a character in place, callers problem to make sure the position is free
+void character_create(Statblock *starting_stats, Position position, Character *out);
 
 // Draws a character wherever specified
 void character_draw(Character *c, Oct_Vec2 position);

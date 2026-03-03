@@ -17,8 +17,7 @@ void get_starting_weapon(WeaponType weapon_type, Weapon *out) {
     } else if (weapon_type == WEAPON_TYPE_DAGGER) {
         get_weapon(weapon_type, RARITY_COMMON, out);
     } else {
-        // This will only trip if a weapon hasn't been implemented
-        assert(false);
+        oct_Raise(OCT_STATUS_ERROR, true, "Weapon type %i hasn't been implemented.", weapon_type);
     }
 }
 
@@ -53,8 +52,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->range = 1;
         out->bonus_stats.evade = 1;
     } else {
-        // This will only trip if a weapon hasn't been implemented
-        assert(false);
+        oct_Raise(OCT_STATUS_ERROR, true, "Weapon type %i hasn't been implemented.", weapon_type);
     }
 }
 
@@ -139,7 +137,7 @@ void character_draw(Character *c, Oct_Vec2 position) {
     }
 }
 
-void character_create(Statblock *starting_stats, Character *out) {
+void character_create(Statblock *starting_stats, Position position, Character *out) {
     memset(out, 0, sizeof(Character));
     memcpy(&out->initial_statblock, starting_stats, sizeof(Statblock));
     out->info.id = new_oct_id();
@@ -147,6 +145,17 @@ void character_create(Statblock *starting_stats, Character *out) {
     out->current_mana = character_max_mana(out);
     out->info.scale_x = 1;
     out->info.facing_direction = 1;
+    out->pos[0] = position[0];
+    out->pos[1] = position[1];
+
+    // Place character into their proper tile, character_move will take it from there
+    TileContents *tile = level_get_tile(position[0], position[1]);
+    if (tile && tile->type == TILE_CONTENTS_TYPE_NONE) {
+        tile->type = TILE_CONTENTS_TYPE_CHARACTER;
+        tile->character = out;
+    } else {
+        oct_Raise(OCT_STATUS_ERROR, true, "Character was attempted to be placed out of bounds.");
+    }
 }
 
 void character_get_current_stats(Character *c, Statblock *out) {
@@ -214,14 +223,34 @@ int32_t character_evade_pips(Character *c) {
 }
 
 bool character_move(Character *c, const Position new_position) {
+    // Characters can't move if they're grappled
     if (c->status_effects.grappled > 0) {
         create_label("Grappled!", c->pos, (Oct_Colour){.r = 0.9f, .g = 0.1f, .b = 0.05f, .a = 1.0f}, false);
         return false;
     }
+
+    // Make sure we aren't walking into a wall or character
+    TileContents *next_tile = level_get_tile(new_position[0], new_position[1]);
+    if (next_tile && (next_tile->type == TILE_CONTENTS_TYPE_WALL || next_tile->type == TILE_CONTENTS_TYPE_CHARACTER))
+        return false;
+
+    // Remove them from their current tile
+    TileContents *tile = level_get_tile(c->pos[0], c->pos[1]);
+    if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile->character == c) {
+        tile->type = TILE_CONTENTS_TYPE_NONE;
+        tile->character = nullptr;
+    }
+
     c->pos[0] = new_position[0];
     c->pos[1] = new_position[1];
     c->info.target_position[0] = (float)new_position[0] * CELL_WIDTH;
     c->info.target_position[1] = (float)new_position[1] * CELL_HEIGHT;
+
+    // Place character in new tile
+    if (next_tile) {
+        next_tile->type = TILE_CONTENTS_TYPE_CHARACTER;
+        next_tile->character = c;
+    }
 
     return true;
 }
