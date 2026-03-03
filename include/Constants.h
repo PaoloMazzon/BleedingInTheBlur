@@ -33,6 +33,8 @@ extern const float GAME_VIEW_HEIGHT;
 #define MAX_CHARACTERS 100
 #define MAX_ITEMS 100
 #define MAX_LABELS 100
+#define MAX_USER_INPUT_SIZE 32
+#define MAX_POPUP_STACK 10
 
 // These are compiler preprocessors for easy access
 #define CAMERA_ID 1

@@ -18,6 +18,10 @@ typedef bool (*ItemUseCallback)(Character *);
 typedef int32_t Position[2];
 typedef int32_t IntRange[2];
 
+// These are a combination of an index into the popup stack and the generation of the popup
+typedef uint64_t PopupDicePointer;
+typedef uint64_t PopupInputPointer;
+
 // Stats are a mess, just collapse them in your editor
 typedef struct Statblock_s {
     // Base stats can be accessed via their name or base_stat[BASE_STAT_TYPE_*]
@@ -265,6 +269,45 @@ typedef struct Label_s {
 } Label;
 
 typedef enum {
+    POPUP_TYPE_DICE = 0,
+    POPUP_TYPE_MESSAGE = 1,
+    POPUP_TYPE_TEXT_INPUT = 2,
+} PopupType;
+
+// Pop-up like an input dialogue or dice rolling
+typedef struct {
+    PopupType type;
+
+    // Generation is incremented when the popup is closed. value_available is set to true
+    // when the value is made ready (dice finish rolling for example), and it is set to
+    // false when the user grabs a value out of it. This means that the value grabbing function
+    // can be absolutely sure the value coming out of the popup belongs to it, and popups
+    // are only reused once value_available is false again.
+    uint32_t generation;
+    bool value_available;
+
+    union {
+        struct {
+            int32_t pips;
+        } Dice;
+        struct {
+            const char *message;
+            bool needs_to_be_freed;
+        } Message;
+        struct {
+            const char *message;
+            bool needs_to_be_freed;
+            char user_input[MAX_USER_INPUT_SIZE];
+        } TextInput;
+    };
+} Popup;
+
+// Information for the level to track the player's attack view
+typedef struct AttackView_s {
+    Position attack_cursor;
+} AttackView;
+
+typedef enum {
     // Player may move, pause, trigger the attack view, attack an adjacent tile, or pass
     LEVEL_STATE_PLAYER_INTERACTION = 0,
 
@@ -287,6 +330,9 @@ typedef enum {
     LEVEL_STATE_PLAYER_DEATH = 6,
 } LevelState;
 
+// Levels are a state machine where the state is stored in state
+// HOWEVER. If there is something in the popup stack then that takes priority
+// until the popup stack is empty
 typedef struct Level_s {
     // Array of tile contents representing the whole level grid, size is width * height
     TileContents *tiles;
@@ -295,6 +341,9 @@ typedef struct Level_s {
 
     // Current state of the level, user interaction and phases are FSM
     LevelState state;
+    Popup popup_stack[MAX_POPUP_STACK]; // there can be multiple in a row
+    int32_t popup_stack_pointer;
+    AttackView attack_view;
 
     // For drawing
     Oct_Tilemap tilemap;
