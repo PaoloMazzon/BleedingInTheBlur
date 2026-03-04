@@ -16,3 +16,6 @@ void update_camera_coords();
 
 // Returns the coordinates where the camera is supposed to be in the game world
 void get_camera_coords(float *x, float *y);
+
+// Simulates rolling dice, returns bool if the roll meets or beats the DC. out may be null
+bool roll_dice(int32_t pips, int32_t dc, int32_t *result);

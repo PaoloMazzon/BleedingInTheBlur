@@ -1,6 +1,7 @@
 #include <oct/Octarine.h>
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 #include "Game.h"
 #include "Util.h"
 #include "Character.h"
@@ -136,6 +137,13 @@ void draw_labels() {
 
 void level_begin() {
     memset(&g_game.current_level, 0, sizeof(Level));
+
+    for (int i = 0; i < 10000; i++) {
+        const int32_t pips = random_int(0, 5);
+        int32_t result = 0;
+        roll_dice(pips, 15, &result);
+        printf("%i, %i\n", pips, result);
+    }
 
     // Tilemap
     g_game.current_level.tilemap = oct_CreateTilemap(
