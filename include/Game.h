@@ -12,7 +12,8 @@ void menu_end();
 void level_begin();
 LevelIndex level_update(); // return value is where to go
 void level_end();
-void create_label(const char *text, Position position, Oct_Colour colour, bool needs_to_be_freed);
+void create_label(const char *text, const Position position, Oct_Colour colour, bool needs_to_be_freed);
+void create_dice_label(const char *text, const Position position, Oct_Colour colour, bool needs_to_be_freed);
 Character *level_get_character_slot();
 // this can return null if it's out of bounds
 TileContents *level_get_tile(int32_t x, int32_t y);
@@ -30,6 +31,9 @@ PopupDicePointer popup_dice(int32_t dc, int32_t pips);
 // Returns false if the popup is not yet resolved, true otherwise
 bool popup_get_input(PopupInputPointer input_pointer, const char *out);
 bool popup_get_dice(PopupDicePointer dice_pointer, int32_t *out);
+
+void player_init();
+void player_update();
 
 void *startup();
 void *update(void *ptr);

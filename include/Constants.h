@@ -28,6 +28,19 @@ extern const float VIRTUAL_HEIGHT;
 extern const float GAME_VIEW_WIDTH;
 extern const float GAME_VIEW_HEIGHT;
 
+// Controls
+extern const Oct_Key BUTTON_ATTACK_VIEW;
+extern const Oct_Key BUTTON_STAT_TOGGLE;
+extern const Oct_Key BUTTON_LEFT;
+extern const Oct_Key BUTTON_RIGHT;
+extern const Oct_Key BUTTON_UP;
+extern const Oct_Key BUTTON_DOWN;
+
+// Glyphs in the dice font
+#define GLYPH_D8 "."
+#define GLYPH_D6 "/"
+#define GLYPH_ARROW "="
+
 #define MAX_ALARMS 100
 #define INVENTORY_SIZE 5
 #define MAX_CHARACTERS 100
@@ -38,4 +51,5 @@ extern const float GAME_VIEW_HEIGHT;
 
 // These are compiler preprocessors for easy access
 #define CAMERA_ID 1
-#define LABELS_ID_START 100
+#define LABELS_ID_START 100 // needs at least MAX_LABELS
+#define ATTACK_CURSOR_ID_START 200 // needs at least 9

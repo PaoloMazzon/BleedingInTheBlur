@@ -269,6 +269,7 @@ typedef struct Label_s {
     int32_t max_ticks;
     int32_t ticks_remaining;
     Oct_Colour colour;
+    bool dice_font;
 } Label;
 
 typedef enum {
@@ -310,6 +311,7 @@ typedef struct {
 // Information for the level to track the player's attack view
 typedef struct AttackView_s {
     Position attack_cursor;
+    Oct_Vec2 cursor_real_pos; // for tweening
 } AttackView;
 
 typedef enum {
@@ -352,6 +354,7 @@ typedef struct Level_s {
 
     // For drawing
     Oct_Tilemap tilemap;
+    bool stats_toggle; // toggle for drawing player stats
 
     Character characters[MAX_CHARACTERS];
     Item items[MAX_ITEMS];

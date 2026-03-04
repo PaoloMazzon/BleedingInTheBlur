@@ -61,3 +61,10 @@ const float VIRTUAL_WIDTH = 320;
 const float VIRTUAL_HEIGHT = 256;
 const float GAME_VIEW_WIDTH = 160;
 const float GAME_VIEW_HEIGHT = 128;
+
+const Oct_Key BUTTON_ATTACK_VIEW = OCT_KEY_X;
+const Oct_Key BUTTON_STAT_TOGGLE = OCT_KEY_C;
+const Oct_Key BUTTON_LEFT = OCT_KEY_LEFT;
+const Oct_Key BUTTON_RIGHT = OCT_KEY_RIGHT;
+const Oct_Key BUTTON_UP = OCT_KEY_UP;
+const Oct_Key BUTTON_DOWN = OCT_KEY_DOWN;

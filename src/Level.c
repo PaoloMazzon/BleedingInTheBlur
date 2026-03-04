@@ -12,71 +12,6 @@ static inline bool tile_in_range_of_player(Position target) {
     return (x_delta + y_delta) <= g_game.player.weapons[g_game.player.active_weapon].range;
 }
 
-void player_update() {
-    Character *player = &g_game.player;
-
-    // Should only be 1/-1 in both directions
-    Position movement_direction = {0};
-    bool player_has_taken_actions = false;
-    if (g_game.current_level.state == LEVEL_STATE_PLAYER_ATTACK) {
-        if (oct_KeyPressed(OCT_KEY_LEFT)) movement_direction[0] = -1;
-        else if (oct_KeyPressed(OCT_KEY_RIGHT)) movement_direction[0] = 1;
-        else if (oct_KeyPressed(OCT_KEY_UP)) movement_direction[1] = -1;
-        else if (oct_KeyPressed(OCT_KEY_DOWN)) movement_direction[1] = 1;
-
-        g_game.current_level.attack_view.attack_cursor[0] += movement_direction[0];
-        g_game.current_level.attack_view.attack_cursor[1] += movement_direction[1];
-        g_game.current_level.attack_view.attack_cursor[0] = oct_Clampi(
-                player->pos[0] - 5,
-                player->pos[0] + 5,
-                g_game.current_level.attack_view.attack_cursor[0]);
-        g_game.current_level.attack_view.attack_cursor[1] = oct_Clampi(
-                player->pos[1] - 5,
-                player->pos[1] + 5,
-                g_game.current_level.attack_view.attack_cursor[1]);
-
-        // Let player cancel attack selection
-        if (oct_KeyPressed(OCT_KEY_X)) {
-            g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
-        }
-    } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_INTERACTION) {
-        if (oct_KeyPressed(OCT_KEY_LEFT)) movement_direction[0] = -1;
-        else if (oct_KeyPressed(OCT_KEY_RIGHT)) movement_direction[0] = 1;
-        else if (oct_KeyPressed(OCT_KEY_UP)) movement_direction[1] = -1;
-        else if (oct_KeyPressed(OCT_KEY_DOWN)) movement_direction[1] = 1;
-
-        if (oct_KeyPressed(OCT_KEY_X)) {
-            g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
-            g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
-            g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
-        }
-
-        // Process movement
-        if (movement_direction[0] != 0 || movement_direction[1] != 0) {
-            const Position target_position = {
-                    g_game.player.pos[0] + movement_direction[0],
-                    g_game.player.pos[1] + movement_direction[1],
-            };
-            if (character_move(&g_game.player, target_position))
-                player_has_taken_actions = true;
-        }
-    }
-
-    // State machine type stuff. The actual actions are taken above but this is to maintain proper
-    // usage of the state machine and also extra turns.
-    if (player_has_taken_actions) {
-        // World gets to take a turn unless player has accumulated enough movement to get
-        // an extra turn
-        if (g_game.player.cumulative_movement == 100) {
-            g_game.player.cumulative_movement = 0;
-        } else {
-            g_game.current_level.world_turn = true;
-            g_game.current_level.state = LEVEL_STATE_ENEMY_TURN;
-        }
-        g_game.player.cumulative_movement += oct_Clampi(0, 100, character_movement(&g_game.player));
-    }
-}
-
 void characters_update() {
     // TODO: Enemy turns
     if (g_game.current_level.world_turn && g_game.current_level.state == LEVEL_STATE_ENEMY_TURN) {
@@ -137,15 +72,20 @@ void draw_tiles() {
 
     // Draw the attack view overlay
     if (g_game.current_level.state == LEVEL_STATE_PLAYER_ATTACK) {
-        const Position cursor_pos = {
-                g_game.current_level.attack_view.attack_cursor[0],
-                g_game.current_level.attack_view.attack_cursor[1]
+        g_game.current_level.attack_view.cursor_real_pos[0] += ((g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH) - g_game.current_level.attack_view.cursor_real_pos[0]) * 0.4f;
+        g_game.current_level.attack_view.cursor_real_pos[1] += ((g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT) - g_game.current_level.attack_view.cursor_real_pos[1]) * 0.4f;
+        const Oct_Vec2 cursor_pos_real = {
+                g_game.current_level.attack_view.cursor_real_pos[0],
+                g_game.current_level.attack_view.cursor_real_pos[1]
         };
-        for (int y = cursor_pos[1] - 1; y <= cursor_pos[1] + 1; y++) {
-            for (int x = cursor_pos[0] - 1; x <= cursor_pos[0] + 1; x++) {
+        uint64_t id = ATTACK_CURSOR_ID_START;
+        for (int y = -1; y <= 1; y++) {
+            for (int x = -1; x <= 1; x++) {
                 Oct_Texture texture = OCT_NO_ASSET;
-                const bool tile_in_range = tile_in_range_of_player((Position){x, y});
-                const bool selected_tile = x == cursor_pos[0] && y == cursor_pos[1];
+                const bool tile_in_range = tile_in_range_of_player((Position){
+                    x + g_game.current_level.attack_view.attack_cursor[0],
+                    y + g_game.current_level.attack_view.attack_cursor[1]});
+                const bool selected_tile = x == 0 && y == 0;
                 if (tile_in_range && selected_tile)
                     texture = oct_GetAsset(g_game.assets, "hud/green_tile.png");
                 else if (tile_in_range && !selected_tile)
@@ -154,7 +94,12 @@ void draw_tiles() {
                     texture = oct_GetAsset(g_game.assets, "hud/red_tile.png");
                 else // (!tile_in_range && !selected_tile)
                     texture = oct_GetAsset(g_game.assets, "hud/red_tile_small.png");
-                oct_DrawTexture(texture, (Oct_Vec2){(float)x * CELL_WIDTH, (float)y * CELL_HEIGHT});
+                oct_DrawTextureInt(
+                        OCT_INTERPOLATE_ALL, id,
+                        texture,
+                        (Oct_Vec2){cursor_pos_real[0] + ((float)x * CELL_WIDTH),
+                                   cursor_pos_real[1] + ((float)y * CELL_HEIGHT)});
+                id++;
             }
         }
     }
@@ -166,13 +111,19 @@ void draw_labels() {
             const float alpha = (float)g_game.current_level.labels[i].ticks_remaining / (float)g_game.current_level.labels[i].max_ticks;
             Oct_Colour c = g_game.current_level.labels[i].colour;
             c.a = alpha;
+            const Oct_FontAtlas font = g_game.current_level.labels[i].dice_font ?
+                                       oct_GetAsset(g_game.assets, "fnt_dice") :
+                                       oct_GetAsset(g_game.assets, "fnt_small");
             oct_DrawTextIntColour(
                     OCT_INTERPOLATE_ALL, LABELS_ID_START + i,
-                    oct_GetAsset(g_game.assets, "fnt_small"),
+                    font,
                     g_game.current_level.labels[i].position,
                     &c, 1,
                     "%s", g_game.current_level.labels[i].label);
-            g_game.current_level.labels[i].position[1] -= 0.5f;
+            if (g_game.current_level.labels[i].dice_font)
+                g_game.current_level.labels[i].position[1] -= 0.15f;
+            else
+                g_game.current_level.labels[i].position[1] -= 0.3f;
 
             g_game.current_level.labels[i].ticks_remaining -= 1;
             if (g_game.current_level.labels[i].ticks_remaining == 0 && g_game.current_level.labels[i].needs_to_be_freed) {
@@ -201,13 +152,7 @@ void level_begin() {
     g_game.current_level.level_height = 100;
     g_game.current_level.tiles = oct_Zalloc(g_game.allocator, sizeof(TileContents) * g_game.current_level.level_width * g_game.current_level.level_height);
 
-    Statblock sb;
-    random_statblock(&sb);
-    print_statblock(&sb);
-    character_create(&sb, (Position){10, 10}, &g_game.player);
-    g_game.player.info.drawn_type = DRAWN_TYPE_TEXTURE;
-    g_game.player.info.texture = oct_GetAsset(g_game.assets, "characters/player.png");
-    get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.player.starting_weapon);
+    player_init();
 }
 
 LevelIndex level_update() {
@@ -246,7 +191,7 @@ void level_end() {
     oct_Free(g_game.allocator, g_game.current_level.tiles);
 }
 
-void create_label(const char *text, Position pos, Oct_Colour colour, bool needs_to_be_freed) {
+void create_label(const char *text, const Position pos, Oct_Colour colour, bool needs_to_be_freed) {
     for (int i = 0; i < MAX_LABELS; i++) {
         if (g_game.current_level.labels[i].ticks_remaining <= 0) {
             g_game.current_level.labels[i].colour = colour;
@@ -256,6 +201,23 @@ void create_label(const char *text, Position pos, Oct_Colour colour, bool needs_
             g_game.current_level.labels[i].label = text;
             g_game.current_level.labels[i].position[0] = ((float)pos[0] * CELL_WIDTH) - ((float)strlen(text) * 6.0f * 0.5f);
             g_game.current_level.labels[i].position[1] = ((float)pos[1] * CELL_HEIGHT);
+            g_game.current_level.labels[i].dice_font = false;
+            return;
+        }
+    }
+}
+
+void create_dice_label(const char *text, const Position pos, Oct_Colour colour, bool needs_to_be_freed) {
+    for (int i = 0; i < MAX_LABELS; i++) {
+        if (g_game.current_level.labels[i].ticks_remaining <= 0) {
+            g_game.current_level.labels[i].colour = colour;
+            g_game.current_level.labels[i].ticks_remaining = 60;
+            g_game.current_level.labels[i].max_ticks = 60;
+            g_game.current_level.labels[i].needs_to_be_freed = needs_to_be_freed;
+            g_game.current_level.labels[i].label = text;
+            g_game.current_level.labels[i].position[0] = ((float)pos[0] * CELL_WIDTH) - ((float)strlen(text) * 11.0f * 0.5f);
+            g_game.current_level.labels[i].position[1] = ((float)pos[1] * CELL_HEIGHT);
+            g_game.current_level.labels[i].dice_font = true;
             return;
         }
     }

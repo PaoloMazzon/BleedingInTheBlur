@@ -147,6 +147,10 @@ void character_create(Statblock *starting_stats, Position position, Character *o
     out->info.facing_direction = 1;
     out->pos[0] = position[0];
     out->pos[1] = position[1];
+    out->info.actual_position[0] = (float)position[0] * CELL_WIDTH;
+    out->info.actual_position[1] = (float)position[1] * CELL_HEIGHT;
+    out->info.target_position[0] = (float)position[0] * CELL_WIDTH;
+    out->info.target_position[1] = (float)position[1] * CELL_HEIGHT;
 
     // Place character into their proper tile, character_move will take it from there
     TileContents *tile = level_get_tile(position[0], position[1]);

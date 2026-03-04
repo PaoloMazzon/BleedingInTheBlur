@@ -10,6 +10,15 @@
       "files": ["fonts/small.ttf"]
     }
   ],
+  "bitmap fonts":
+  [
+    {
+      "name": "fnt_dice",
+      "image": "fonts/dicefont.png",
+      "cell size": [12, 14],
+      "unicode range": [46, 62]
+    }
+  ],
   "font atlases":
   [
     {
