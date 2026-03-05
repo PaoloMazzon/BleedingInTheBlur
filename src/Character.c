@@ -6,22 +6,8 @@
 
 void get_starting_weapon(WeaponType weapon_type, Weapon *out) {
     memset(out, 0, sizeof(Weapon));
-    if (weapon_type == WEAPON_TYPE_SWORD) {
-        get_weapon(weapon_type, RARITY_COMMON, out);
-    } else if (weapon_type == WEAPON_TYPE_SPEAR) {
-        get_weapon(weapon_type, RARITY_COMMON, out);
-    } else if (weapon_type == WEAPON_TYPE_BOW) {
-        get_weapon(weapon_type, RARITY_COMMON, out);
-    } else if (weapon_type == WEAPON_TYPE_CROSSBOW) {
-        get_weapon(weapon_type, RARITY_COMMON, out);
-    } else if (weapon_type == WEAPON_TYPE_DAGGER) {
-        get_weapon(weapon_type, RARITY_COMMON, out);
-    } else {
-        oct_Raise(OCT_STATUS_ERROR, true, "Weapon type %i hasn't been implemented.", weapon_type);
-    }
+    get_weapon(weapon_type, RARITY_COMMON, out);
 }
-
-
 
 void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
     memset(out, 0, sizeof(Weapon));
@@ -51,6 +37,10 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->damage = 2;
         out->range = 1;
         out->bonus_stats.evade = 1;
+    } else if (weapon_type == WEAPON_TYPE_OTHER) {
+        out->info.name = "Claw";
+        out->damage = 2;
+        out->range = 1;
     } else {
         oct_Raise(OCT_STATUS_ERROR, true, "Weapon type %i hasn't been implemented.", weapon_type);
     }

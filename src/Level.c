@@ -70,38 +70,42 @@ void draw_tiles() {
     const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
 
     oct_TilemapDrawPart(g_game.current_level.tilemap, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
+}
 
-    // Draw the attack view overlay
-    if (g_game.current_level.state == LEVEL_STATE_PLAYER_ATTACK) {
-        g_game.current_level.attack_view.cursor_real_pos[0] += ((g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH) - g_game.current_level.attack_view.cursor_real_pos[0]) * 0.4f;
-        g_game.current_level.attack_view.cursor_real_pos[1] += ((g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT) - g_game.current_level.attack_view.cursor_real_pos[1]) * 0.4f;
-        const Oct_Vec2 cursor_pos_real = {
-                g_game.current_level.attack_view.cursor_real_pos[0],
-                g_game.current_level.attack_view.cursor_real_pos[1]
-        };
-        uint64_t id = ATTACK_CURSOR_ID_START;
-        for (int y = -1; y <= 1; y++) {
-            for (int x = -1; x <= 1; x++) {
-                Oct_Texture texture = OCT_NO_ASSET;
-                const bool tile_in_range = tile_in_range_of_player((Position){
+void draw_attack_view() {
+    if (g_game.current_level.state != LEVEL_STATE_PLAYER_ATTACK) return;
+    g_game.current_level.attack_view.cursor_real_pos[0] += ((g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH) - g_game.current_level.attack_view.cursor_real_pos[0]) * 0.4f;
+    g_game.current_level.attack_view.cursor_real_pos[1] += ((g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT) - g_game.current_level.attack_view.cursor_real_pos[1]) * 0.4f;
+    const Oct_Vec2 cursor_pos_real = {
+            g_game.current_level.attack_view.cursor_real_pos[0],
+            g_game.current_level.attack_view.cursor_real_pos[1]
+    };
+    uint64_t id = ATTACK_CURSOR_ID_START;
+    for (int y = -1; y <= 1; y++) {
+        for (int x = -1; x <= 1; x++) {
+            Oct_Texture texture = OCT_NO_ASSET;
+            const bool tile_in_range = tile_in_range_of_player((Position){
                     x + g_game.current_level.attack_view.attack_cursor[0],
                     y + g_game.current_level.attack_view.attack_cursor[1]});
-                const bool selected_tile = x == 0 && y == 0;
-                if (tile_in_range && selected_tile)
-                    texture = oct_GetAsset(g_game.assets, "hud/green_tile.png");
-                else if (tile_in_range && !selected_tile)
-                    texture = oct_GetAsset(g_game.assets, "hud/green_tile_small.png");
-                else if (!tile_in_range && selected_tile)
-                    texture = oct_GetAsset(g_game.assets, "hud/red_tile.png");
-                else // (!tile_in_range && !selected_tile)
-                    texture = oct_GetAsset(g_game.assets, "hud/red_tile_small.png");
-                oct_DrawTextureInt(
-                        OCT_INTERPOLATE_ALL, id,
-                        texture,
-                        (Oct_Vec2){cursor_pos_real[0] + ((float)x * CELL_WIDTH),
-                                   cursor_pos_real[1] + ((float)y * CELL_HEIGHT)});
+            const bool selected_tile = x == 0 && y == 0;
+            if (x + g_game.current_level.attack_view.attack_cursor[0] == g_game.player.pos[0] && y + g_game.current_level.attack_view.attack_cursor[1] == g_game.player.pos[1]) {
                 id++;
+                continue;
             }
+            if (tile_in_range && selected_tile)
+                texture = oct_GetAsset(g_game.assets, "hud/green_tile.png");
+            else if (tile_in_range && !selected_tile)
+                texture = oct_GetAsset(g_game.assets, "hud/green_tile_small.png");
+            else if (!tile_in_range && selected_tile)
+                texture = oct_GetAsset(g_game.assets, "hud/red_tile.png");
+            else // (!tile_in_range && !selected_tile)
+                texture = oct_GetAsset(g_game.assets, "hud/red_tile_small.png");
+            oct_DrawTextureInt(
+                    OCT_INTERPOLATE_ALL, id,
+                    texture,
+                    (Oct_Vec2){cursor_pos_real[0] + ((float)x * CELL_WIDTH),
+                               cursor_pos_real[1] + ((float)y * CELL_HEIGHT)});
+            id++;
         }
     }
 }
@@ -161,6 +165,8 @@ void level_begin() {
     g_game.current_level.tiles = oct_Zalloc(g_game.allocator, sizeof(TileContents) * g_game.current_level.level_width * g_game.current_level.level_height);
 
     player_init();
+
+    create_slime(level_get_character_slot(), (Position){15, 15});
 }
 
 LevelIndex level_update() {
@@ -185,6 +191,7 @@ LevelIndex level_update() {
     oct_LockCameras(g_game.world_camera);
     draw_tiles();
     draw_characters();
+    draw_attack_view();
     draw_labels();
 
     // UI drawing

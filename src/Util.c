@@ -31,6 +31,8 @@ void get_camera_coords(float *x, float *y) {
 
 bool roll_dice(int32_t pips, int32_t dc, int32_t *result) {
     int32_t sum = random_int(1, 9);
+    if (sum == 8)
+        sum += 4;
     for (int i = 0; i < pips; i++) {
         sum += random_int(1, 7);
     }

@@ -39,4 +39,4 @@ void *startup();
 void *update(void *ptr);
 void shutdown(void *ptr);
 
-void create_slime(Character *slot);
+void create_slime(Character *slot, Position pos);
