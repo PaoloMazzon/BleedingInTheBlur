@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Character.h"
+#include "Util.h"
 
 void player_init() {
     Statblock sb;
@@ -38,6 +39,9 @@ void player_update() {
         if (oct_KeyPressed(BUTTON_ATTACK_VIEW)) {
             g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
         }
+
+        // Look at attack cursor
+        look_at(g_game.current_level.attack_view.attack_cursor, 0.8f);
     } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_INTERACTION) {
         if (oct_KeyPressed(BUTTON_LEFT)) movement_direction[0] = -1;
         else if (oct_KeyPressed(BUTTON_RIGHT)) movement_direction[0] = 1;
@@ -61,6 +65,9 @@ void player_update() {
             if (character_move(&g_game.player, target_position))
                 player_has_taken_actions = true;
         }
+
+        // Point camera at player
+        look_at(player->pos, 1);
     }
 
     // Player can toggle the stat view anytime

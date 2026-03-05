@@ -153,6 +153,8 @@ typedef struct Traits_s {
     bool human;
     bool occult;
     bool undying; // doesn't die
+    bool hostile; // attacks the player
+    bool lazy; // will only pursue the player if the player is close
 } Traits;
 
 // These are countdowns, above 0 means its active this turn
@@ -375,6 +377,10 @@ typedef struct Game_s {
     // Level in the dungeon
     Level current_level;
     LevelIndex level_index;
+
+    // Where the camera is looking
+    Position camera_center;
+    float zoom; // usually 1
 
     // Single source of truth for the player, everything else is a reference to this
     Character player;

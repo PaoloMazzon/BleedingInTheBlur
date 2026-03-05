@@ -31,6 +31,7 @@ extern const float GAME_VIEW_HEIGHT;
 // Controls
 extern const Oct_Key BUTTON_ATTACK_VIEW;
 extern const Oct_Key BUTTON_STAT_TOGGLE;
+extern const Oct_Key BUTTON_CONFIRM;
 extern const Oct_Key BUTTON_LEFT;
 extern const Oct_Key BUTTON_RIGHT;
 extern const Oct_Key BUTTON_UP;

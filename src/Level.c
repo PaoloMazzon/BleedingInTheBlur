@@ -63,7 +63,7 @@ void draw_ui() {
 
 void draw_tiles() {
     float camera_x, camera_y;
-    get_camera_coords(&camera_x, &camera_y);
+    get_camera_coords(&camera_x, &camera_y, nullptr, nullptr);
     const int32_t start_draw_x = (int32_t)floorf((camera_x - CELL_WIDTH) / CELL_WIDTH);
     const int32_t start_draw_y = (int32_t)floorf((camera_y - CELL_HEIGHT) / CELL_HEIGHT);
     const int32_t tile_horizontal = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
@@ -172,10 +172,10 @@ void level_begin() {
 LevelIndex level_update() {
     const float window_width = oct_WindowWidth();
     const float window_height = oct_WindowHeight();
-    float camera_x, camera_y;
-    get_camera_coords(&camera_x, &camera_y);
+    float camera_x, camera_y, camera_w, camera_h;
+    get_camera_coords(&camera_x, &camera_y, &camera_w, &camera_h);
     Oct_CameraUpdate camera_update = {
-            .size = {GAME_VIEW_WIDTH, GAME_VIEW_HEIGHT},
+            .size = {camera_w, camera_h},
             .screenSize = {VIRTUAL_WIDTH, VIRTUAL_HEIGHT},
             .screenPosition = {0, 0},
             .position = {camera_x, camera_y}

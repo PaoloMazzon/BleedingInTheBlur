@@ -4,6 +4,11 @@
 
 static float camera_x = 0;
 static float camera_y = 0;
+static float camera_zoom = 1;
+static float camera_actual_zoom = 1;
+static float camera_w = 160;
+static float camera_h = 128;
+static Position camera_lookat;
 static uint64_t object_id_counter = 1000000;
 
 int32_t non_negative(int32_t x) {
@@ -20,13 +25,24 @@ uint64_t new_oct_id() {
 }
 
 void update_camera_coords() {
-    camera_x += ((g_game.player.info.actual_position[0] + (CELL_WIDTH / 2)) - (GAME_VIEW_WIDTH / 2) - camera_x) * 0.4f;
-    camera_y += ((g_game.player.info.actual_position[1] + (CELL_HEIGHT / 2)) - (GAME_VIEW_HEIGHT / 2) - camera_y) * 0.4f;
+    camera_x += ((((float)camera_lookat[0] * CELL_WIDTH) + (CELL_WIDTH / 2)) - (camera_w / 2) - camera_x) * 0.2f;
+    camera_y += ((((float)camera_lookat[1] * CELL_HEIGHT) + (CELL_HEIGHT / 2)) - (camera_h / 2) - camera_y) * 0.2f;
+    camera_w = camera_actual_zoom * GAME_VIEW_WIDTH;
+    camera_h = camera_actual_zoom * GAME_VIEW_HEIGHT;
+    camera_actual_zoom += (camera_zoom - camera_actual_zoom) * 0.4f;
 }
 
-void get_camera_coords(float *x, float *y) {
-    *x = camera_x;
-    *y = camera_y;
+void get_camera_coords(float *x, float *y, float *w, float *h) {
+    if (x) *x = camera_x;
+    if (y) *y = camera_y;
+    if (w) *w = camera_w;
+    if (h) *h = camera_h;
+}
+
+void look_at(Position pos, float zoom) {
+    camera_lookat[0] = pos[0];
+    camera_lookat[1] = pos[1];
+    camera_zoom = zoom;
 }
 
 bool roll_dice(int32_t pips, int32_t dc, int32_t *result) {
