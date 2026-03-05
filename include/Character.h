@@ -23,6 +23,9 @@ const char *get_skill_name(int32_t base_stat_index, int32_t skill_index);
 // Does boilerplate to create a character in place, callers problem to make sure the position is free
 void character_create(Statblock *starting_stats, Position position, Character *out);
 
+// Gets a DC for a given base stat
+int32_t statblock_get_dc(int32_t base_stat);
+
 // Draws a character wherever specified
 void character_draw(Character *c, Oct_Vec2 position);
 
@@ -52,3 +55,10 @@ int32_t character_evade_pips(Character *c);
 
 // Moves a character (including the visual portion and not just the logic). Returns false if the character can't move
 bool character_move(Character *c, const Position new_position);
+
+// Takes an attacking character, a set of traits belonging to the target, and returns the pips that will
+// be rolled on the attack as well as the DC for the attack.
+AttackFavour character_get_attack_stats(Character *c, Traits *attack_traits, Traits *target_traits, int32_t *out_pips, int32_t *out_dc);
+
+// Attempts an attack, returning true if it lands. See character_get_attack_stats to get the rolls involved
+bool character_attempt_attack(Character *c, Traits *attack_traits, Traits *target_traits);

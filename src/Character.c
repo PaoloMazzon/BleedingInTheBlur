@@ -1,5 +1,6 @@
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 #include "Character.h"
 #include "Util.h"
 #include "Game.h"
@@ -17,30 +18,42 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->damage = 5;
         out->range = 1;
         out->bonus_stats.attrition = 1;
+        out->info.traits.Attack.melee = true;
+        out->info.traits.Attack.blade = true;
     } else if (weapon_type == WEAPON_TYPE_SPEAR) {
         out->info.name = "Spear";
         out->damage = 4;
         out->range = 2;
         out->bonus_stats.marksman = 1;
+        out->info.traits.Attack.melee = true;
+        out->info.traits.Attack.heavy = true;
     } else if (weapon_type == WEAPON_TYPE_BOW) {
         out->info.name = "Bow";
         out->damage = 2;
         out->range = 4;
+        out->info.traits.Attack.ranged = true;
     } else if (weapon_type == WEAPON_TYPE_CROSSBOW) {
         out->info.name = "Crossbow";
         out->damage = 3;
         out->range = 4;
         out->bonus_stats.evade = -1;
         out->bonus_stats.marksman = 1;
+        out->info.traits.Attack.ranged = true;
+        out->info.traits.Attack.heavy = true;
     } else if (weapon_type == WEAPON_TYPE_DAGGER) {
         out->info.name = "Dagger";
         out->damage = 2;
         out->range = 1;
         out->bonus_stats.evade = 1;
+        out->info.traits.Attack.improvised = true;
+        out->info.traits.Attack.blade = true;
+        out->info.traits.Attack.melee = true;
     } else if (weapon_type == WEAPON_TYPE_OTHER) {
         out->info.name = "Claw";
         out->damage = 2;
         out->range = 1;
+        out->info.traits.Attack.improvised = true;
+        out->info.traits.Attack.melee = true;
     } else {
         oct_Raise(OCT_STATUS_ERROR, true, "Weapon type %i hasn't been implemented.", weapon_type);
     }
@@ -152,6 +165,10 @@ void character_create(Statblock *starting_stats, Position position, Character *o
     }
 }
 
+int32_t statblock_get_dc(int32_t base_stat) {
+    return 20 - base_stat;
+}
+
 void character_get_current_stats(Character *c, Statblock *out) {
     memset(out, 0, sizeof(Statblock));
     for (int i = 0; i < BASE_STAT_TYPE_MAX; i++)
@@ -207,7 +224,7 @@ int32_t character_take_damage(Character *c, int32_t damage, Traits *source_trait
 }
 
 bool character_is_alive(Character *c) {
-    return c->current_hp > 0 || c->info.traits.undying;
+    return c->current_hp > 0 || c->info.traits.Character.undying;
 }
 
 int32_t character_evade_pips(Character *c) {
@@ -247,4 +264,61 @@ bool character_move(Character *c, const Position new_position) {
     }
 
     return true;
+}
+
+AttackFavour character_get_attack_stats(Character *c, Traits *attack_traits, Traits *target_traits, int32_t *out_pips, int32_t *out_dc) {
+    Statblock current;
+    character_get_current_stats(c, &current);
+    int32_t pip_count = 0;
+    int32_t dc = statblock_get_dc(current.martial);
+
+    // Calculate base pips and dc for the situation
+    if (attack_traits->Attack.melee)
+        pip_count = current.blades;
+    else if (attack_traits->Attack.ranged)
+        pip_count = current.marksman;
+    else
+        pip_count = current.grappler;
+    const int32_t base_pips = pip_count;
+
+    // Bonuses and detriments
+    if (target_traits->Character.nimble && attack_traits->Attack.ranged) pip_count -= 1;
+    if (target_traits->Character.lazy && attack_traits->Attack.heavy) pip_count += 1;
+    if (target_traits->occult && attack_traits->holy) pip_count += 1;
+    if (target_traits->holy && attack_traits->occult) pip_count += 1;
+
+    // Calculate if this roll is favoured, ill favoured, or neutral
+    if (out_dc) *out_dc = dc;
+    if (out_pips) *out_pips = pip_count;
+    if (pip_count > base_pips)
+        return ATTACK_FAVOUR_GOOD;
+    else if (pip_count < base_pips)
+        return ATTACK_FAVOUR_BAD;
+    return ATTACK_FAVOUR_NEUTRAL;
+}
+
+bool character_attempt_attack(Character *c, Traits *attack_traits, Traits *target_traits) {
+    int32_t pips, dc, result;
+    character_get_attack_stats(c, attack_traits, target_traits, &pips, &dc);
+    bool passed = roll_dice(pips, dc, &result);
+    const Oct_Colour red = {
+            .r = 1.0f,
+            .g = 0.2f,
+            .b = 0.2f,
+            .a = 1.0f
+    };
+    const Oct_Colour green = {
+            .r = 0.2f,
+            .g = 1.0f,
+            .b = 0.2f,
+            .a = 1.0f
+    };
+    const int32_t max_text_len = 49;
+    char *buffer = oct_Malloc(g_game.allocator, max_text_len + 1);
+    snprintf(buffer, max_text_len, "1%s%i%s%s%i%s%i", GLYPH_D8, pips, GLYPH_D6, GLYPH_ARROW, result, GLYPH_OUT_OF, dc);
+    create_dice_label(buffer,
+                      c->pos,
+                      passed ? green : red, true);
+
+    return passed;
 }

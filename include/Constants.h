@@ -40,7 +40,11 @@ extern const Oct_Key BUTTON_DOWN;
 // Glyphs in the dice font
 #define GLYPH_D8 "."
 #define GLYPH_D6 "/"
+#define GLYPH_OUT_OF ":"
 #define GLYPH_ARROW "="
+#define GLYPH_UP ";"
+#define GLYPH_DOWN "<"
+#define GLYPH_POINT_RIGHT "="
 
 #define MAX_ALARMS 100
 #define INVENTORY_SIZE 5

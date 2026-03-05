@@ -147,14 +147,33 @@ typedef enum {
     RARITY_MYTHIC   = 3,
     RARITY_MAX      = 4,
 } Rarity;
+typedef enum {
+    ATTACK_FAVOUR_NEUTRAL = 0, // no change to pips
+    ATTACK_FAVOUR_GOOD    = 1, // the circumstances result in extra pips
+    ATTACK_FAVOUR_BAD     = 2, // the circumstances result in fewer pips
+} AttackFavour;
 
 // These should all be bools
 typedef struct Traits_s {
-    bool human;
+    struct {
+        bool melee; // melee attack
+        bool ranged; // ranged attack
+        bool blade; // bladed weapon
+        bool improvised; // improvised attack
+        bool heavy; // heavy weapon
+    } Attack; // traits for attacks/weapons
+
+    struct {
+        bool human;
+        bool undying; // doesn't die
+        bool hostile; // attacks the player
+        bool lazy; // will only pursue the player if the player is close
+        bool nimble; // good against ranged
+    } Character; // traits for characters
+
+    // Traits that can be either
     bool occult;
-    bool undying; // doesn't die
-    bool hostile; // attacks the player
-    bool lazy; // will only pursue the player if the player is close
+    bool holy;
 } Traits;
 
 // These are countdowns, above 0 means its active this turn

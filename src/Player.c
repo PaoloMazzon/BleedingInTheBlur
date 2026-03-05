@@ -73,7 +73,6 @@ void player_update() {
     // Player can toggle the stat view anytime
     if (oct_KeyPressed(BUTTON_STAT_TOGGLE)) {
         g_game.current_level.stats_toggle = !g_game.current_level.stats_toggle;
-        create_dice_label("1" GLYPH_D8 "3" GLYPH_D6 "=13:15", &player->pos, (Oct_Colour){.r = 0.1f, .g = 1.0f, .b = 0.3f, .a = 1.0f}, false);
     }
 
     // State machine type stuff. The actual actions are taken above but this is to maintain proper
