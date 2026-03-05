@@ -8,9 +8,7 @@
 
 // Returns true if a given tile is within range of the player's attack range
 static inline bool tile_in_range_of_player(Position target) {
-    const int32_t x_delta = abs(g_game.player.pos[0] - target[0]);
-    const int32_t y_delta = abs(g_game.player.pos[1] - target[1]);
-    return (x_delta + y_delta) <= g_game.player.weapons[g_game.player.active_weapon].range;
+    return tile_distance(target, g_game.player.pos) <= g_game.player.weapons[g_game.player.active_weapon].range;
 }
 
 void characters_update() {
@@ -110,6 +108,46 @@ void draw_attack_view() {
     }
 }
 
+// Draws the portion of the attack view that needs to be in the UI and not game world
+void draw_attack_view_ui() {
+    static char buffer[50];
+    static const int32_t max_buffer_len = 49;
+    if (g_game.current_level.state != LEVEL_STATE_PLAYER_ATTACK) return;
+
+    const float SCREEN_X = 10;
+    const float SCREEN_Y = 10;
+
+    // Show roll stats if cursor is on something
+    const TileContents *contents = level_get_tile(g_game.current_level.attack_view.attack_cursor);
+    if (contents && (contents->type == TILE_CONTENTS_TYPE_CHARACTER || contents->type == TILE_CONTENTS_TYPE_ITEM)) {
+        if (contents->type == TILE_CONTENTS_TYPE_CHARACTER && contents->character == &g_game.player) return;
+        const Traits *target_traits = contents->type == TILE_CONTENTS_TYPE_CHARACTER ?
+                                      &contents->character->info.traits :
+                                      &contents->item->info.traits;
+        int32_t dc, pips;
+        const AttackFavour favour =  character_get_attack_stats(&g_game.player,
+                                                                &g_game.player.weapons[g_game.player.active_weapon].info.traits,
+                                                                g_game.current_level.attack_view.attack_cursor,
+                                                                target_traits,
+                                                                &pips, &dc);
+        const char *favoured = "";
+        if (favour == ATTACK_FAVOUR_GOOD) favoured = GLYPH_UP;
+        if (favour == ATTACK_FAVOUR_BAD) favoured = GLYPH_DOWN;
+
+        // Get text size to properly position the overlay
+        snprintf(buffer, max_buffer_len, "1%s%i%s%s%s%i", GLYPH_D8, pips, GLYPH_D6, favoured, GLYPH_POINT_RIGHT, dc);
+        Oct_Vec2 text_size = {(float)strlen(buffer) * 12, 14};
+
+        oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/predictionbackground.png"),
+                        (Oct_Vec2){SCREEN_X, SCREEN_Y});
+        oct_DrawTextColour(
+                oct_GetAsset(g_game.assets, "fnt_dice"),
+                (Oct_Vec2){SCREEN_X + 2, SCREEN_Y + 2},
+                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f}, 1,
+                "%s", buffer);
+    }
+}
+
 void draw_labels() {
     for (int i = 0; i < MAX_LABELS; i++) {
         if (g_game.current_level.labels[i].ticks_remaining > 0) {
@@ -141,13 +179,6 @@ void draw_labels() {
 
 void level_begin() {
     memset(&g_game.current_level, 0, sizeof(Level));
-
-    for (int i = 0; i < 10000; i++) {
-        const int32_t pips = random_int(0, 5);
-        int32_t result = 0;
-        roll_dice(pips, 15, &result);
-        printf("%i, %i\n", pips, result);
-    }
 
     // Tilemap
     g_game.current_level.tilemap = oct_CreateTilemap(
@@ -196,6 +227,7 @@ LevelIndex level_update() {
 
     // UI drawing
     oct_LockCameras(g_game.ui_camera);
+    draw_attack_view_ui();
     draw_ui();
 
     return g_game.level_index;
@@ -247,10 +279,17 @@ Character *level_get_character_slot() {
     return nullptr;
 }
 
-TileContents *level_get_tile(int32_t x, int32_t y) {
-    if (x < 0 || x >= g_game.current_level.level_width || y < 0 || y >= g_game.current_level.level_height)
+TileContents *level_get_tile(Position pos) {
+    if (pos[0] < 0 || pos[0] >= g_game.current_level.level_width || pos[1] < 0 || pos[1] >= g_game.current_level.level_height)
         return nullptr;
-    return &g_game.current_level.tiles[(y * g_game.current_level.level_width) + x];
+    return &g_game.current_level.tiles[(pos[1] * g_game.current_level.level_width) + pos[0]];
+}
+
+Traits *level_get_tile_traits(Position pos) {
+    const TileContents *t = level_get_tile(pos);
+    if (t && t->type == TILE_CONTENTS_TYPE_CHARACTER) return &t->character->info.traits;
+    if (t && t->type == TILE_CONTENTS_TYPE_ITEM) return &t->item->info.traits;
+    return nullptr;
 }
 
 TileContentsType level_get_tile_type(int32_t x, int32_t y) {

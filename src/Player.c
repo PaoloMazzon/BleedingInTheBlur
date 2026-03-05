@@ -40,6 +40,20 @@ void player_update() {
             g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
         }
 
+        // Attack things at target
+        if (oct_KeyPressed(BUTTON_CONFIRM)) {
+            const Traits *tile_traits = level_get_tile_traits(g_game.current_level.attack_view.attack_cursor);
+            if (tile_traits && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= player->weapons[player->active_weapon].range) {
+                int32_t bonus_damage = 0;
+                bool attack = character_attempt_attack(player,
+                                                       &player->weapons[player->active_weapon].info.traits,
+                                                       g_game.current_level.attack_view.attack_cursor,
+                                                       tile_traits,
+                                                       &bonus_damage);
+                // TODO: Attack damage and animation
+            }
+        }
+
         // Look at attack cursor
         look_at(g_game.current_level.attack_view.attack_cursor, 0.8f);
     } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_INTERACTION) {

@@ -58,7 +58,8 @@ bool character_move(Character *c, const Position new_position);
 
 // Takes an attacking character, a set of traits belonging to the target, and returns the pips that will
 // be rolled on the attack as well as the DC for the attack.
-AttackFavour character_get_attack_stats(Character *c, Traits *attack_traits, Traits *target_traits, int32_t *out_pips, int32_t *out_dc);
+AttackFavour character_get_attack_stats(Character *c, const Traits *attack_traits, Position target_position, const Traits *target_traits, int32_t *out_pips, int32_t *out_dc);
 
 // Attempts an attack, returning true if it lands. See character_get_attack_stats to get the rolls involved
-bool character_attempt_attack(Character *c, Traits *attack_traits, Traits *target_traits);
+// out_bonus_damage is the difference between the result and dc in the event of a successful role, otherwise its set to 0
+bool character_attempt_attack(Character *c, const Traits *attack_traits, Position target_position, const Traits *target_traits, int32_t *out_bonus_damage);

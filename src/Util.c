@@ -56,3 +56,9 @@ bool roll_dice(int32_t pips, int32_t dc, int32_t *result) {
         *result = sum;
     return sum >= dc;
 }
+
+int32_t tile_distance(Position p1, Position p2) {
+    const int32_t x_delta = abs(p1[0] - p2[0]);
+    const int32_t y_delta = abs(p1[1] - p2[1]);
+    return x_delta + y_delta;
+}

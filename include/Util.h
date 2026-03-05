@@ -22,3 +22,5 @@ void look_at(Position pos, float zoom);
 
 // Simulates rolling dice, returns bool if the roll meets or beats the DC. out may be null
 bool roll_dice(int32_t pips, int32_t dc, int32_t *result);
+
+int32_t tile_distance(Position p1, Position p2);

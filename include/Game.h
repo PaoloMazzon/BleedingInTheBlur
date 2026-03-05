@@ -16,7 +16,8 @@ void create_label(const char *text, const Position position, Oct_Colour colour, 
 void create_dice_label(const char *text, const Position position, Oct_Colour colour, bool needs_to_be_freed);
 Character *level_get_character_slot();
 // this can return null if it's out of bounds
-TileContents *level_get_tile(int32_t x, int32_t y);
+TileContents *level_get_tile(Position pos);
+Traits *level_get_tile_traits(Position pos); // same as above but returns traits for the tile if its applicable
 TileContentsType level_get_tile_type(int32_t x, int32_t y); // returns TILE_CONTENTS_TYPE_NONE if out of bounds
 
 // Returns true if there is anything in the popup stack

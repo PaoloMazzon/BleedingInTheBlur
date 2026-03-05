@@ -156,7 +156,7 @@ void character_create(Statblock *starting_stats, Position position, Character *o
     out->info.target_position[1] = (float)position[1] * CELL_HEIGHT;
 
     // Place character into their proper tile, character_move will take it from there
-    TileContents *tile = level_get_tile(position[0], position[1]);
+    TileContents *tile = level_get_tile(position);
     if (tile && tile->type == TILE_CONTENTS_TYPE_NONE) {
         tile->type = TILE_CONTENTS_TYPE_CHARACTER;
         tile->character = out;
@@ -241,12 +241,12 @@ bool character_move(Character *c, const Position new_position) {
     }
 
     // Make sure we aren't walking into a wall or character
-    TileContents *next_tile = level_get_tile(new_position[0], new_position[1]);
+    TileContents *next_tile = level_get_tile(new_position);
     if (next_tile && (next_tile->type == TILE_CONTENTS_TYPE_WALL || next_tile->type == TILE_CONTENTS_TYPE_CHARACTER))
         return false;
 
     // Remove them from their current tile
-    TileContents *tile = level_get_tile(c->pos[0], c->pos[1]);
+    TileContents *tile = level_get_tile(c->pos);
     if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile->character == c) {
         tile->type = TILE_CONTENTS_TYPE_NONE;
         tile->character = nullptr;
@@ -266,7 +266,7 @@ bool character_move(Character *c, const Position new_position) {
     return true;
 }
 
-AttackFavour character_get_attack_stats(Character *c, Traits *attack_traits, Traits *target_traits, int32_t *out_pips, int32_t *out_dc) {
+AttackFavour character_get_attack_stats(Character *c, const Traits *attack_traits, Position target_position, const Traits *target_traits, int32_t *out_pips, int32_t *out_dc) {
     Statblock current;
     character_get_current_stats(c, &current);
     int32_t pip_count = 0;
@@ -286,6 +286,7 @@ AttackFavour character_get_attack_stats(Character *c, Traits *attack_traits, Tra
     if (target_traits->Character.lazy && attack_traits->Attack.heavy) pip_count += 1;
     if (target_traits->occult && attack_traits->holy) pip_count += 1;
     if (target_traits->holy && attack_traits->occult) pip_count += 1;
+    if (tile_distance(target_position, c->pos) == 1 && attack_traits->Attack.ranged) pip_count -= 1;
 
     // Calculate if this roll is favoured, ill favoured, or neutral
     if (out_dc) *out_dc = dc;
@@ -297,10 +298,13 @@ AttackFavour character_get_attack_stats(Character *c, Traits *attack_traits, Tra
     return ATTACK_FAVOUR_NEUTRAL;
 }
 
-bool character_attempt_attack(Character *c, Traits *attack_traits, Traits *target_traits) {
+bool character_attempt_attack(Character *c, const Traits *attack_traits, Position target_position, const Traits *target_traits, int32_t *out_bonus_damage) {
     int32_t pips, dc, result;
-    character_get_attack_stats(c, attack_traits, target_traits, &pips, &dc);
+    character_get_attack_stats(c, attack_traits, target_position, target_traits, &pips, &dc);
     bool passed = roll_dice(pips, dc, &result);
+    if (out_bonus_damage) {
+        *out_bonus_damage = passed ? result - dc : 0;
+    }
     const Oct_Colour red = {
             .r = 1.0f,
             .g = 0.2f,
@@ -317,7 +321,7 @@ bool character_attempt_attack(Character *c, Traits *attack_traits, Traits *targe
     char *buffer = oct_Malloc(g_game.allocator, max_text_len + 1);
     snprintf(buffer, max_text_len, "1%s%i%s%s%i%s%i", GLYPH_D8, pips, GLYPH_D6, GLYPH_ARROW, result, GLYPH_OUT_OF, dc);
     create_dice_label(buffer,
-                      c->pos,
+                      target_position,
                       passed ? green : red, true);
 
     return passed;
