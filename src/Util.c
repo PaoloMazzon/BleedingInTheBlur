@@ -62,3 +62,39 @@ int32_t tile_distance(Position p1, Position p2) {
     const int32_t y_delta = abs(p1[1] - p2[1]);
     return x_delta + y_delta;
 }
+
+float hyperbolic_x(float normalized_x) {
+    return -powf((2 * normalized_x) - 1, 2) + 1;
+}
+
+void timer_start(Timer *timer, int32_t duration_in_frames) {
+    timer->start_frame = g_game.frame;
+    timer->end_frame = g_game.frame + duration_in_frames;
+}
+
+bool timer_tick(Timer *timer) {
+    const bool done = timer->end_frame == g_game.frame;
+    if (done) {
+        timer->end_frame = TIMESTAMP_NOT_IN_USE;
+        timer->start_frame = TIMESTAMP_NOT_IN_USE;
+    }
+    return done;
+}
+
+float timer_get_normalized(Timer *timer) {
+    const float total = (float)timer->end_frame - (float)timer->start_frame;
+    const float left = (float)timer->end_frame - (float)g_game.frame;
+    return left / total;
+}
+
+bool timer_is_done(Timer *timer) {
+    return timer_in_use(timer) && timer->end_frame == g_game.frame;
+}
+
+bool timer_in_use(Timer *timer) {
+    return timer->end_frame != TIMESTAMP_NOT_IN_USE || timer->start_frame != TIMESTAMP_NOT_IN_USE;
+}
+
+int32_t timer_frames_left(Timer *timer) {
+    return timer->end_frame - g_game.frame;
+}

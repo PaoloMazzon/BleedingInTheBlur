@@ -62,4 +62,4 @@ AttackFavour character_get_attack_stats(Character *c, const Traits *attack_trait
 
 // Attempts an attack, returning true if it lands. See character_get_attack_stats to get the rolls involved
 // out_bonus_damage is the difference between the result and dc in the event of a successful role, otherwise its set to 0
-bool character_attempt_attack(Character *c, const Traits *attack_traits, Position target_position, const Traits *target_traits, int32_t *out_bonus_damage);
+bool character_attempt_attack(Character *c, const Traits *attack_traits, Character *rcvr, int32_t base_attack_damage);

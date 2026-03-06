@@ -23,4 +23,16 @@ void look_at(Position pos, float zoom);
 // Simulates rolling dice, returns bool if the roll meets or beats the DC. out may be null
 bool roll_dice(int32_t pips, int32_t dc, int32_t *result);
 
+// returns the manhattan distance between two tiles
 int32_t tile_distance(Position p1, Position p2);
+
+// for an inverse parabola normalized to [0, 1]
+float hyperbolic_x(float normalized_x);
+
+// for managing timers, once timer_tick is called on a complete timer the timer is no longer valid
+void timer_start(Timer *timer, int32_t duration_in_frames);
+bool timer_tick(Timer *timer); // does nothing if the timer is not set, returns true if this frame it goes off
+float timer_get_normalized(Timer *timer); // returns a float from 0-1 representing how much time is left where 1 is full time
+bool timer_is_done(Timer *timer); // returns true if the timer is done, only valid until timer_tick is called
+bool timer_in_use(Timer *timer); // returns true if the timer is currently in use
+int32_t timer_frames_left(Timer *timer);

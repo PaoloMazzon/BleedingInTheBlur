@@ -55,6 +55,9 @@ const int32_t STARTING_WEAPON_SLOT      = 0;
 const int32_t STARTING_BASE_STAT_POINTS = 15;
 const int32_t BASE_STAT_MAX             = 10;
 const int32_t STARTING_SKILL_PIPS       = 22;
+const int32_t TIMESTAMP_NOT_IN_USE      = 0;
+
+const int32_t ATTACK_ANIMATION_DURATION = 30;
 
 const float CELL_WIDTH       = 8;
 const float CELL_HEIGHT      = 8;

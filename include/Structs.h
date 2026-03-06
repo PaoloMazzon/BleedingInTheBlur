@@ -225,6 +225,12 @@ typedef struct Item_s {
     ItemUseCallback use_callback;
 } Item;
 
+// For keeping track of time (in terms of frames)
+typedef struct Timer_s {
+    int32_t start_frame;
+    int32_t end_frame;
+} Timer;
+
 typedef struct Alarm_s {
     int32_t turns_left;
     AlarmCallback callback;
@@ -383,6 +389,17 @@ typedef struct Level_s {
 
     // If the player does something, and it isn't an extra turn, the world gets a turn
     bool world_turn;
+
+    // For attack animations
+    struct {
+        int32_t damage;
+        bool successful;
+        Timer animation_timer;
+        Oct_Texture tex;
+        bool ranged; // if the tex should return to the sender
+        Character *attacker;
+        Character *receiver;
+    } Attack;
 } Level;
 
 typedef struct Game_s {
@@ -403,4 +420,6 @@ typedef struct Game_s {
 
     // Single source of truth for the player, everything else is a reference to this
     Character player;
+
+    int32_t frame; // increments 1x per frame
 } Game;

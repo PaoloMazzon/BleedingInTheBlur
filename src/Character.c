@@ -298,13 +298,25 @@ AttackFavour character_get_attack_stats(Character *c, const Traits *attack_trait
     return ATTACK_FAVOUR_NEUTRAL;
 }
 
-bool character_attempt_attack(Character *c, const Traits *attack_traits, Position target_position, const Traits *target_traits, int32_t *out_bonus_damage) {
+bool character_attempt_attack(Character *c, const Traits *attack_traits, Character *rcvr, int32_t base_attack_damage) {
+    // Get attempt results
     int32_t pips, dc, result;
+    const Position target_position = {rcvr->pos[0], rcvr->pos[1]};
+    const Traits *target_traits = &rcvr->info.traits;
     character_get_attack_stats(c, attack_traits, target_position, target_traits, &pips, &dc);
     bool passed = roll_dice(pips, dc, &result);
-    if (out_bonus_damage) {
-        *out_bonus_damage = passed ? result - dc : 0;
-    }
+    const int32_t bonus_damage = passed ? result - dc : 0;
+
+    // Setup the level attack animation
+    g_game.current_level.Attack.damage = bonus_damage + base_attack_damage;
+    g_game.current_level.Attack.successful = passed;
+    timer_start(&g_game.current_level.Attack.animation_timer, ATTACK_ANIMATION_DURATION);
+    g_game.current_level.Attack.tex = oct_GetAsset(g_game.assets, "attacks/spear.png");
+    g_game.current_level.Attack.ranged = attack_traits->Attack.ranged;
+    g_game.current_level.Attack.attacker = c;
+    g_game.current_level.Attack.receiver = rcvr;
+
+    // Make a dice label
     const Oct_Colour red = {
             .r = 1.0f,
             .g = 0.2f,

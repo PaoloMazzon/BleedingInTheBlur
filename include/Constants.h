@@ -20,6 +20,12 @@ extern const int32_t BASE_STAT_MAX;
 // How many skill pips players get at the start of the game
 extern const int32_t STARTING_SKILL_PIPS;
 
+// Constant that defines a timestamp as being not in use
+extern const int32_t TIMESTAMP_NOT_IN_USE;
+
+// Animation durations
+extern const int32_t ATTACK_ANIMATION_DURATION;
+
 // Cell width/height for the rendered game
 extern const float CELL_WIDTH;
 extern const float CELL_HEIGHT;

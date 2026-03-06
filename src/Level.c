@@ -28,6 +28,10 @@ void draw_characters() {
         else c = &g_game.current_level.characters[i];
         ObjectInfo *c_info = &c->info;
 
+        // Characters in attack animations are processed separately
+        if (level_in_attack_animation() && (c == g_game.current_level.Attack.attacker || g_game.current_level.Attack.receiver))
+            continue;
+
         if (!character_is_alive(c)) continue;
 
         // Move character to where they should be
@@ -52,6 +56,11 @@ void draw_characters() {
         c_info->scale_x += (c_info->facing_direction - c_info->scale_x) * 0.35f;
 
         character_draw(c, c_info->actual_position);
+    }
+
+    // Draw the attack animation
+    if (level_in_attack_animation()) {
+        // TODO: This
     }
 }
 
@@ -230,6 +239,7 @@ LevelIndex level_update() {
     draw_attack_view_ui();
     draw_ui();
 
+    timer_tick(&g_game.current_level.Attack.animation_timer);
     return g_game.level_index;
 }
 
@@ -296,4 +306,12 @@ TileContentsType level_get_tile_type(int32_t x, int32_t y) {
     if (x < 0 || x >= g_game.current_level.level_width || y < 0 || y >= g_game.current_level.level_height)
         return TILE_CONTENTS_TYPE_NONE;
     return g_game.current_level.tiles[(y * g_game.current_level.level_width) + x].type;
+}
+
+bool level_in_attack_animation() {
+    return timer_in_use(&g_game.current_level.Attack.animation_timer);
+}
+
+bool level_attack_animation_complete() {
+    return timer_is_done(&g_game.current_level.Attack.animation_timer);
 }

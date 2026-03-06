@@ -29,6 +29,7 @@ void *startup() {
     };
     oct_UpdateCamera(g_game.world_camera, &world_camera_update);
     oct_UpdateCamera(g_game.ui_camera, &ui_camera_update);
+    g_game.frame = 1;
 
     menu_begin();
     return nullptr;
@@ -82,6 +83,7 @@ void *update(void *ptr) {
             (Oct_Vec2){window_width / VIRTUAL_WIDTH, window_height / VIRTUAL_HEIGHT},
             0, (Oct_Vec2){0, 0});
 
+    g_game.frame++;
     return nullptr;
 }
 

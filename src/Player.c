@@ -12,76 +12,94 @@ void player_init() {
     get_starting_weapon(WEAPON_TYPE_SPEAR, &g_game.player.starting_weapon);
 }
 
+static bool player_attack_view_state() {
+    Character *player = &g_game.player;
+    Position movement_direction = {0};
+
+    if (level_attack_animation_complete()) {
+        return true;
+    }
+
+    if (oct_KeyPressed(BUTTON_LEFT)) movement_direction[0] = -1;
+    else if (oct_KeyPressed(BUTTON_RIGHT)) movement_direction[0] = 1;
+    else if (oct_KeyPressed(BUTTON_UP)) movement_direction[1] = -1;
+    else if (oct_KeyPressed(BUTTON_DOWN)) movement_direction[1] = 1;
+
+    g_game.current_level.attack_view.attack_cursor[0] += movement_direction[0];
+    g_game.current_level.attack_view.attack_cursor[1] += movement_direction[1];
+    g_game.current_level.attack_view.attack_cursor[0] = oct_Clampi(
+            player->pos[0] - 5,
+            player->pos[0] + 5,
+            g_game.current_level.attack_view.attack_cursor[0]);
+    g_game.current_level.attack_view.attack_cursor[1] = oct_Clampi(
+            player->pos[1] - 5,
+            player->pos[1] + 5,
+            g_game.current_level.attack_view.attack_cursor[1]);
+
+    // Let player cancel attack selection
+    if (oct_KeyPressed(BUTTON_ATTACK_VIEW)) {
+        g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
+    }
+
+    // Attack things at target
+    if (oct_KeyPressed(BUTTON_CONFIRM)) {
+        const TileContents *tile = level_get_tile(g_game.current_level.attack_view.attack_cursor);
+        if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= player->weapons[player->active_weapon].range) {
+            int32_t bonus_damage = 0;
+            character_attempt_attack(player,
+                                     &player->weapons[player->active_weapon].info.traits,
+                                     tile->character,
+                                     player->weapons[player->active_weapon].damage);
+        }
+    }
+
+    // Look at attack cursor
+    look_at(g_game.current_level.attack_view.attack_cursor, 0.8f);
+    return false;
+}
+
+static bool player_interaction_state() {
+    bool player_has_taken_actions = false;
+    Character *player = &g_game.player;
+    Position movement_direction = {0};
+    if (oct_KeyPressed(BUTTON_LEFT)) movement_direction[0] = -1;
+    else if (oct_KeyPressed(BUTTON_RIGHT)) movement_direction[0] = 1;
+    else if (oct_KeyPressed(BUTTON_UP)) movement_direction[1] = -1;
+    else if (oct_KeyPressed(BUTTON_DOWN)) movement_direction[1] = 1;
+
+    if (oct_KeyPressed(BUTTON_ATTACK_VIEW)) {
+        g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
+        g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
+        g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
+        g_game.current_level.attack_view.cursor_real_pos[0] = (float)g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH;
+        g_game.current_level.attack_view.cursor_real_pos[1] = (float)g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT;
+    }
+
+    // Process movement
+    if (movement_direction[0] != 0 || movement_direction[1] != 0) {
+        const Position target_position = {
+                g_game.player.pos[0] + movement_direction[0],
+                g_game.player.pos[1] + movement_direction[1],
+        };
+        if (character_move(&g_game.player, target_position))
+            player_has_taken_actions = true;
+    }
+
+    // Point camera at player
+    look_at(player->pos, 1);
+
+    return player_has_taken_actions;
+}
+
 void player_update() {
     Character *player = &g_game.player;
 
     // Should only be 1/-1 in both directions
-    Position movement_direction = {0};
     bool player_has_taken_actions = false;
     if (g_game.current_level.state == LEVEL_STATE_PLAYER_ATTACK) {
-        if (oct_KeyPressed(BUTTON_LEFT)) movement_direction[0] = -1;
-        else if (oct_KeyPressed(BUTTON_RIGHT)) movement_direction[0] = 1;
-        else if (oct_KeyPressed(BUTTON_UP)) movement_direction[1] = -1;
-        else if (oct_KeyPressed(BUTTON_DOWN)) movement_direction[1] = 1;
-
-        g_game.current_level.attack_view.attack_cursor[0] += movement_direction[0];
-        g_game.current_level.attack_view.attack_cursor[1] += movement_direction[1];
-        g_game.current_level.attack_view.attack_cursor[0] = oct_Clampi(
-                player->pos[0] - 5,
-                player->pos[0] + 5,
-                g_game.current_level.attack_view.attack_cursor[0]);
-        g_game.current_level.attack_view.attack_cursor[1] = oct_Clampi(
-                player->pos[1] - 5,
-                player->pos[1] + 5,
-                g_game.current_level.attack_view.attack_cursor[1]);
-
-        // Let player cancel attack selection
-        if (oct_KeyPressed(BUTTON_ATTACK_VIEW)) {
-            g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
-        }
-
-        // Attack things at target
-        if (oct_KeyPressed(BUTTON_CONFIRM)) {
-            const Traits *tile_traits = level_get_tile_traits(g_game.current_level.attack_view.attack_cursor);
-            if (tile_traits && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= player->weapons[player->active_weapon].range) {
-                int32_t bonus_damage = 0;
-                bool attack = character_attempt_attack(player,
-                                                       &player->weapons[player->active_weapon].info.traits,
-                                                       g_game.current_level.attack_view.attack_cursor,
-                                                       tile_traits,
-                                                       &bonus_damage);
-                // TODO: Attack damage and animation
-            }
-        }
-
-        // Look at attack cursor
-        look_at(g_game.current_level.attack_view.attack_cursor, 0.8f);
+        player_has_taken_actions = player_attack_view_state();
     } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_INTERACTION) {
-        if (oct_KeyPressed(BUTTON_LEFT)) movement_direction[0] = -1;
-        else if (oct_KeyPressed(BUTTON_RIGHT)) movement_direction[0] = 1;
-        else if (oct_KeyPressed(BUTTON_UP)) movement_direction[1] = -1;
-        else if (oct_KeyPressed(BUTTON_DOWN)) movement_direction[1] = 1;
-
-        if (oct_KeyPressed(BUTTON_ATTACK_VIEW)) {
-            g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
-            g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
-            g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
-            g_game.current_level.attack_view.cursor_real_pos[0] = (float)g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH;
-            g_game.current_level.attack_view.cursor_real_pos[1] = (float)g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT;
-        }
-
-        // Process movement
-        if (movement_direction[0] != 0 || movement_direction[1] != 0) {
-            const Position target_position = {
-                    g_game.player.pos[0] + movement_direction[0],
-                    g_game.player.pos[1] + movement_direction[1],
-            };
-            if (character_move(&g_game.player, target_position))
-                player_has_taken_actions = true;
-        }
-
-        // Point camera at player
-        look_at(player->pos, 1);
+        player_has_taken_actions = player_interaction_state();
     }
 
     // Player can toggle the stat view anytime
