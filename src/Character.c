@@ -59,14 +59,26 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
     }
 }
 
-void random_statblock(Statblock *out) {
-    memset(out, 0, sizeof(Statblock));
+void base_statblock(Statblock *sb) {
+    memset(sb, 0, sizeof(Statblock));
+
+    for (int32_t base_stat = 0; base_stat < 4; base_stat++) {
+        sb->base_stats[base_stat] = 2;
+        for (int32_t sub_stat = 0; sub_stat < 4; sub_stat++) {
+            int32_t *skill = get_skill_pip(sb, base_stat, sub_stat);
+            *skill = 1;
+        }
+    }
+}
+
+void random_statblock(Statblock *sb) {
+    base_statblock(sb);
 
     // Pick base stats first
     for (int i = 0; i < STARTING_BASE_STAT_POINTS;) {
         const int32_t stat = random_int(0, 4);
-        if (out->base_stats[stat] >= BASE_STAT_MAX) continue;
-        out->base_stats[stat] += 1;
+        if (sb->base_stats[stat] >= BASE_STAT_MAX) continue;
+        sb->base_stats[stat] += 1;
         i++;
     }
 
@@ -74,7 +86,7 @@ void random_statblock(Statblock *out) {
     for (int i = 0; i < STARTING_SKILL_PIPS; i++) {
         const int32_t base_stat = random_int(0, 4);
         const int32_t skill = random_int(0, 4);
-        int32_t *skill_stat = get_skill_pip(out, base_stat, skill);
+        int32_t *skill_stat = get_skill_pip(sb, base_stat, skill);
         *skill_stat += 1;
     }
 }
@@ -315,6 +327,7 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
     g_game.current_level.Attack.ranged = attack_traits->Attack.ranged;
     g_game.current_level.Attack.attacker = c;
     g_game.current_level.Attack.receiver = rcvr;
+    g_game.current_level.Attack.traits = *attack_traits;
 
     // Make a dice label
     const Oct_Colour red = {

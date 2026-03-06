@@ -43,24 +43,59 @@ void draw_characters() {
         c_info->actual_position[1] += velocity[1];
 
         // Make sure the facing value accurately reflects where the character is pointing
-        if (velocity[0] > 0)
-            c_info->facing_direction = 1;
-        else if (velocity[0] < 0)
-            c_info->facing_direction = -1;
+        if (!timer_in_use(&c->face_away_timer)) {
+            if (velocity[0] > 0.01)
+                c_info->facing_direction = 1;
+            else if (velocity[0] < -0.01)
+                c_info->facing_direction = -1;
+
+            // Lerp scale to match facing
+            c_info->scale_x += (c_info->facing_direction - c_info->scale_x) * 0.35f;
+        }
 
         // Cool rotation effect
         const float speed = sqrtf(powf(velocity[0], 2) + powf(velocity[1], 2));
         c_info->rotation = speed * c_info->facing_direction * 0.15f;
 
-        // Lerp scale to match facing
-        c_info->scale_x += (c_info->facing_direction - c_info->scale_x) * 0.35f;
-
         character_draw(c, c_info->actual_position);
+        timer_tick(&c->face_away_timer);
     }
 
     // Draw the attack animation
     if (level_in_attack_animation()) {
-        // TODO: This
+        Level *level = &g_game.current_level;
+        Position rcvr_target_tile = {
+                level->Attack.receiver->pos[0] + 1,
+                level->Attack.receiver->pos[1],
+        };
+        if (level->Attack.receiver->pos[0] < level->Attack.attacker->pos[0])
+            rcvr_target_tile[0] = level->Attack.receiver->pos[0] - 1;
+        if (level->Attack.successful) rcvr_target_tile[0] = level->Attack.receiver->pos[0];
+
+        Position attacker_target_tile = {
+                level->Attack.receiver->pos[0],
+                level->Attack.receiver->pos[1],
+        };
+        const float interpolation = hyperbolic_x(timer_get_normalized(&level->Attack.animation_timer));
+
+        // Interpolate target position and effects for attacker
+        ObjectInfo *atk_info = &level->Attack.attacker->info;
+        ObjectInfo *rcvr_info = &level->Attack.receiver->info;
+        atk_info->actual_position[0] = atk_info->actual_position[0] + (((float)attacker_target_tile[0] * CELL_WIDTH) - atk_info->actual_position[0]) * interpolation;
+        atk_info->actual_position[1] = atk_info->actual_position[1] + (((float)attacker_target_tile[1] * CELL_HEIGHT) - atk_info->actual_position[1]) * interpolation;
+        atk_info->rotation = interpolation * atk_info->facing_direction * 1.5f;
+
+        // Account for facing the wrong way
+        atk_info->facing_direction = (level->Attack.attacker->pos[0] <= level->Attack.receiver->pos[0]) ? 1 : -1;
+        atk_info->scale_x = atk_info->scale_x;
+        character_draw(level->Attack.receiver, rcvr_info->actual_position);
+        timer_start(&level->Attack.attacker->face_away_timer, 20);
+
+        // Interpolate target position and effects for receiver
+        character_draw(level->Attack.attacker, atk_info->actual_position);
+        rcvr_info->actual_position[0] = rcvr_info->actual_position[0] + (((float)rcvr_target_tile[0] * CELL_WIDTH) - rcvr_info->actual_position[0]) * interpolation;
+        rcvr_info->actual_position[1] = rcvr_info->actual_position[1] + (((float)rcvr_target_tile[1] * CELL_HEIGHT) - rcvr_info->actual_position[1]) * interpolation;
+        rcvr_info->rotation = interpolation * -rcvr_info->facing_direction * 1.5f;
     }
 }
 
@@ -80,7 +115,7 @@ void draw_tiles() {
 }
 
 void draw_attack_view() {
-    if (g_game.current_level.state != LEVEL_STATE_PLAYER_ATTACK) return;
+    if (g_game.current_level.state != LEVEL_STATE_PLAYER_ATTACK || level_in_attack_animation()) return;
     g_game.current_level.attack_view.cursor_real_pos[0] += ((g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH) - g_game.current_level.attack_view.cursor_real_pos[0]) * 0.4f;
     g_game.current_level.attack_view.cursor_real_pos[1] += ((g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT) - g_game.current_level.attack_view.cursor_real_pos[1]) * 0.4f;
     const Oct_Vec2 cursor_pos_real = {
@@ -186,6 +221,27 @@ void draw_labels() {
     }
 }
 
+void process_character_attack() {
+    if (level_attack_animation_complete() && g_game.current_level.Attack.successful) {
+        character_take_damage(
+                g_game.current_level.Attack.receiver,
+                g_game.current_level.Attack.damage,
+                &g_game.current_level.Attack.traits);
+        snprintf(g_game.current_level.Attack.buffer, MAX_BUFFER_LENGTH - 1, "%i!", g_game.current_level.Attack.damage);
+        Oct_Colour c = {
+                .r = 1.0,
+                .g = 1.0,
+                .b = 1.0,
+                .a = 1.0,
+        };
+        create_label(
+                g_game.current_level.Attack.buffer,
+                g_game.current_level.Attack.receiver->pos,
+                c,
+                false);
+    }
+}
+
 void level_begin() {
     memset(&g_game.current_level, 0, sizeof(Level));
 
@@ -238,6 +294,8 @@ LevelIndex level_update() {
     oct_LockCameras(g_game.ui_camera);
     draw_attack_view_ui();
     draw_ui();
+
+    process_character_attack();
 
     timer_tick(&g_game.current_level.Attack.animation_timer);
     return g_game.level_index;

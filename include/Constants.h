@@ -59,6 +59,7 @@ extern const Oct_Key BUTTON_DOWN;
 #define MAX_LABELS 100
 #define MAX_USER_INPUT_SIZE 32
 #define MAX_POPUP_STACK 10
+#define MAX_BUFFER_LENGTH 50
 
 // These are compiler preprocessors for easy access
 #define CAMERA_ID 1

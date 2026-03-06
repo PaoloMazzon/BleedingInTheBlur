@@ -73,6 +73,7 @@ void timer_start(Timer *timer, int32_t duration_in_frames) {
 }
 
 bool timer_tick(Timer *timer) {
+    if (!timer_in_use(timer)) return false;
     const bool done = timer->end_frame == g_game.frame;
     if (done) {
         timer->end_frame = TIMESTAMP_NOT_IN_USE;

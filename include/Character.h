@@ -8,8 +8,11 @@ void get_starting_weapon(WeaponType weapon_type, Weapon *out);
 // For soul-bound weapons
 void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out);
 
-// Returns a random statblock, obeying stat allocation rules
-void random_statblock(Statblock *out);
+// Sets sb to a minimal statblock
+void base_statblock(Statblock *sb);
+
+// Sets sb to a random statblock, obeying stat allocation rules
+void random_statblock(Statblock *sb);
 
 // Prints a statblock to the console
 void print_statblock(Statblock *s);

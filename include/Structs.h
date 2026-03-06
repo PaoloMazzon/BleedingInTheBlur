@@ -277,6 +277,9 @@ struct Character_s {
     // Max hp and mana are derived from the current statblock
     int32_t current_hp;
     int32_t current_mana;
+
+    // Timer to control when the character can start facing another way after attacking
+    Timer face_away_timer;
 };
 
 // Things that can be on a tile in the dungeon
@@ -399,6 +402,8 @@ typedef struct Level_s {
         bool ranged; // if the tex should return to the sender
         Character *attacker;
         Character *receiver;
+        Traits traits; // traits associated with the attack
+        char buffer[MAX_BUFFER_LENGTH + 1];
     } Attack;
 } Level;
 
