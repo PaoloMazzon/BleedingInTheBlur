@@ -18,5 +18,6 @@ add_executable(${PROJECT_NAME}
         src/Popup.c
         src/NPC.c
         src/Player.c
+        src/LevelGenerator.c
 )
 target_link_libraries(${PROJECT_NAME} OctarineEngine)

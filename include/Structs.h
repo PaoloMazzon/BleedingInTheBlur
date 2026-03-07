@@ -244,6 +244,13 @@ typedef struct Weapon_s {
     int32_t range;
 } Weapon;
 
+typedef struct LevelGenerationParameters_s {
+    IntRange level_size;
+    IntRange room_min_size;
+    IntRange room_max_size;
+    IntRange room_count;
+} LevelGenerationParameters;
+
 // A character in the game
 struct Character_s {
     ObjectInfo info;
