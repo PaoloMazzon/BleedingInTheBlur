@@ -105,6 +105,7 @@ void draw_ui() {
 }
 
 void draw_tiles() {
+    // oct_DrawTexture(g_game.current_level.level_tex, (Oct_Vec2){0, 0});
     float camera_x, camera_y;
     get_camera_coords(&camera_x, &camera_y, nullptr, nullptr);
     const int32_t start_draw_x = (int32_t)floorf((camera_x - CELL_WIDTH) / CELL_WIDTH);
@@ -248,31 +249,18 @@ void level_begin() {
 
     // Generate level
     LevelGenerationParameters params = {
-        .level_size = {100, 100},
+        .level_size = {40, 40},
         .room_count = {5, 10},
-        .room_min_size = {3, 3},
-        .room_max_size = {10, 10}
+        .room_min_size = {5, 5},
+        .room_max_size = {10, 10},
+        .extra_hallways = {2, 3},
     };
-    generate_level(&g_game.current_level, &params);
+    Position player_start_pos;
+    generate_level(&g_game.current_level, &params, player_start_pos);
 
-    // Tilemap
-    g_game.current_level.tilemap = oct_CreateTilemap(
-            oct_GetAsset(g_game.assets, "tileset.png"),
-            100, 100,
-            (Oct_Vec2){CELL_WIDTH, CELL_HEIGHT});
-    for (int y = 0; y < 100; y++) {
-        for (int x = 0; x < 100; x++) {
-            const int32_t tile = random_int(17, 17 + 5);
-            oct_SetTilemap(g_game.current_level.tilemap, x, y, tile);
-        }
-    }
-    g_game.current_level.level_width = 100;
-    g_game.current_level.level_height = 100;
-    g_game.current_level.tiles = oct_Zalloc(g_game.allocator, sizeof(TileContents) * g_game.current_level.level_width * g_game.current_level.level_height);
-
-    player_init();
-
-    create_slime(level_get_character_slot(), (Position){15, 15});
+    // Debug
+    player_init(player_start_pos);
+    //create_slime(level_get_character_slot(), (Position){15, 15});
 }
 
 LevelIndex level_update() {

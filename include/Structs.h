@@ -249,6 +249,7 @@ typedef struct LevelGenerationParameters_s {
     IntRange room_min_size;
     IntRange room_max_size;
     IntRange room_count;
+    IntRange extra_hallways;
 } LevelGenerationParameters;
 
 // A character in the game
@@ -392,6 +393,7 @@ typedef struct Level_s {
     // For drawing
     Oct_Tilemap tilemap;
     bool stats_toggle; // toggle for drawing player stats
+    Oct_Texture level_tex;
 
     Character characters[MAX_CHARACTERS];
     Item items[MAX_ITEMS];

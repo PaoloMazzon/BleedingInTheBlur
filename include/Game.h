@@ -35,11 +35,13 @@ PopupDicePointer popup_dice(int32_t dc, int32_t pips);
 bool popup_get_input(PopupInputPointer input_pointer, const char *out);
 bool popup_get_dice(PopupDicePointer dice_pointer, int32_t *out);
 
-void player_init();
+void player_init(Position start_pos);
 void player_update();
 
 void *startup();
 void *update(void *ptr);
 void shutdown(void *ptr);
+void set_draw_target(Oct_Texture tex);
+void reset_draw_target(); // call after changing the draw target
 
 void create_slime(Character *slot, Position pos);

@@ -91,3 +91,13 @@ void shutdown(void *ptr) {
     oct_FreeAssetBundle(g_game.assets);
     oct_FreeAllocator(g_game.allocator);
 }
+
+void set_draw_target(Oct_Texture tex) {
+    oct_SetDrawTarget(tex);
+    oct_SetTextureCamerasEnabled(false);
+}
+
+void reset_draw_target() {
+    oct_SetDrawTarget(g_game.backbuffer);
+    oct_SetTextureCamerasEnabled(true);
+}

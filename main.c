@@ -15,7 +15,11 @@ int main(int argc, const char **argv) {
             .windowTitle = "Bleeding in the Blur",
             .windowWidth = (int32_t)VIRTUAL_WIDTH * 3,
             .windowHeight = (int32_t)VIRTUAL_HEIGHT * 3,
+#ifndef NDEBUG
+            .debug = true,
+#else
             .debug = false,
+#endif
     };
 
     // Launches the game with the above parameters
