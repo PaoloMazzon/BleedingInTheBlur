@@ -21,6 +21,7 @@ Traits *level_get_tile_traits(Position pos); // same as above but returns traits
 TileContentsType level_get_tile_type(int32_t x, int32_t y); // returns TILE_CONTENTS_TYPE_NONE if out of bounds
 bool level_in_attack_animation();
 bool level_attack_animation_complete();
+void level_get_spawn_point(Position out_tile);
 
 // Returns true if there is anything in the popup stack
 bool popups_are_active();

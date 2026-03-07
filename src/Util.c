@@ -33,10 +33,10 @@ void update_camera_coords() {
 }
 
 void get_camera_coords(float *x, float *y, float *w, float *h) {
-    if (x) *x = camera_x;
-    if (y) *y = camera_y;
-    if (w) *w = camera_w;
-    if (h) *h = camera_h;
+    if (x) *x = roundf(camera_x);
+    if (y) *y = roundf(camera_y);
+    if (w) *w = roundf(camera_w);
+    if (h) *h = roundf(camera_h);
 }
 
 void look_at(Position pos, float zoom) {

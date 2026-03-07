@@ -5,6 +5,8 @@
 #include "Util.h"
 #include "Game.h"
 
+
+
 // For keeping tracks of room in the dungeon while level generating
 typedef struct RoomSpace_s {
     Position top_left;
@@ -83,6 +85,12 @@ static void pick_spot_in_room(RoomSpace *r, Position out_spot) {
     out_spot[1] = random_int(r->top_left[1] + 1, r->top_left[1] + r->size[1] - 2);
 }
 
+// Same as above but for spawning (ie, can be on the edges
+static void pick_spawn_in_room(RoomSpace *r, Position out_spot) {
+    out_spot[0] = random_int(r->top_left[0], r->top_left[0] + r->size[0]);
+    out_spot[1] = random_int(r->top_left[1], r->top_left[1] + r->size[1]);
+}
+
 // Cuts a vertical line in the map
 static void carve_hallway_vertical(Oct_Tilemap tilemap, Position p1, Position p2) {
     int32_t i = 0;
@@ -125,24 +133,40 @@ static void carve_hallway(Oct_Tilemap tilemap, Position p1, Position p2) {
     }
 }
 
+static bool is_door_location(RoomSpace *rooms, int32_t room_count, int32_t x, int32_t y) {
+    return false; // TODO: This
+}
+
 void generate_level(Level *level, LevelGenerationParameters *params, Position out_player_pos) {
-    // stop future me from being a dumbass
+    const int32_t spawns_per_room = 5;
+
+    // Level generation needs at least 3 rooms
     assert(params->room_count[0] > 2 && params->room_count[0] > 2);
+
+    // Max room size must be less than the level size
     assert(params->room_max_size[0] < params->level_size[0]);
     assert(params->room_max_size[1] < params->level_size[1]);
+
+    // Rooms must have at least spawns_per_room spawnable spots
+    assert(params->room_min_size[0] * params->room_max_size[1] >= spawns_per_room);
 
     // Create resources and pick a room count
     TileContents *level_tiles = oct_Zalloc(
         g_game.allocator,
         sizeof(TileContents) * params->level_size[0] * params->level_size[1]);
     Oct_Tilemap tilemap = oct_CreateTilemap(
-        oct_GetAsset(g_game.assets, "tileset.png"),
-        params->level_size[0], params->level_size[1],
-        (Oct_Vec2){CELL_WIDTH, CELL_HEIGHT});
+            oct_GetAsset(g_game.assets, "tileset.png"),
+            params->level_size[0], params->level_size[1],
+            (Oct_Vec2){CELL_WIDTH, CELL_HEIGHT});
+    Oct_Tilemap decorations = oct_CreateTilemap(
+            oct_GetAsset(g_game.assets, "tileset.png"),
+            params->level_size[0], params->level_size[1],
+            (Oct_Vec2){CELL_WIDTH, CELL_HEIGHT});
     int32_t room_count = random_int(params->room_count[0], params->room_count[1] + 1);
     RoomSpace *rooms = oct_Malloc(g_game.allocator, sizeof(RoomSpace) * room_count);
     level->tiles = level_tiles;
     level->tilemap = tilemap;
+    level->decorations = decorations;
     level->level_width = params->level_size[0];
     level->level_height = params->level_size[1];
 
@@ -220,6 +244,46 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
         }
     }
 
+    // Choose a bunch of potential spawn points in every room except for the starting room
+    level->spawn_points = oct_Zalloc(g_game.allocator, spawns_per_room * sizeof(Position) * (room_count - 1));
+    level->spawn_points_count = (room_count - 1) * spawns_per_room;
+    for (int32_t i = 1; i < room_count; i++) {
+        for (int32_t j = 0; j < spawns_per_room; j++) {
+            bool overlapping = true;
+            while (overlapping) {
+                pick_spawn_in_room(&rooms[i], level->spawn_points[((i - 1) * spawns_per_room) + j]);
+
+                // Check if this spot already exists in the spawn points
+                const int32_t starting_index = (i - 1) * spawns_per_room;
+                overlapping = false;
+                for (int32_t k = starting_index; k < starting_index + j; k++) {
+                    if (level->spawn_points[((i - 1) * spawns_per_room) + j][0] == level->spawn_points[k][0] &&
+                        level->spawn_points[((i - 1) * spawns_per_room) + j][1] == level->spawn_points[k][1])
+                        overlapping = true;
+                }
+                if (overlapping)
+                    oct_Log("Re-rolling spot [%i,%i]", level->spawn_points[((i - 1) * spawns_per_room) + j][0], level->spawn_points[((i - 1) * spawns_per_room) + j][1]);
+            }
+            oct_Log("Found spot [%i,%i]", level->spawn_points[((i - 1) * spawns_per_room) + j][0], level->spawn_points[((i - 1) * spawns_per_room) + j][1]);
+        }
+    }
+
+    // Place decorations and doors
+    for (int32_t y = 0; y < params->level_size[1]; y++) {
+        for (int32_t x = 0; x < params->level_size[0]; x++) {
+            
+
+            if (is_door_location(rooms, room_count, x, y)) {
+                oct_SetTilemap(decorations, x, y, TILE_DOOR_CLOSED);
+                TileContents *t = level_get_tile((Position){x, y});
+                assert(t);
+                t->type = TILE_CONTENTS_TYPE_WALL;
+                t->tile.door = true;
+                t->tile.door_open = false;
+            }
+        }
+    }
+
     // Draw the entire level to a texture
     level->level_tex = oct_CreateSurface((Oct_Vec2){(float)level->level_width * CELL_WIDTH, (float)level->level_height * CELL_HEIGHT});
     assert(level->level_tex);
@@ -234,7 +298,14 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
 }
 
 void cleanup_level(Level *level) {
+    oct_Free(g_game.allocator, level->spawn_points);
+    level->spawn_points = nullptr;
     oct_FreeAsset(level->level_tex);
+    level->level_tex = OCT_NO_ASSET;
     oct_Free(g_game.allocator, level->tiles);
+    level->tiles = nullptr;
     oct_DestroyTilemap(level->tilemap);
+    level->tilemap = nullptr;
+    oct_DestroyTilemap(level->decorations);
+    level->tilemap = nullptr;
 }

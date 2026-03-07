@@ -34,6 +34,30 @@ extern const float VIRTUAL_HEIGHT;
 extern const float GAME_VIEW_WIDTH;
 extern const float GAME_VIEW_HEIGHT;
 
+// Tiles
+extern const int32_t TILE_DOOR_OPEN;
+extern const int32_t TILE_DOOR_CLOSED;
+extern const int32_t TILE_FLOOR_SHADOW_LEFT; // These three are for the shadows that cast on the floor from the right
+extern const int32_t TILE_FLOOR_SHADOW_BELOW;
+extern const int32_t TILE_FLOOR_SHADOW_CORNER;
+extern const int32_t TILE_WALL_SHADOW_LEFT; // directions represent where the empty space is
+extern const int32_t TILE_WALL_SHADOW_RIGHT;
+extern const int32_t TILE_WALL_SHADOW_ABOVE;
+extern const int32_t TILE_WALL_SHADOW_BELOW;
+extern const int32_t TILE_WALL_SHADOW_OUTER_CORNER_TR;
+extern const int32_t TILE_WALL_SHADOW_OUTER_CORNER_TL;
+extern const int32_t TILE_WALL_SHADOW_OUTER_CORNER_BR;
+extern const int32_t TILE_WALL_SHADOW_OUTER_CORNER_BL;
+extern const int32_t TILE_WALL_SHADOW_INNER_CORNER_TR;
+extern const int32_t TILE_WALL_SHADOW_INNER_CORNER_TL;
+extern const int32_t TILE_WALL_SHADOW_INNER_CORNER_BR;
+extern const int32_t TILE_WALL_SHADOW_INNER_CORNER_BL;
+extern const int32_t TILE_WALL_SHADOW_ABOVE_BELOW;
+extern const int32_t TILE_WALL_SHADOW_ABOVE_BELOW_RIGHT;
+extern const int32_t TILE_WALL_SHADOW_ABOVE_BELOW_LEFT;
+extern const int32_t TILE_WALL_SHADOW_LEFT_RIGHT;
+extern const int32_t TILE_WALL_SHADOW_LEFT_RIGHT_TOP;
+extern const int32_t TILE_WALL_SHADOW_LEFT_RIGHT_BOTTOM;
 // Controls
 extern const Oct_Key BUTTON_ATTACK_VIEW;
 extern const Oct_Key BUTTON_STAT_TOGGLE;

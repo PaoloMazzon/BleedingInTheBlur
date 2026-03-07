@@ -114,6 +114,7 @@ void draw_tiles() {
     const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
 
     oct_TilemapDrawPart(g_game.current_level.tilemap, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
+    oct_TilemapDrawPart(g_game.current_level.decorations, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
 }
 
 void draw_attack_view() {
@@ -257,10 +258,14 @@ void level_begin() {
     };
     Position player_start_pos;
     generate_level(&g_game.current_level, &params, player_start_pos);
+    player_init(player_start_pos);
 
     // Debug
-    player_init(player_start_pos);
-    //create_slime(level_get_character_slot(), (Position){15, 15});
+    for (int32_t i = 0; i < 10; i++) {
+        Position slime_spawn;
+        level_get_spawn_point(slime_spawn);
+        create_slime(level_get_character_slot(), slime_spawn);
+    }
 }
 
 LevelIndex level_update() {
@@ -301,8 +306,6 @@ LevelIndex level_update() {
 
 void level_end() {
     cleanup_level(&g_game.current_level);
-    oct_DestroyTilemap(g_game.current_level.tilemap);
-    oct_Free(g_game.allocator, g_game.current_level.tiles);
 }
 
 void create_label(const char *text, const Position pos, Oct_Colour colour, bool needs_to_be_freed) {
@@ -371,4 +374,16 @@ bool level_in_attack_animation() {
 
 bool level_attack_animation_complete() {
     return timer_is_done(&g_game.current_level.Attack.animation_timer);
+}
+
+void level_get_spawn_point(Position out_tile) {
+    const int32_t index = random_int(0, g_game.current_level.spawn_points_count);
+    out_tile[0] = g_game.current_level.spawn_points[index][0];
+    out_tile[1] = g_game.current_level.spawn_points[index][1];
+
+    // Swap the index and last spot to effectively remove an element in O(1)
+    const int32_t last_spot = g_game.current_level.spawn_points_count - 1;
+    g_game.current_level.spawn_points[index][0] = g_game.current_level.spawn_points[last_spot][0];
+    g_game.current_level.spawn_points[index][1] = g_game.current_level.spawn_points[last_spot][1];
+    g_game.current_level.spawn_points_count--;
 }

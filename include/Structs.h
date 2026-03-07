@@ -213,9 +213,8 @@ typedef struct ObjectInfo_s {
 
 // Something like a wall or door or trap
 typedef struct Tile_s {
-    int32_t index; // index in the tileset
-    int32_t max_hp;
-    int32_t current_hp; // some tiles can be destroyed
+    bool door;
+    bool door_open; // only applies if its a door
 } Tile;
 
 typedef struct Item_s {
@@ -389,9 +388,12 @@ typedef struct Level_s {
     Popup popup_stack[MAX_POPUP_STACK]; // there can be multiple in a row
     int32_t popup_stack_pointer;
     AttackView attack_view;
+    Position *spawn_points; // spaces things can safely be spawned
+    int32_t spawn_points_count; // current count of spawn points, size is effectively redundant
 
     // For drawing
     Oct_Tilemap tilemap;
+    Oct_Tilemap decorations; // drawn above tilemap
     bool stats_toggle; // toggle for drawing player stats
     Oct_Texture level_tex;
 
