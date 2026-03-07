@@ -147,16 +147,6 @@ static void draw_tiles() {
     reset_draw_target();
 
     oct_DrawTexture(g_game.current_level.level_tex, (Oct_Vec2){0, 0});
-    return;
-    float camera_x, camera_y;
-    get_camera_coords(&camera_x, &camera_y, nullptr, nullptr);
-    const int32_t start_draw_x = (int32_t)floorf((camera_x - CELL_WIDTH) / CELL_WIDTH);
-    const int32_t start_draw_y = (int32_t)floorf((camera_y - CELL_HEIGHT) / CELL_HEIGHT);
-    const int32_t tile_horizontal = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
-    const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
-
-    oct_TilemapDrawPart(g_game.current_level.tilemap, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
-    oct_TilemapDrawPart(g_game.current_level.decorations, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
 }
 
 static void draw_fog_of_war() {
@@ -325,10 +315,10 @@ void level_begin() {
     // Generate level
     LevelGenerationParameters params = {
         .level_size = {40, 40},
-        .room_count = {5, 10},
+        .room_count = {4, 7},
         .room_min_size = {5, 5},
-        .room_max_size = {10, 10},
-        .extra_hallways = {2, 3},
+        .room_max_size = {8, 8},
+        .extra_hallways = {1, 2},
     };
     Position player_start_pos;
     generate_level(&g_game.current_level, &params, player_start_pos);
