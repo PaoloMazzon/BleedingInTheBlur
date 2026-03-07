@@ -232,6 +232,16 @@ int32_t character_crit_chance(Character *c) {
 int32_t character_take_damage(Character *c, int32_t damage, Traits *source_traits) {
     const int32_t initial = c->current_hp;
     c->current_hp = non_negative(c->current_hp - damage);
+
+    // check if they need to get deleted for dying
+    if (!character_is_alive(c)) {
+        TileContents *t = level_get_tile(c->pos);
+        if (t && t->type == TILE_CONTENTS_TYPE_CHARACTER && t->character == c) {
+            t->type = TILE_CONTENTS_TYPE_NONE;
+            t->character = nullptr;
+        }
+    }
+
     return initial - c->current_hp;
 }
 

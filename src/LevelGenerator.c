@@ -15,12 +15,12 @@ typedef struct RoomSpace_s {
 
 // From the tileset
 static int32_t get_floor_tile() {
-    return random_int(17, 22);
+    return random_int(17 + 8, 22 + 8);
 }
 
-static bool is_floor_tile(int32_t tile) {
-    return tile >= 17 && tile <= 21;
-}
+// These only apply to the base tileset
+static bool is_floor_tile(int32_t tile) { return tile >= (17 + 8) && tile <= (21 + 8); }
+static bool is_wall_tile(int32_t tile) { return !is_floor_tile(tile); }
 
 static int32_t get_wall_tile() {
     return random_int(1, 17);
@@ -115,26 +115,71 @@ static void carve_hallway_horizontal(Oct_Tilemap tilemap, Position p1, Position 
 
 // Carves a hallway between the two points (places 0 along the hallway)
 static void carve_hallway(Oct_Tilemap tilemap, Position p1, Position p2) {
-    const bool horizontal_then_vertical = oct_Random(0, 1) > 0.5;
-    if (horizontal_then_vertical) {
-        carve_hallway_horizontal(tilemap, p1, p2);
-        Position new_point = {
-                p2[0],
-                p1[1]
-        };
-        carve_hallway_vertical(tilemap, new_point, p2);
-    } else {
-        carve_hallway_vertical(tilemap, p1, p2);
-        Position new_point = {
-                p1[0],
-                p2[1]
-        };
-        carve_hallway_horizontal(tilemap, new_point, p2);
-    }
+    carve_hallway_horizontal(tilemap, p1, p2);
+    Position new_point = {
+            p2[0],
+            p1[1]
+    };
+    carve_hallway_vertical(tilemap, new_point, p2);
 }
 
 static bool is_door_location(RoomSpace *rooms, int32_t room_count, int32_t x, int32_t y) {
     return false; // TODO: This
+}
+
+// Applies shadows to decorations
+static void autotile(Oct_Tilemap tilemap, Oct_Tilemap decoration, int32_t x, int32_t y) {
+    // These are true if there is empty space in that location
+    const bool above        = is_floor_tile(oct_GetTilemap(tilemap, x, y - 1));
+    const bool below        = is_floor_tile(oct_GetTilemap(tilemap, x, y + 1));
+    const bool left         = is_floor_tile(oct_GetTilemap(tilemap, x - 1, y));
+    const bool right        = is_floor_tile(oct_GetTilemap(tilemap, x + 1, y));
+    const bool top_left     = is_floor_tile(oct_GetTilemap(tilemap, x - 1, y - 1));
+    const bool top_right    = is_floor_tile(oct_GetTilemap(tilemap, x + 1, y - 1));
+    const bool bottom_left  = is_floor_tile(oct_GetTilemap(tilemap, x - 1, y + 1));
+    const bool bottom_right = is_floor_tile(oct_GetTilemap(tilemap, x + 1, y + 1));
+
+    const bool is_wall = !is_floor_tile(oct_GetTilemap(tilemap, x, y));
+
+    if (is_wall) {
+        const int open = (above ? 1 : 0) + (below ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
+
+        if (open == 0) {
+            if      (top_right)    oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_INNER_CORNER_TR);
+            else if (top_left)     oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_INNER_CORNER_TL);
+            else if (bottom_right) oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_INNER_CORNER_BR);
+            else if (bottom_left)  oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_INNER_CORNER_BL);
+
+        } else if (open == 1) {
+            if      (above) oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_ABOVE);
+            else if (below) oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_BELOW);
+            else if (left)  oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_LEFT);
+            else if (right) oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_RIGHT);
+
+        } else if (open == 2) {
+            if      (above && below)  oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_ABOVE_BELOW);
+            else if (left  && right)  oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_LEFT_RIGHT);
+            else if (above && right)  oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_OUTER_CORNER_TR);
+            else if (above && left)   oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_OUTER_CORNER_TL);
+            else if (below && right)  oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_OUTER_CORNER_BR);
+            else if (below && left)   oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_OUTER_CORNER_BL);
+
+        } else if (open == 3) {
+            if      (!left)  oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_ABOVE_BELOW_RIGHT);
+            else if (!right) oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_ABOVE_BELOW_LEFT);
+            else if (!below) oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_LEFT_RIGHT_TOP);
+            else if (!above) oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_LEFT_RIGHT_BOTTOM);
+        }
+    } else {
+        const bool wall_right = !right;
+        const bool wall_above = !above;
+        const bool wall_top_right = !top_right;
+
+        if      (wall_right && wall_above) oct_SetTilemap(decoration, x, y, TILE_FLOOR_SHADOW_CORNER);
+        else if (wall_right)               oct_SetTilemap(decoration, x, y, TILE_FLOOR_SHADOW_LEFT);
+        else if (wall_above)               oct_SetTilemap(decoration, x, y, TILE_FLOOR_SHADOW_BELOW);
+        else if (wall_top_right)           oct_SetTilemap(decoration, x, y, TILE_WALL_SHADOW_INNER_CORNER_TR);
+    }
 }
 
 void generate_level(Level *level, LevelGenerationParameters *params, Position out_player_pos) {
@@ -271,7 +316,7 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     // Place decorations and doors
     for (int32_t y = 0; y < params->level_size[1]; y++) {
         for (int32_t x = 0; x < params->level_size[0]; x++) {
-            
+            autotile(tilemap, decorations, x, y);
 
             if (is_door_location(rooms, room_count, x, y)) {
                 oct_SetTilemap(decorations, x, y, TILE_DOOR_CLOSED);
@@ -287,10 +332,6 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     // Draw the entire level to a texture
     level->level_tex = oct_CreateSurface((Oct_Vec2){(float)level->level_width * CELL_WIDTH, (float)level->level_height * CELL_HEIGHT});
     assert(level->level_tex);
-    set_draw_target(level->level_tex);
-    oct_DrawClear(&(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f});
-    oct_TilemapDraw(tilemap);
-    reset_draw_target();
 
     // Place the player
     pick_spot_in_room(&rooms[start_room], out_player_pos);

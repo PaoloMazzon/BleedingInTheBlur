@@ -30,7 +30,7 @@ void draw_characters() {
         ObjectInfo *c_info = &c->info;
 
         // Characters in attack animations are processed separately
-        if (level_in_attack_animation() && (c == g_game.current_level.Attack.attacker || g_game.current_level.Attack.receiver))
+        if (level_in_attack_animation() && (c == g_game.current_level.Attack.attacker || c == g_game.current_level.Attack.receiver))
             continue;
 
         if (!character_is_alive(c)) continue;
@@ -104,8 +104,50 @@ void draw_ui() {
     // TODO: This
 }
 
-void draw_tiles() {
-    // oct_DrawTexture(g_game.current_level.level_tex, (Oct_Vec2){0, 0});
+static bool tile_visible_to_player(Position tile) {
+    const Position player_position = {
+            g_game.player.pos[0],
+            g_game.player.pos[1]
+    };
+
+    int x0 = player_position[0];
+    int y0 = player_position[1];
+    int x1 = tile[0];
+    int y1 = tile[1];
+
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
+
+    while (x0 != x1 || y0 != y1) {
+        if (x0 != player_position[0] || y0 != player_position[1]) {
+            TileContents *t = level_get_tile((Position){x0, y0});
+            if (t == NULL || t->type == TILE_CONTENTS_TYPE_WALL) {
+                return false;  // wall in the way — destination is hidden
+            }
+        }
+
+        int e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x0 += sx; }
+        if (e2 <  dx) { err += dx; y0 += sy; }
+    }
+
+    // destination tile itself is never blocked — walls you're looking AT are visible
+    return true;
+}
+
+static void draw_tiles() {
+    // batshit insane terrible solution because octarine is borked
+    set_draw_target(g_game.current_level.level_tex);
+    oct_DrawClear(&(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f});
+    oct_TilemapDraw(g_game.current_level.tilemap);
+    oct_TilemapDraw(g_game.current_level.decorations);
+    reset_draw_target();
+
+    oct_DrawTexture(g_game.current_level.level_tex, (Oct_Vec2){0, 0});
+    return;
     float camera_x, camera_y;
     get_camera_coords(&camera_x, &camera_y, nullptr, nullptr);
     const int32_t start_draw_x = (int32_t)floorf((camera_x - CELL_WIDTH) / CELL_WIDTH);
@@ -115,6 +157,38 @@ void draw_tiles() {
 
     oct_TilemapDrawPart(g_game.current_level.tilemap, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
     oct_TilemapDrawPart(g_game.current_level.decorations, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
+}
+
+static void draw_fog_of_war() {
+    // oct_DrawTexture(g_game.current_level.level_tex, (Oct_Vec2){0, 0});
+    float camera_x, camera_y;
+    get_camera_coords(&camera_x, &camera_y, nullptr, nullptr);
+    const int32_t start_draw_x = (int32_t)floorf((camera_x - CELL_WIDTH) / CELL_WIDTH);
+    const int32_t start_draw_y = (int32_t)floorf((camera_y - CELL_HEIGHT) / CELL_HEIGHT);
+    const int32_t tile_horizontal = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
+    const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
+
+    // Draw shadows over places the player can't see
+    for (int32_t y = start_draw_y; y < start_draw_y + tile_vertical; y++) {
+        for (int32_t x = start_draw_x; x < start_draw_x + tile_horizontal; x++) {
+            if (!tile_visible_to_player((Position){x, y})) {
+                Oct_DrawCommand cmd = {
+                        .blendMode = OCT_BLEND_MODE_BLEND,
+                        .type = OCT_DRAW_COMMAND_TYPE_TEXTURE,
+                        .colour = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f},
+                        .Texture = {
+                                .texture = oct_GetAsset(g_game.assets, "fow.png"),
+                                .viewport = {0, 0, OCT_WHOLE_TEXTURE, OCT_WHOLE_TEXTURE},
+                                .position = {((float)x * CELL_WIDTH) - 2, ((float)y * CELL_HEIGHT) - 2},
+                                .scale = {1, 1},
+                                .origin = {0, 0},
+                                .rotation = 0,
+                        }
+                };
+                oct_Draw(&cmd);
+            }
+        }
+    }
 }
 
 void draw_attack_view() {
@@ -290,6 +364,7 @@ LevelIndex level_update() {
     oct_LockCameras(g_game.world_camera);
     draw_tiles();
     draw_characters();
+    draw_fog_of_war();
     draw_attack_view();
     draw_labels();
 
