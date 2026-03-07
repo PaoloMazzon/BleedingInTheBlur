@@ -5,6 +5,7 @@
 #include "Game.h"
 #include "Util.h"
 #include "Character.h"
+#include "LevelGenerator.h"
 
 // Returns true if a given tile is within range of the player's attack range
 static inline bool tile_in_range_of_player(Position target) {
@@ -245,6 +246,15 @@ void process_character_attack() {
 void level_begin() {
     memset(&g_game.current_level, 0, sizeof(Level));
 
+    // Generate level
+    LevelGenerationParameters params = {
+        .level_size = {100, 100},
+        .room_count = {5, 10},
+        .room_min_size = {3, 3},
+        .room_max_size = {10, 10}
+    };
+    generate_level(&g_game.current_level, &params);
+
     // Tilemap
     g_game.current_level.tilemap = oct_CreateTilemap(
             oct_GetAsset(g_game.assets, "tileset.png"),
@@ -302,6 +312,7 @@ LevelIndex level_update() {
 }
 
 void level_end() {
+    cleanup_level(&g_game.current_level);
     oct_DestroyTilemap(g_game.current_level.tilemap);
     oct_Free(g_game.allocator, g_game.current_level.tiles);
 }
