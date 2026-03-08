@@ -123,8 +123,24 @@ static void carve_hallway(Oct_Tilemap tilemap, Position p1, Position p2) {
     carve_hallway_vertical(tilemap, new_point, p2);
 }
 
-static bool is_door_location(RoomSpace *rooms, int32_t room_count, int32_t x, int32_t y) {
-    return false; // TODO: This
+static bool is_door_location(Oct_Tilemap tilemap, Oct_Tilemap decorations, RoomSpace *rooms, int32_t room_count, int32_t x, int32_t y) {
+    for (int32_t i = 0; i < room_count; i++) {
+        if (x >= rooms[i].top_left[0] - 1 && x <= rooms[i].top_left[0] + rooms[i].size[0] + 2 &&
+            y >= rooms[i].top_left[1] - 1 && y <= rooms[i].top_left[1] + rooms[i].size[1] + 2) {
+            const bool above = is_floor_tile(oct_GetTilemap(tilemap, x, y - 1));
+            const bool below = is_floor_tile(oct_GetTilemap(tilemap, x, y + 1));
+            const bool left = is_floor_tile(oct_GetTilemap(tilemap, x - 1, y));
+            const bool right = is_floor_tile(oct_GetTilemap(tilemap, x + 1, y));
+            const bool DOOR_ANYWHERE_FFS = oct_GetTilemap(decorations, x + 1, y) == TILE_DOOR_CLOSED ||
+                                           oct_GetTilemap(decorations, x - 1, y) == TILE_DOOR_CLOSED ||
+                                           oct_GetTilemap(decorations, x, y + 1) == TILE_DOOR_CLOSED ||
+                                           oct_GetTilemap(decorations, x, y - 1) == TILE_DOOR_CLOSED;
+            if (DOOR_ANYWHERE_FFS || !is_floor_tile(oct_GetTilemap(tilemap, x, y))) return false;
+            if ((above && below && !left && !right) || (!above && !below && left && right))
+                return true;
+        }
+    }
+    return false;
 }
 
 // Applies shadows to decorations
@@ -317,8 +333,7 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     for (int32_t y = 0; y < params->level_size[1]; y++) {
         for (int32_t x = 0; x < params->level_size[0]; x++) {
             autotile(tilemap, decorations, x, y);
-
-            if (is_door_location(rooms, room_count, x, y)) {
+            if (is_door_location(tilemap, decorations, rooms, room_count, x, y)) {
                 oct_SetTilemap(decorations, x, y, TILE_DOOR_CLOSED);
                 TileContents *t = level_get_tile((Position){x, y});
                 assert(t);

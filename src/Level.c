@@ -139,11 +139,17 @@ static bool tile_visible_to_player(Position tile) {
 }
 
 static void draw_tiles() {
-    // batshit insane terrible solution because octarine is borked
+    float camera_x, camera_y;
+    get_camera_coords(&camera_x, &camera_y, nullptr, nullptr);
+    const int32_t start_draw_x = (int32_t)floorf((camera_x - CELL_WIDTH) / CELL_WIDTH);
+    const int32_t start_draw_y = (int32_t)floorf((camera_y - CELL_HEIGHT) / CELL_HEIGHT);
+    const int32_t tile_horizontal = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
+    const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
+
     set_draw_target(g_game.current_level.level_tex);
     oct_DrawClear(&(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f});
-    oct_TilemapDraw(g_game.current_level.tilemap);
-    oct_TilemapDraw(g_game.current_level.decorations);
+    oct_TilemapDrawPart(g_game.current_level.tilemap, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
+    oct_TilemapDrawPart(g_game.current_level.decorations, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
     reset_draw_target();
 
     oct_DrawTexture(g_game.current_level.level_tex, (Oct_Vec2){0, 0});
