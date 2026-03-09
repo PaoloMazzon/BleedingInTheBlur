@@ -232,7 +232,16 @@ int32_t character_crit_chance(Character *c) {
 }
 
 int32_t character_take_damage(Character *c, int32_t damage, Traits *source_traits) {
+    Statblock current_statblock;
+    character_get_current_stats(c, &current_statblock);
     const int32_t initial = c->current_hp;
+
+    // They can evade
+    if (roll_dice(current_statblock.evade, current_statblock.martial, nullptr)) {
+        create_label("Evaded!", c->pos, (Oct_Colour){.r = 0.3f, .g = 1.0f, .b = 0.3f, .a = 1.0f}, false);
+        return 0;
+    }
+
     c->current_hp = non_negative(c->current_hp - damage);
 
     // check if they need to get deleted for dying
@@ -363,7 +372,7 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
     char *buffer = oct_Malloc(g_game.allocator, max_text_len + 1);
     snprintf(buffer, max_text_len, "1%s%i%s%s%i%s%i", GLYPH_D8, pips, GLYPH_D6, GLYPH_ARROW, result, GLYPH_OUT_OF, dc);
     create_dice_label(buffer,
-                      target_position,
+                      (Position){target_position[0], target_position[1] + 2},
                       passed ? green : red, true);
 
     return passed;

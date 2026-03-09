@@ -370,22 +370,24 @@ void draw_labels() {
 
 void process_character_attack() {
     if (level_attack_animation_complete() && g_game.current_level.Attack.successful) {
-        character_take_damage(
+        const int32_t actual_damage = character_take_damage(
                 g_game.current_level.Attack.receiver,
                 g_game.current_level.Attack.damage,
                 &g_game.current_level.Attack.traits);
-        snprintf(g_game.current_level.Attack.buffer, MAX_BUFFER_LENGTH - 1, "%i!", g_game.current_level.Attack.damage);
-        Oct_Colour c = {
-                .r = 1.0,
-                .g = 1.0,
-                .b = 1.0,
-                .a = 1.0,
-        };
-        create_label(
-                g_game.current_level.Attack.buffer,
-                g_game.current_level.Attack.receiver->pos,
-                c,
-                false);
+        if (actual_damage != 0) {
+            snprintf(g_game.current_level.Attack.buffer, MAX_BUFFER_LENGTH - 1, "%i!", actual_damage);
+            Oct_Colour c = {
+                    .r = 1.0,
+                    .g = 1.0,
+                    .b = 1.0,
+                    .a = 1.0,
+            };
+            create_label(
+                    g_game.current_level.Attack.buffer,
+                    g_game.current_level.Attack.receiver->pos,
+                    c,
+                    false);
+        }
     }
 }
 
