@@ -106,6 +106,35 @@ void draw_ui() {
     oct_DrawTexture(
             oct_GetAsset(g_game.assets, "hud/hudbase.png"),
             (Oct_Vec2){0, 224});
+
+    // Stats
+    const int32_t max_hp = character_max_hp(&g_game.player);
+    const int32_t hp = g_game.player.current_hp;
+    const int32_t max_mana = character_max_mana(&g_game.player);
+    const int32_t mana = g_game.player.current_mana;
+    const int32_t movement = g_game.player.cumulative_movement;
+
+    // Draw HP depending on if the player has above or below 40
+    float hp_horizontal_jump = 6;
+    float hp_vertical_jump = 4;
+    int32_t hp_extra_pixel_at = 5;
+    Oct_Texture hp_pip_empty = oct_GetAsset(g_game.assets, "hud/healthpipempty.png");
+    Oct_Texture hp_pip_full = oct_GetAsset(g_game.assets, "hud/healthpipfull.png");
+    const float hp_start_x = 2;
+    const float hp_start_y = 226;
+    if (max_hp > 40) {
+        hp_horizontal_jump = 3;
+        hp_extra_pixel_at = 10;
+        hp_pip_empty = oct_GetAsset(g_game.assets, "hud/healthpipempty_big.png");
+        hp_pip_full = oct_GetAsset(g_game.assets, "hud/healthpipfull_big.png");
+    }
+    for (int32_t i = 0; i < max_hp; i++) {
+        const float vertical_jump = (float)(i / (hp_extra_pixel_at * 2)) * hp_vertical_jump;
+        const float horizontal_jump = ((float)(i % (hp_extra_pixel_at * 2)) * hp_horizontal_jump) + (float)((i % (hp_extra_pixel_at * 2)) / hp_extra_pixel_at);
+        oct_DrawTexture(
+                hp > i ? hp_pip_full : hp_pip_empty,
+                (Oct_Vec2){hp_start_x + horizontal_jump, hp_start_y + vertical_jump});
+    }
 }
 
 static TileVisibility tile_visible_to_player(Position tile, Statblock *player_current_stats) {
