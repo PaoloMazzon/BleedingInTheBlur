@@ -26,7 +26,7 @@ uint64_t new_oct_id() {
 
 void update_camera_coords() {
     camera_x += ((((float)camera_lookat[0] * CELL_WIDTH) + (CELL_WIDTH / 2)) - (camera_w / 2) - camera_x) * 0.2f;
-    camera_y += ((((float)camera_lookat[1] * CELL_HEIGHT) + (CELL_HEIGHT / 2)) - (camera_h / 2) - camera_y) * 0.2f;
+    camera_y += ((((float)(camera_lookat[1] + 1) * CELL_HEIGHT) + (CELL_HEIGHT / 2)) - (camera_h / 2) - camera_y) * 0.2f;
     camera_w = camera_actual_zoom * GAME_VIEW_WIDTH;
     camera_h = camera_actual_zoom * GAME_VIEW_HEIGHT;
     camera_actual_zoom += (camera_zoom - camera_actual_zoom) * 0.4f;

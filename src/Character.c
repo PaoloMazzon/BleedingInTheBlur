@@ -210,7 +210,7 @@ void character_get_current_stats(Character *c, Statblock *out) {
 int32_t character_max_hp(Character *c) {
     Statblock current_statblock;
     character_get_current_stats(c, &current_statblock);
-    return c->bonus_max_hp + (current_statblock.grit * 2) + 15;
+    return c->bonus_max_hp + (current_statblock.grit * 3) + 10;
 }
 
 int32_t character_max_mana(Character *c) {

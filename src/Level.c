@@ -103,7 +103,9 @@ void draw_characters() {
 }
 
 void draw_ui() {
-    // TODO: This
+    oct_DrawTexture(
+            oct_GetAsset(g_game.assets, "hud/hudbase.png"),
+            (Oct_Vec2){0, 224});
 }
 
 static TileVisibility tile_visible_to_player(Position tile, Statblock *player_current_stats) {

@@ -20,10 +20,12 @@ static bool player_attack_view_state() {
         return true;
     }
 
-    if (oct_KeyPressed(BUTTON_LEFT)) movement_direction[0] = -1;
-    else if (oct_KeyPressed(BUTTON_RIGHT)) movement_direction[0] = 1;
-    else if (oct_KeyPressed(BUTTON_UP)) movement_direction[1] = -1;
-    else if (oct_KeyPressed(BUTTON_DOWN)) movement_direction[1] = 1;
+    if (!level_in_attack_animation()) {
+        if (oct_KeyPressed(BUTTON_LEFT)) movement_direction[0] = -1;
+        else if (oct_KeyPressed(BUTTON_RIGHT)) movement_direction[0] = 1;
+        else if (oct_KeyPressed(BUTTON_UP)) movement_direction[1] = -1;
+        else if (oct_KeyPressed(BUTTON_DOWN)) movement_direction[1] = 1;
+    }
 
     g_game.current_level.attack_view.attack_cursor[0] += movement_direction[0];
     g_game.current_level.attack_view.attack_cursor[1] += movement_direction[1];
@@ -37,12 +39,12 @@ static bool player_attack_view_state() {
             g_game.current_level.attack_view.attack_cursor[1]);
 
     // Let player cancel attack selection
-    if (oct_KeyPressed(BUTTON_ATTACK_VIEW)) {
+    if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_ATTACK_VIEW)) {
         g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
     }
 
     // Attack things at target
-    if (oct_KeyPressed(BUTTON_CONFIRM)) {
+    if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_CONFIRM)) {
         const TileContents *tile = level_get_tile(g_game.current_level.attack_view.attack_cursor);
         if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= player->weapons[player->active_weapon].range) {
             int32_t bonus_damage = 0;
