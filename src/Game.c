@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <math.h>
 #include "Game.h"
 #include "Structs.h"
 
@@ -71,17 +72,59 @@ void *update(void *ptr) {
         }
     }
 
-    // Draw from the backbuffer to the screen
+
+    // Toggle fullscreen
+    if (oct_KeyDown(OCT_KEY_LALT) && oct_KeyPressed(OCT_KEY_RETURN))
+        oct_SetFullscreen(!oct_WindowIsFullscreen());
+    if (oct_KeyPressed(OCT_KEY_1))
+        g_game.scale_mode = SCALE_MODE_INTEGER;
+    if (oct_KeyPressed(OCT_KEY_2))
+        g_game.scale_mode = SCALE_MODE_ASPECT_RATIO;
+    if (oct_KeyPressed(OCT_KEY_3))
+        g_game.scale_mode = SCALE_MODE_STRETCH;
     const float window_width = oct_WindowWidth();
     const float window_height = oct_WindowHeight();
+
+    Oct_CameraUpdate camera_update = {
+            .size = {window_width, window_height},
+            .screenSize = {window_width, window_height},
+    };
+    oct_UpdateCamera(g_game.render_camera, &camera_update);
+
+    // Draw from the backbuffer to the screen
     oct_SetDrawTarget(OCT_TARGET_SWAPCHAIN);
     oct_SetTextureCamerasEnabled(false);
     oct_LockCameras(g_game.render_camera);
-    oct_DrawTextureExt(
-            g_game.backbuffer,
-            (Oct_Vec2){0, 0},
-            (Oct_Vec2){window_width / VIRTUAL_WIDTH, window_height / VIRTUAL_HEIGHT},
-            0, (Oct_Vec2){0, 0});
+    oct_DrawClear(&(Oct_Colour){.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = 1.0f});
+    if (g_game.scale_mode == SCALE_MODE_INTEGER) {
+        const float scale_x = floorf(window_width / VIRTUAL_WIDTH);
+        const float scale_y = floorf(window_height / VIRTUAL_HEIGHT);
+        const float scale = scale_x < scale_y ? scale_x : scale_y;
+        const float x_offset = (window_width - (VIRTUAL_WIDTH * scale)) * 0.5f;
+        const float y_offset = (window_height - (VIRTUAL_HEIGHT * scale)) * 0.5f;
+        oct_DrawTextureExt(
+                g_game.backbuffer,
+                (Oct_Vec2) {x_offset, y_offset},
+                (Oct_Vec2) {scale, scale},
+                0, (Oct_Vec2) {0, 0});
+    } else if (g_game.scale_mode == SCALE_MODE_ASPECT_RATIO) {
+        const float scale_x = window_width / VIRTUAL_WIDTH;
+        const float scale_y = window_height / VIRTUAL_HEIGHT;
+        const float scale = scale_x < scale_y ? scale_x : scale_y;
+        const float x_offset = (window_width - (VIRTUAL_WIDTH * scale)) * 0.5f;
+        const float y_offset = (window_height - (VIRTUAL_HEIGHT * scale)) * 0.5f;
+        oct_DrawTextureExt(
+                g_game.backbuffer,
+                (Oct_Vec2) {x_offset, y_offset},
+                (Oct_Vec2) {scale, scale},
+                0, (Oct_Vec2) {0, 0});
+    } else /* Stretch */ {
+        oct_DrawTextureExt(
+                g_game.backbuffer,
+                (Oct_Vec2){0, 0},
+                (Oct_Vec2){window_width / VIRTUAL_WIDTH, window_height / VIRTUAL_HEIGHT},
+                0, (Oct_Vec2){0, 0});
+    }
 
     g_game.frame++;
     return nullptr;

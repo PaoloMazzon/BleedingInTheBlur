@@ -157,6 +157,11 @@ typedef enum {
     TILE_VISIBILITY_PARTIALLY_VISIBLE = 1, // player saw it recently
     TILE_VISIBILITY_FULLY_VISIBLE     = 2, // player currently sees it
 } TileVisibility;
+typedef enum {
+    SCALE_MODE_INTEGER      = 0, // Integer scaling
+    SCALE_MODE_ASPECT_RATIO = 1, // Maintain aspect ratio
+    SCALE_MODE_STRETCH      = 2, // Stretch to fit the screen
+} ScaleMode;
 
 // These should all be bools
 typedef struct Traits_s {
@@ -434,6 +439,7 @@ typedef struct Game_s {
     Oct_Camera world_camera; // in-game-world camera
     Oct_Camera ui_camera; // ui camera (it'll be virtual screen size)
     Oct_Camera render_camera; // for the final backbuffer
+    ScaleMode scale_mode;
 
     // Level in the dungeon
     Level current_level;
