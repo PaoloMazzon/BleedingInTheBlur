@@ -135,6 +135,41 @@ void draw_ui() {
                 hp > i ? hp_pip_full : hp_pip_empty,
                 (Oct_Vec2){hp_start_x + horizontal_jump, hp_start_y + vertical_jump});
     }
+    // Mana
+    const float mana_horizontal_jump = 3;
+    const float mana_vertical_jump = 4;
+    const int32_t mana_extra_pixel_at = 10;
+    const Oct_Texture mana_pip_empty = oct_GetAsset(g_game.assets, "hud/manapipempty.png");
+    const Oct_Texture mana_pip_full = oct_GetAsset(g_game.assets, "hud/manapipfull.png");
+    const float mana_start_x = 66;
+    const float mana_start_y = 226;
+    for (int32_t i = 0; i < max_mana; i++) {
+        const float vertical_jump = (float)(i / (mana_extra_pixel_at * 2)) * mana_vertical_jump;
+        const float horizontal_jump = ((float)(i % (mana_extra_pixel_at * 2)) * mana_horizontal_jump) + (float)((i % (mana_extra_pixel_at * 2)) / mana_extra_pixel_at);
+        oct_DrawTexture(
+                mana > i ? mana_pip_full : mana_pip_empty,
+                (Oct_Vec2){mana_start_x + horizontal_jump, mana_start_y + vertical_jump});
+    }
+
+    // movement bar starts at 132, 230  + 17 + 1
+    const float player_movement = (float)g_game.player.cumulative_movement / 100.0f;
+    oct_DrawTextureExt(
+            oct_GetAsset(g_game.assets, "hud/movementbar.png"),
+            (Oct_Vec2){132, 230},
+            (Oct_Vec2){player_movement, 1},
+            0, (Oct_Vec2){0, 0});
+    if (level_extra_player_turn())
+        oct_DrawTexture(
+                oct_GetAsset(g_game.assets, "hud/extraturn.png"),
+                (Oct_Vec2){132 + 17, 230 + 1});
+
+    // item location is 232, 232
+    // TODO: Draw the item
+
+    // weapon highlight is 259 + (32 * index), 227
+    oct_DrawTexture(
+            oct_GetAsset(g_game.assets, "hud/weaponselect.png"),
+                   (Oct_Vec2){259 + (float)(g_game.player.active_weapon), 227});
 }
 
 static TileVisibility tile_visible_to_player(Position tile, Statblock *player_current_stats) {
@@ -527,4 +562,8 @@ bool level_tile_seen_this_turn(Position pos) {
         pos[1] < 0 || pos[1] >= g_game.current_level.level_height) return 0;
     const int32_t raw_value = g_game.current_level.tile_visibilities_turn[(pos[1] * g_game.current_level.level_width) + pos[0]];
     return raw_value - g_game.current_level.turn >= -1 || raw_value == g_game.current_level.turn;
+}
+
+bool level_extra_player_turn() {
+    return g_game.player.cumulative_movement >= 100;
 }

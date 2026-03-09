@@ -27,6 +27,7 @@ int32_t level_get_tile_memory(Position pos); // get the visibility rating
 void level_set_tile_memory(Position pos, int32_t visibility); // set the visibility rating
 bool level_tile_is_remembered(Position pos); // just see if the player should remember it
 bool level_tile_seen_this_turn(Position pos);
+bool level_extra_player_turn();
 
 // Returns true if there is anything in the popup stack
 bool popups_are_active();

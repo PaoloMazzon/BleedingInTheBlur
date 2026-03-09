@@ -120,6 +120,6 @@ void player_update() {
             g_game.current_level.world_turn = true;
             g_game.current_level.state = LEVEL_STATE_ENEMY_TURN;
         }
-        g_game.player.cumulative_movement += oct_Clampi(0, 100, character_movement(&g_game.player));
+        g_game.player.cumulative_movement = oct_Clampi(0, 100, g_game.player.cumulative_movement + character_movement(&g_game.player));
     }
 }
