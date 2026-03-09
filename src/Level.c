@@ -34,6 +34,8 @@ void draw_characters() {
             continue;
 
         if (!character_is_alive(c)) continue;
+        const float target_alpha = level_tile_seen_this_turn(c->pos) ? 1 : 0;
+        c_info->actual_alpha += (target_alpha - c_info->actual_alpha) * 0.4;
 
         // Move character to where they should be
         const Oct_Vec2 velocity = {
@@ -58,7 +60,7 @@ void draw_characters() {
         const float speed = sqrtf(powf(velocity[0], 2) + powf(velocity[1], 2));
         c_info->rotation = speed * c_info->facing_direction * 0.15f;
 
-        character_draw(c, c_info->actual_position);
+        character_draw(c, c_info->actual_position, c_info->actual_alpha);
         timer_tick(&c->face_away_timer);
     }
 
@@ -89,11 +91,11 @@ void draw_characters() {
         // Account for facing the wrong way
         atk_info->facing_direction = (level->Attack.attacker->pos[0] <= level->Attack.receiver->pos[0]) ? 1 : -1;
         atk_info->scale_x = atk_info->scale_x;
-        character_draw(level->Attack.receiver, rcvr_info->actual_position);
+        character_draw(level->Attack.receiver, rcvr_info->actual_position, 1.0f);
         timer_start(&level->Attack.attacker->face_away_timer, 20);
 
         // Interpolate target position and effects for receiver
-        character_draw(level->Attack.attacker, atk_info->actual_position);
+        character_draw(level->Attack.attacker, atk_info->actual_position, 1.0f);
         rcvr_info->actual_position[0] = rcvr_info->actual_position[0] + (((float)rcvr_target_tile[0] * CELL_WIDTH) - rcvr_info->actual_position[0]) * interpolation;
         rcvr_info->actual_position[1] = rcvr_info->actual_position[1] + (((float)rcvr_target_tile[1] * CELL_HEIGHT) - rcvr_info->actual_position[1]) * interpolation;
         rcvr_info->rotation = interpolation * -rcvr_info->facing_direction * 1.5f;
@@ -104,7 +106,7 @@ void draw_ui() {
     // TODO: This
 }
 
-static bool tile_visible_to_player(Position tile) {
+static TileVisibility tile_visible_to_player(Position tile, Statblock *player_current_stats) {
     const Position player_position = {
             g_game.player.pos[0],
             g_game.player.pos[1]
@@ -125,7 +127,8 @@ static bool tile_visible_to_player(Position tile) {
         if (x0 != player_position[0] || y0 != player_position[1]) {
             TileContents *t = level_get_tile((Position){x0, y0});
             if (t == NULL || t->type == TILE_CONTENTS_TYPE_WALL) {
-                return false;  // wall in the way — destination is hidden
+                const bool remembered = level_tile_is_remembered(tile);
+                return (remembered ? TILE_VISIBILITY_PARTIALLY_VISIBLE : TILE_VISIBILITY_NOT_VISIBLE);
             }
         }
 
@@ -134,8 +137,8 @@ static bool tile_visible_to_player(Position tile) {
         if (e2 <  dx) { err += dx; y0 += sy; }
     }
 
-    // destination tile itself is never blocked — walls you're looking AT are visible
-    return true;
+    level_set_tile_memory(tile, player_current_stats->learning + (player_current_stats->cartography * 3));
+    return TILE_VISIBILITY_FULLY_VISIBLE;
 }
 
 static void draw_tiles() {
@@ -163,17 +166,22 @@ static void draw_fog_of_war() {
     const int32_t start_draw_y = (int32_t)floorf((camera_y - CELL_HEIGHT) / CELL_HEIGHT);
     const int32_t tile_horizontal = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
     const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
+    Statblock player_current_stats;
+    character_get_current_stats(&g_game.player, &player_current_stats);
+    const Oct_Texture full_block = oct_GetAsset(g_game.assets, "fow.png");
+    const Oct_Texture part_block = oct_GetAsset(g_game.assets, "fow_half.png");
 
     // Draw shadows over places the player can't see
     for (int32_t y = start_draw_y; y < start_draw_y + tile_vertical; y++) {
         for (int32_t x = start_draw_x; x < start_draw_x + tile_horizontal; x++) {
-            if (!tile_visible_to_player((Position){x, y})) {
+            TileVisibility tile_visibility = tile_visible_to_player((Position){x, y}, &player_current_stats);
+            if (tile_visibility != TILE_VISIBILITY_FULLY_VISIBLE) {
                 Oct_DrawCommand cmd = {
                         .blendMode = OCT_BLEND_MODE_BLEND,
                         .type = OCT_DRAW_COMMAND_TYPE_TEXTURE,
                         .colour = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f},
                         .Texture = {
-                                .texture = oct_GetAsset(g_game.assets, "fow.png"),
+                                .texture = (tile_visibility == TILE_VISIBILITY_PARTIALLY_VISIBLE ? part_block : full_block),
                                 .viewport = {0, 0, OCT_WHOLE_TEXTURE, OCT_WHOLE_TEXTURE},
                                 .position = {((float)x * CELL_WIDTH) - 2, ((float)y * CELL_HEIGHT) - 2},
                                 .scale = {1, 1},
@@ -328,6 +336,8 @@ void level_begin() {
     };
     Position player_start_pos;
     generate_level(&g_game.current_level, &params, player_start_pos);
+    g_game.current_level.tile_visibilities = oct_Zalloc(g_game.allocator, sizeof(int32_t) * params.level_size[0] * params.level_size[1]);
+    g_game.current_level.tile_visibilities_turn = oct_Zalloc(g_game.allocator, sizeof(int32_t) * params.level_size[0] * params.level_size[1]);
     player_init(player_start_pos);
 
     // Debug
@@ -353,6 +363,7 @@ LevelIndex level_update() {
 
     // Update logic/turn logic
     player_update();
+    const bool world_turn_occurred = g_game.current_level.world_turn;
     update_camera_coords();
     characters_update();
 
@@ -372,10 +383,13 @@ LevelIndex level_update() {
     process_character_attack();
 
     timer_tick(&g_game.current_level.Attack.animation_timer);
+    if (world_turn_occurred) g_game.current_level.turn++;
     return g_game.level_index;
 }
 
 void level_end() {
+    oct_Free(g_game.allocator, g_game.current_level.tile_visibilities);
+    oct_Free(g_game.allocator, g_game.current_level.tile_visibilities_turn);
     cleanup_level(&g_game.current_level);
 }
 
@@ -457,4 +471,29 @@ void level_get_spawn_point(Position out_tile) {
     g_game.current_level.spawn_points[index][0] = g_game.current_level.spawn_points[last_spot][0];
     g_game.current_level.spawn_points[index][1] = g_game.current_level.spawn_points[last_spot][1];
     g_game.current_level.spawn_points_count--;
+}
+
+int32_t level_get_tile_memory(Position pos) {
+    if (pos[0] < 0 || pos[0] >= g_game.current_level.level_width ||
+        pos[1] < 0 || pos[1] >= g_game.current_level.level_height) return 0;
+    const int32_t raw_value = g_game.current_level.tile_visibilities[(pos[1] * g_game.current_level.level_width) + pos[0]];
+    return raw_value - g_game.current_level.turn;
+}
+
+void level_set_tile_memory(Position pos, int32_t visibility) {
+    if (pos[0] < 0 || pos[0] >= g_game.current_level.level_width ||
+        pos[1] < 0 || pos[1] >= g_game.current_level.level_height) return;
+    g_game.current_level.tile_visibilities[(pos[1] * g_game.current_level.level_width) + pos[0]] = visibility + g_game.current_level.turn;
+    g_game.current_level.tile_visibilities_turn[(pos[1] * g_game.current_level.level_width) + pos[0]] = g_game.current_level.turn;
+}
+
+bool level_tile_is_remembered(Position pos) {
+    return level_get_tile_memory(pos) > 0;
+}
+
+bool level_tile_seen_this_turn(Position pos) {
+    if (pos[0] < 0 || pos[0] >= g_game.current_level.level_width ||
+        pos[1] < 0 || pos[1] >= g_game.current_level.level_height) return 0;
+    const int32_t raw_value = g_game.current_level.tile_visibilities_turn[(pos[1] * g_game.current_level.level_width) + pos[0]];
+    return raw_value - g_game.current_level.turn >= -1 || raw_value == g_game.current_level.turn;
 }

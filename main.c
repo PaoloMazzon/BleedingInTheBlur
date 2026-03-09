@@ -18,7 +18,7 @@ int main(int argc, const char **argv) {
 #ifndef NDEBUG
             .debug = true,
 #else
-            .debug = true,
+            .debug = false,
 #endif
     };
 

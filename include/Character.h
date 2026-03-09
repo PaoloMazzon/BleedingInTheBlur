@@ -30,7 +30,7 @@ void character_create(Statblock *starting_stats, Position position, Character *o
 int32_t statblock_get_dc(int32_t base_stat);
 
 // Draws a character wherever specified
-void character_draw(Character *c, Oct_Vec2 position);
+void character_draw(Character *c, Oct_Vec2 position, float alpha);
 
 // Returns the current statblock for a character (initial stats + bonus)
 void character_get_current_stats(Character *c, Statblock *out);

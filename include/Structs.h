@@ -152,6 +152,11 @@ typedef enum {
     ATTACK_FAVOUR_GOOD    = 1, // the circumstances result in extra pips
     ATTACK_FAVOUR_BAD     = 2, // the circumstances result in fewer pips
 } AttackFavour;
+typedef enum {
+    TILE_VISIBILITY_NOT_VISIBLE       = 0,
+    TILE_VISIBILITY_PARTIALLY_VISIBLE = 1, // player saw it recently
+    TILE_VISIBILITY_FULLY_VISIBLE     = 2, // player currently sees it
+} TileVisibility;
 
 // These should all be bools
 typedef struct Traits_s {
@@ -206,6 +211,7 @@ typedef struct ObjectInfo_s {
     float rotation;
     float scale_x;
     float facing_direction;
+    float actual_alpha; // for fading in and out when visible/not visible
 
     // These matter for skills and items and other things
     Traits traits;
@@ -396,6 +402,8 @@ typedef struct Level_s {
     Oct_Tilemap decorations; // drawn above tilemap
     bool stats_toggle; // toggle for drawing player stats
     Oct_Texture level_tex;
+    int32_t *tile_visibilities; // keeping track of what the player is aware of
+    int32_t *tile_visibilities_turn; // keeping track of what the player is looking at
 
     Character characters[MAX_CHARACTERS];
     Item items[MAX_ITEMS];
@@ -403,6 +411,7 @@ typedef struct Level_s {
 
     // If the player does something, and it isn't an extra turn, the world gets a turn
     bool world_turn;
+    int32_t turn; // amount of turns that have taken place this level
 
     // For attack animations
     struct {

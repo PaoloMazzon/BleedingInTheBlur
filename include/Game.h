@@ -22,6 +22,11 @@ TileContentsType level_get_tile_type(int32_t x, int32_t y); // returns TILE_CONT
 bool level_in_attack_animation();
 bool level_attack_animation_complete();
 void level_get_spawn_point(Position out_tile);
+// For player remembering out-of-sight parts of the level
+int32_t level_get_tile_memory(Position pos); // get the visibility rating
+void level_set_tile_memory(Position pos, int32_t visibility); // set the visibility rating
+bool level_tile_is_remembered(Position pos); // just see if the player should remember it
+bool level_tile_seen_this_turn(Position pos);
 
 // Returns true if there is anything in the popup stack
 bool popups_are_active();
