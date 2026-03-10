@@ -62,6 +62,7 @@ extern const int32_t TILE_WALL_SHADOW_LEFT_RIGHT_BOTTOM;
 extern const Oct_Key BUTTON_ATTACK_VIEW;
 extern const Oct_Key BUTTON_STAT_TOGGLE;
 extern const Oct_Key BUTTON_CONFIRM;
+extern const Oct_Key BUTTON_SWAP_WEAPON;
 extern const Oct_Key BUTTON_LEFT;
 extern const Oct_Key BUTTON_RIGHT;
 extern const Oct_Key BUTTON_UP;
@@ -89,3 +90,5 @@ extern const Oct_Key BUTTON_DOWN;
 #define CAMERA_ID 1
 #define LABELS_ID_START 100 // needs at least MAX_LABELS
 #define ATTACK_CURSOR_ID_START 200 // needs at least 9
+#define WEAPON_INDICATOR_ID 2
+#define MOVEMENT_BAR_ID 3

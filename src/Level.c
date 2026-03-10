@@ -103,6 +103,8 @@ void draw_characters() {
 }
 
 void draw_ui() {
+    static float actual_weapon_indicator_offset = 0;
+    static float actual_movement_scale = 0;
     oct_DrawTexture(
             oct_GetAsset(g_game.assets, "hud/hudbase.png"),
             (Oct_Vec2){0, 224});
@@ -153,10 +155,12 @@ void draw_ui() {
 
     // movement bar starts at 132, 230  + 17 + 1
     const float player_movement = (float)g_game.player.cumulative_movement / 100.0f;
-    oct_DrawTextureExt(
+    actual_movement_scale += (player_movement - actual_movement_scale) * 0.4f;
+    oct_DrawTextureIntExt(
+            OCT_INTERPOLATE_ALL, MOVEMENT_BAR_ID,
             oct_GetAsset(g_game.assets, "hud/movementbar.png"),
             (Oct_Vec2){132, 230},
-            (Oct_Vec2){player_movement, 1},
+            (Oct_Vec2){actual_movement_scale, 1},
             0, (Oct_Vec2){0, 0});
     if (level_extra_player_turn())
         oct_DrawTexture(
@@ -164,12 +168,20 @@ void draw_ui() {
                 (Oct_Vec2){132 + 17, 230 + 1});
 
     // item location is 232, 232
-    // TODO: Draw the item
+    // TODO: Item
 
     // weapon highlight is 259 + (32 * index), 227
-    oct_DrawTexture(
+    if (g_game.player.starting_weapon.type != WEAPON_TYPE_NONE) {
+        oct_DrawTexture(g_game.player.starting_weapon.icon, (Oct_Vec2){264, 232});
+    }
+    if (g_game.player.soul_bound_weapon.type != WEAPON_TYPE_NONE) {
+        oct_DrawTexture(g_game.player.soul_bound_weapon.icon, (Oct_Vec2){264 + 32, 232});
+    }
+    actual_weapon_indicator_offset += (((float)(g_game.player.active_weapon) * 32) - actual_weapon_indicator_offset) * 0.4f;
+    oct_DrawTextureInt(
+            OCT_INTERPOLATE_ALL, WEAPON_INDICATOR_ID,
             oct_GetAsset(g_game.assets, "hud/weaponselect.png"),
-                   (Oct_Vec2){259 + (float)(g_game.player.active_weapon), 227});
+                   (Oct_Vec2){259 + actual_weapon_indicator_offset, 227});
 }
 
 static TileVisibility tile_visible_to_player(Position tile, Statblock *player_current_stats) {
@@ -409,7 +421,7 @@ void level_begin() {
     player_init(player_start_pos);
 
     // Debug
-    for (int32_t i = 0; i < 10; i++) {
+    for (int32_t i = 0; i < 5; i++) {
         Position slime_spawn;
         level_get_spawn_point(slime_spawn);
         create_slime(level_get_character_slot(), slime_spawn);

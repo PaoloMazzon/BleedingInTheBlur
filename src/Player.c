@@ -77,6 +77,10 @@ static bool player_interaction_state() {
         g_game.current_level.attack_view.cursor_real_pos[1] = (float)g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT;
     }
 
+    if (oct_KeyPressed(BUTTON_SWAP_WEAPON)) {
+        player->active_weapon = !player->active_weapon;
+    }
+
     // Process movement
     if (movement_direction[0] != 0 || movement_direction[1] != 0) {
         const Position target_position = {

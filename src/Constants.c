@@ -93,6 +93,7 @@ const int32_t TILE_WALL_SHADOW_LEFT_RIGHT_BOTTOM = 42 + 8;
 const Oct_Key BUTTON_ATTACK_VIEW = OCT_KEY_X;
 const Oct_Key BUTTON_STAT_TOGGLE = OCT_KEY_C;
 const Oct_Key BUTTON_CONFIRM     = OCT_KEY_Z;
+const Oct_Key BUTTON_SWAP_WEAPON = OCT_KEY_V;
 const Oct_Key BUTTON_LEFT        = OCT_KEY_LEFT;
 const Oct_Key BUTTON_RIGHT       = OCT_KEY_RIGHT;
 const Oct_Key BUTTON_UP          = OCT_KEY_UP;

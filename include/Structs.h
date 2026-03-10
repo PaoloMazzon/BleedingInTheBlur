@@ -132,12 +132,13 @@ typedef enum {
     TILE_CONTENTS_TYPE_WALL      = 3,
 } TileContentsType;
 typedef enum {
-    WEAPON_TYPE_SWORD    = 0,
-    WEAPON_TYPE_SPEAR    = 1,
-    WEAPON_TYPE_BOW      = 2,
-    WEAPON_TYPE_CROSSBOW = 3,
-    WEAPON_TYPE_DAGGER   = 4,
-    WEAPON_TYPE_OTHER    = 5, // Things like monster claws
+    WEAPON_TYPE_NONE     = 0,
+    WEAPON_TYPE_SWORD    = 1,
+    WEAPON_TYPE_SPEAR    = 2,
+    WEAPON_TYPE_BOW      = 3,
+    WEAPON_TYPE_CROSSBOW = 4,
+    WEAPON_TYPE_DAGGER   = 5,
+    WEAPON_TYPE_OTHER    = 6, // Things like monster claws
     WEAPON_TYPE_MAX      = 6,
 } WeaponType;
 typedef enum {
@@ -248,6 +249,7 @@ typedef struct Alarm_s {
 
 typedef struct Weapon_s {
     ObjectInfo info;
+    Oct_Texture icon;
     WeaponType type;
     Statblock bonus_stats;
     int32_t damage;
