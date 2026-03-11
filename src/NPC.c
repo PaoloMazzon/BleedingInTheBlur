@@ -29,24 +29,15 @@ void create_slime(Character *slot, Position pos) {
             .grappler = 3,
             .evade = 1,
     };
+    Traits traits = {
+            .Character.lazy = true,
+            .Character.hostile = true,
+    };
     character_create(&sb, pos, slot);
     slot->info.name = "Slime";
+    slot->info.traits = traits;
     slot->info.drawn_type = DRAWN_TYPE_TEXTURE;
     slot->info.texture = oct_GetAsset(g_game.assets, "characters/slime.png");
+    slot->aggro_range = 4;
     get_starting_weapon(WEAPON_TYPE_OTHER, &slot->starting_weapon);
-}
-
-void character_take_turn(Character *c) {
-    Position movement_options[] = {
-            {1, 0},
-            {0, 1},
-            {-1, 0},
-            {0, -1},
-    };
-    const int32_t choice = random_int(0, 4);
-    Position new_pos = {
-            c->pos[0] + movement_options[choice][0],
-            c->pos[1] + movement_options[choice][1],
-    };
-    character_move(c, new_pos);
 }

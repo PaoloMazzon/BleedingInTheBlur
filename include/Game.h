@@ -31,6 +31,7 @@ bool level_extra_player_turn();
 void level_set_displayed_enemy(Character *c);
 void level_transition_to_enemy_turns();
 void level_next_enemy_turn();
+bool tiles_have_walls_between(Position tile1, Position tile2);
 
 // Returns true if there is anything in the popup stack
 bool popups_are_active();

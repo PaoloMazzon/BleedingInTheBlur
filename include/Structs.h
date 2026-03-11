@@ -282,6 +282,7 @@ struct Character_s {
     Alarm alarms[MAX_ALARMS];
     Item items[INVENTORY_SIZE];
     StatusEffects status_effects; // status effects are decremented every turn
+    int32_t aggro_range;
 
     // Weapons
     union {

@@ -12,7 +12,7 @@ static inline bool tile_in_range_of_player(Position target) {
     return tile_distance(target, g_game.player.pos) <= g_game.player.weapons[g_game.player.active_weapon].range;
 }
 
-static TileVisibility tiles_have_walls_between(Position tile1, Position tile2) {
+bool tiles_have_walls_between(Position tile1, Position tile2) {
     int x0 = tile1[0];
     int y0 = tile1[1];
     int x1 = tile2[0];
@@ -528,7 +528,7 @@ void level_begin() {
     player_init(player_start_pos);
 
     // Debug
-    for (int32_t i = 0; i < 5; i++) {
+    for (int32_t i = 0; i < 2; i++) {
         Position slime_spawn;
         level_get_spawn_point(slime_spawn);
         create_slime(level_get_character_slot(), slime_spawn);
