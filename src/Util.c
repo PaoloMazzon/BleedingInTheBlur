@@ -57,6 +57,14 @@ bool roll_dice(int32_t pips, int32_t dc, int32_t *result) {
     return sum >= dc;
 }
 
+bool roll_ups(int32_t pips, int32_t up_count, int32_t *out_rolled_ups) {
+    int32_t ups = random_int(1, 9) == 8 ? 1 : 0;
+    for (int i = 0; i < pips; i++)
+        ups += random_int(1, 7) == 6 ? 1 : 0;
+    if (out_rolled_ups) *out_rolled_ups = ups;
+    return ups >= up_count;
+}
+
 int32_t tile_distance(Position p1, Position p2) {
     const int32_t x_delta = abs(p1[0] - p2[0]);
     const int32_t y_delta = abs(p1[1] - p2[1]);

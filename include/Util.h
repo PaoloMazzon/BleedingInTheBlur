@@ -23,6 +23,11 @@ void look_at(Position pos, float zoom);
 // Simulates rolling dice, returns bool if the roll meets or beats the DC. out may be null
 bool roll_dice(int32_t pips, int32_t dc, int32_t *result);
 
+// Simulates rolling ups on dice. This means that it rolls 1d8 and a number of d6 equal to the
+// pips but the roll is only considered successful if the max value is rolled on at least
+// up_count of the dice.
+bool roll_ups(int32_t pips, int32_t up_count, int32_t *out_rolled_ups);
+
 // returns the manhattan distance between two tiles
 int32_t tile_distance(Position p1, Position p2);
 

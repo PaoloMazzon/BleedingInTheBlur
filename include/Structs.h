@@ -163,6 +163,12 @@ typedef enum {
     SCALE_MODE_ASPECT_RATIO = 1, // Maintain aspect ratio
     SCALE_MODE_STRETCH      = 2, // Stretch to fit the screen
 } ScaleMode;
+typedef enum {
+    ITEM_TYPE_NONE   = 0, // not a valid item
+    ITEM_TYPE_POTION = 1, // some sort of potion, could be garbage
+    ITEM_TYPE_SPELL  = 2, // spell with x charges
+    ITEM_TYPE_USABLE = 3, // usable item with x charges
+} ItemType;
 
 // These should all be bools
 typedef struct Traits_s {
@@ -231,6 +237,9 @@ typedef struct Tile_s {
 
 typedef struct Item_s {
     ObjectInfo info;
+    ItemType type;
+    int32_t charges;
+    int32_t charges_remaining;
     ItemEnterInventoryCallback enter_inventory_callback;
     ItemExitInventoryCallback exit_inventory_callback;
     ItemUseCallback use_callback;
@@ -432,6 +441,11 @@ typedef struct Level_s {
         Traits traits; // traits associated with the attack
         char buffer[MAX_BUFFER_LENGTH + 1];
     } Attack;
+
+    // For displaying enemy information
+    Timer enemy_display_timer;
+    Character *enemy_displayed;
+    float actual_displayed_health; // for tweening
 } Level;
 
 typedef struct Game_s {

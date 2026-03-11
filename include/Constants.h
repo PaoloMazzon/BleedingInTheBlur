@@ -78,7 +78,7 @@ extern const Oct_Key BUTTON_DOWN;
 #define GLYPH_POINT_RIGHT "="
 
 #define MAX_ALARMS 100
-#define INVENTORY_SIZE 5
+#define INVENTORY_SIZE 4
 #define MAX_CHARACTERS 100
 #define MAX_ITEMS 100
 #define MAX_LABELS 100
@@ -87,8 +87,11 @@ extern const Oct_Key BUTTON_DOWN;
 #define MAX_BUFFER_LENGTH 50
 
 // These are compiler preprocessors for easy access
-#define CAMERA_ID 1
 #define LABELS_ID_START 100 // needs at least MAX_LABELS
 #define ATTACK_CURSOR_ID_START 200 // needs at least 9
-#define WEAPON_INDICATOR_ID 2
-#define MOVEMENT_BAR_ID 3
+#define                         CAMERA_ID 1
+#define               WEAPON_INDICATOR_ID 2
+#define                   MOVEMENT_BAR_ID 3
+#define                 ENEMY_HUD_NAME_ID 4
+#define            ENEMY_HUD_HEALTHBAR_ID 5
+#define ENEMY_HUD_HEALTHBAR_BACKGROUND_ID 6

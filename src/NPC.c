@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Character.h"
+#include "WeaponItem.h"
 
 void create_slime(Character *slot, Position pos) {
     Statblock sb = {
@@ -28,6 +29,7 @@ void create_slime(Character *slot, Position pos) {
             .evade = 1,
     };
     character_create(&sb, pos, slot);
+    slot->info.name = "Slime";
     slot->info.drawn_type = DRAWN_TYPE_TEXTURE;
     slot->info.texture = oct_GetAsset(g_game.assets, "characters/slime.png");
     get_starting_weapon(WEAPON_TYPE_OTHER, &slot->starting_weapon);

@@ -28,6 +28,7 @@ void level_set_tile_memory(Position pos, int32_t visibility); // set the visibil
 bool level_tile_is_remembered(Position pos); // just see if the player should remember it
 bool level_tile_seen_this_turn(Position pos);
 bool level_extra_player_turn();
+void level_set_displayed_enemy(Character *c);
 
 // Returns true if there is anything in the popup stack
 bool popups_are_active();

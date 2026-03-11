@@ -182,6 +182,49 @@ void draw_ui() {
             OCT_INTERPOLATE_ALL, WEAPON_INDICATOR_ID,
             oct_GetAsset(g_game.assets, "hud/weaponselect.png"),
                    (Oct_Vec2){259 + actual_weapon_indicator_offset, 227});
+
+    // Draw enemy info if one needs to be displayed
+    timer_tick(&g_game.current_level.enemy_display_timer);
+    if (timer_in_use(&g_game.current_level.enemy_display_timer) && g_game.current_level.enemy_displayed) {
+        const float normalized = timer_get_normalized(&g_game.current_level.enemy_display_timer);
+        const float fade_out_threshold = 0.2f;
+        const float alpha = fade_out_threshold >= normalized ? normalized / fade_out_threshold : 1;
+        Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha};
+        const float enemy_health = oct_Clamp(0, 1, (float)g_game.current_level.enemy_displayed->current_hp / (float)character_max_hp(g_game.current_level.enemy_displayed));
+        g_game.current_level.actual_displayed_health += (enemy_health - g_game.current_level.actual_displayed_health) * 0.4f;
+        Oct_Vec2 size = {0};
+        oct_GetTextSize(oct_GetAsset(g_game.assets, "fnt_pixel"), size, 1, g_game.current_level.enemy_displayed->info.name);
+        oct_DrawTextIntColour(
+                OCT_INTERPOLATE_ALL, ENEMY_HUD_NAME_ID,
+                oct_GetAsset(g_game.assets, "fnt_pixel"),
+                (Oct_Vec2){(VIRTUAL_WIDTH / 2) - (size[0] / 2), 7},
+                &c,
+                1,
+                g_game.current_level.enemy_displayed->info.name);
+        oct_DrawTextureIntColour(
+                OCT_INTERPOLATE_ALL, ENEMY_HUD_HEALTHBAR_BACKGROUND_ID,
+                oct_GetAsset(g_game.assets, "hud/enemyhealthbarbg.png"),
+                &c,
+                (Oct_Vec2){(VIRTUAL_WIDTH / 2) - (82 / 2), 20});
+        Oct_DrawCommand cmd = {
+                .type = OCT_DRAW_COMMAND_TYPE_TEXTURE,
+                .colour = c,
+                .id = ENEMY_HUD_HEALTHBAR_ID,
+                .interpolate = OCT_INTERPOLATE_ALL,
+                .Texture = {
+                        .texture = oct_GetAsset(g_game.assets, "hud/enemyhealthbar.png"),
+                        .viewport = {
+                                .position = {0, 0},
+                                .size = {76 * g_game.current_level.actual_displayed_health, 3}
+                        },
+                        .position = {(VIRTUAL_WIDTH / 2) - (82 / 2) + 3, 20 + 2},
+                        .scale = {1.0f, 1.0f},
+                        .origin = {0, 0},
+                        .rotation = 0,
+                }
+        };
+        oct_Draw(&cmd);
+    }
 }
 
 static TileVisibility tile_visible_to_player(Position tile, Statblock *player_current_stats) {
@@ -382,12 +425,17 @@ void draw_labels() {
 
 void process_character_attack() {
     if (level_attack_animation_complete() && g_game.current_level.Attack.successful) {
+        const bool crit = random_int(1, 101) <= character_crit_chance(g_game.current_level.Attack.attacker);
+        const int32_t multiplier = crit ? 2 : 1;
         const int32_t actual_damage = character_take_damage(
                 g_game.current_level.Attack.receiver,
-                g_game.current_level.Attack.damage,
+                g_game.current_level.Attack.damage * multiplier,
                 &g_game.current_level.Attack.traits);
         if (actual_damage != 0) {
-            snprintf(g_game.current_level.Attack.buffer, MAX_BUFFER_LENGTH - 1, "%i!", actual_damage);
+            if (!crit)
+                snprintf(g_game.current_level.Attack.buffer, MAX_BUFFER_LENGTH - 1, "%i dmg", actual_damage);
+            else
+                snprintf(g_game.current_level.Attack.buffer, MAX_BUFFER_LENGTH - 1, "CRIT %i!", actual_damage);
             Oct_Colour c = {
                     .r = 1.0,
                     .g = 1.0,
@@ -580,4 +628,11 @@ bool level_tile_seen_this_turn(Position pos) {
 
 bool level_extra_player_turn() {
     return g_game.player.cumulative_movement >= 100;
+}
+
+void level_set_displayed_enemy(Character *c) {
+    if (c != g_game.current_level.enemy_displayed)
+        g_game.current_level.actual_displayed_health = (float)c->current_hp / (float)character_max_hp(c);
+    g_game.current_level.enemy_displayed = c;
+    timer_start(&g_game.current_level.enemy_display_timer, 30 * 3);
 }
