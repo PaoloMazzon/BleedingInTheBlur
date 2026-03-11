@@ -2,4 +2,4 @@
 Roguelike game
 
 HEAVILY WIP
-![BleedingInTheBlur_yiWp5K4mhs](https://github.com/user-attachments/assets/667ad92d-2fd7-4450-bda3-8984a81c4ac3)
+![BleedingInTheBlur_iA8PQPm7Xh](https://github.com/user-attachments/assets/96379b09-ed0a-4ecc-8bdd-2fbd184a90fe)
