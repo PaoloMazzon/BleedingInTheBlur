@@ -18,6 +18,7 @@ static bool player_attack_view_state() {
     Position movement_direction = {0};
 
     if (level_attack_animation_complete()) {
+        oct_Log("Done player attack animation.");
         return true;
     }
 
@@ -48,7 +49,6 @@ static bool player_attack_view_state() {
     if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_CONFIRM)) {
         const TileContents *tile = level_get_tile(g_game.current_level.attack_view.attack_cursor);
         if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= player->weapons[player->active_weapon].range) {
-            int32_t bonus_damage = 0;
             character_attempt_attack(player,
                                      &player->weapons[player->active_weapon].info.traits,
                                      tile->character,
@@ -128,8 +128,7 @@ void player_update() {
         if (g_game.player.cumulative_movement == 100) {
             g_game.player.cumulative_movement = 0;
         } else {
-            g_game.current_level.world_turn = true;
-            g_game.current_level.state = LEVEL_STATE_ENEMY_TURN;
+            level_transition_to_enemy_turns();
         }
         g_game.player.cumulative_movement = oct_Clampi(0, 100, g_game.player.cumulative_movement + character_movement(&g_game.player));
     }

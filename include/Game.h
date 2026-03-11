@@ -29,6 +29,8 @@ bool level_tile_is_remembered(Position pos); // just see if the player should re
 bool level_tile_seen_this_turn(Position pos);
 bool level_extra_player_turn();
 void level_set_displayed_enemy(Character *c);
+void level_transition_to_enemy_turns();
+void level_next_enemy_turn();
 
 // Returns true if there is anything in the popup stack
 bool popups_are_active();

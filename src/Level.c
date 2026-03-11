@@ -12,12 +12,71 @@ static inline bool tile_in_range_of_player(Position target) {
     return tile_distance(target, g_game.player.pos) <= g_game.player.weapons[g_game.player.active_weapon].range;
 }
 
-void characters_update() {
-    // TODO: Enemy turns
+static TileVisibility tiles_have_walls_between(Position tile1, Position tile2) {
+    int x0 = tile1[0];
+    int y0 = tile1[1];
+    int x1 = tile2[0];
+    int y1 = tile2[1];
+
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
+
+    while (x0 != x1 || y0 != y1) {
+        if (x0 != tile1[0] || y0 != tile1[1]) {
+            TileContents *t = level_get_tile((Position){x0, y0});
+            if (t == NULL || t->type == TILE_CONTENTS_TYPE_WALL) {
+                return true;
+            }
+        }
+
+        int e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x0 += sx; }
+        if (e2 <  dx) { err += dx; y0 += sy; }
+    }
+
+    return false;
+}
+
+// returns true if you should call it again
+bool characters_update() {
+    // FIXME: This should be made into a proper state machine. There are only 4 states: waiting to take turn (timer), taking turn (timer), in attack animation, take turn instantly
     if (g_game.current_level.world_turn && g_game.current_level.state == LEVEL_STATE_ENEMY_TURN) {
-        g_game.current_level.world_turn = false;
+        Character *enemy = &g_game.current_level.characters[g_game.current_level.enemy_turn];
+
+        // Delayed turn is done
+        if (timer_tick(&g_game.current_level.enemy_move_timer) && !level_in_attack_animation()) {
+            level_next_enemy_turn();
+            return true;
+        }
+
+        const bool done_turn_delay = timer_tick(&g_game.current_level.enemy_delayed_turn_timer);
+        if (done_turn_delay) {
+            character_take_turn(enemy);
+            timer_start(&g_game.current_level.enemy_move_timer, 30 / 2);
+            oct_Log("Started move timer for enemy %i", g_game.current_level.enemy_turn);
+        } else if (!timer_in_use(&g_game.current_level.enemy_delayed_turn_timer) && !level_in_attack_animation() && !timer_in_use(&g_game.current_level.enemy_move_timer)) {
+            if (tile_distance(enemy->pos, g_game.player.pos) > 5 || tiles_have_walls_between(enemy->pos, g_game.player.pos)) {
+                // Take turn instantly
+                character_take_turn(enemy);
+                level_next_enemy_turn();
+                return true;
+            } else {
+                timer_start(&g_game.current_level.enemy_delayed_turn_timer, 30 / 2);
+                oct_Log("Started delayed timer for enemy %i", g_game.current_level.enemy_turn);
+            }
+        } else if (!level_in_attack_animation() && (timer_in_use(&g_game.current_level.enemy_move_timer) || timer_in_use(&g_game.current_level.enemy_delayed_turn_timer))) {
+            // Center camera on the enemy thats moving around
+            look_at(enemy->pos, 1);
+        } else if (level_attack_animation_complete()) {
+            level_next_enemy_turn();
+        }
+    } else if (!g_game.current_level.world_turn && g_game.current_level.state == LEVEL_STATE_ENEMY_TURN) {
         g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
     }
+    return false;
 }
 
 // This will also move characters to where they are supposed to be in the game world
@@ -493,7 +552,11 @@ LevelIndex level_update() {
     player_update();
     const bool world_turn_occurred = g_game.current_level.world_turn;
     update_camera_coords();
-    characters_update();
+
+    bool next_character = characters_update();
+    while (next_character) {
+        next_character = characters_update();
+    }
 
     // Drawing the world
     oct_LockCameras(g_game.world_camera);
@@ -635,4 +698,22 @@ void level_set_displayed_enemy(Character *c) {
         g_game.current_level.actual_displayed_health = (float)c->current_hp / (float)character_max_hp(c);
     g_game.current_level.enemy_displayed = c;
     timer_start(&g_game.current_level.enemy_display_timer, 30 * 3);
+}
+
+void level_transition_to_enemy_turns() {
+    g_game.current_level.state = LEVEL_STATE_ENEMY_TURN;
+    g_game.current_level.world_turn = true;
+    g_game.current_level.enemy_turn = -1;
+    level_next_enemy_turn();
+}
+
+void level_next_enemy_turn() {
+    for (int32_t i = g_game.current_level.enemy_turn + 1; i < MAX_CHARACTERS; i++) {
+        if (character_is_alive(&g_game.current_level.characters[i])) {
+            g_game.current_level.enemy_turn = i;
+            return;
+        }
+    }
+    g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
+    g_game.current_level.world_turn = false;
 }

@@ -427,7 +427,10 @@ typedef struct Level_s {
 
     // If the player does something, and it isn't an extra turn, the world gets a turn
     bool world_turn;
+    Timer enemy_move_timer; // for showing enemies in range moving
+    Timer enemy_delayed_turn_timer; // to let the camera pan over before taking the turn
     int32_t turn; // amount of turns that have taken place this level
+    int32_t enemy_turn;
 
     // For attack animations
     struct {
