@@ -452,6 +452,7 @@ typedef struct Level_s {
 
     // For showing the player's item bar popup
     Timer player_item_bar_popup_timer;
+    float player_item_bar_actual_y; // for tweening
 
     // For displaying enemy information
     Timer enemy_display_timer;

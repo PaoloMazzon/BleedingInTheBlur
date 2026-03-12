@@ -89,7 +89,8 @@ static bool player_interaction_state() {
     }
 
     if (oct_KeyPressed(BUTTON_ITEM_SWAP)) {
-        // TODO: Swap items
+        timer_start(&g_game.current_level.player_item_bar_popup_timer, 30 * 3);
+        g_game.player.selected_item = (g_game.player.selected_item + 1) % INVENTORY_SIZE;
     }
 
     // Process movement
@@ -131,6 +132,7 @@ void player_update() {
         // an extra turn
         if (g_game.player.cumulative_movement == 100) {
             g_game.player.cumulative_movement = 0;
+            g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
         } else {
             level_transition_to_enemy_turns();
         }

@@ -79,6 +79,10 @@ const char *get_skill_name(int32_t base_stat_index, int32_t skill_index) {
     return MARTIAL_STAT_NAMES[skill_index];
 }
 
+void character_draw(Character *c, Oct_Vec2 position, float alpha) {
+    draw_object(&c->info, position, 1, alpha);
+}
+
 void draw_object(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) {
     if (info->drawn_type == DRAWN_TYPE_SPRITE) {
         oct_DrawSpriteIntColourExt(
