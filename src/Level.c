@@ -162,6 +162,42 @@ void draw_characters() {
 void draw_ui() {
     static float actual_weapon_indicator_offset = 0;
     static float actual_movement_scale = 0;
+
+    // We want the item popup to draw below the rest of the hud so it can drop behind it
+    // item location is 232, 232
+    timer_tick(&g_game.current_level.player_item_bar_popup_timer);
+    if (timer_in_use(&g_game.current_level.player_item_bar_popup_timer)) {
+        const float item_bar_normalized_timer = timer_get_normalized(&g_game.current_level.player_item_bar_popup_timer);
+        // TODO: This should not be based off of the timer and instead a moving target_y like everything else in case the timer is restarted multiple times (in the case of the player spamming item swap)
+        const float y_displacement = item_bar_normalized_timer  < 0.1f ?
+            ((item_bar_normalized_timer / 0.1f) * 32 /* pop up */) :
+        (item_bar_normalized_timer > 0.9f ?
+            ((((item_bar_normalized_timer - 0.9f) / 0.1f) * 32 ) /* go back down*/) : 32);
+        const float item_popup_start_x = 100;
+        const float item_popup_start_y = 100 - y_displacement;
+        const float item_item_displacement_x = 4;
+        const float item_item_displacement_y = 4; // TODO: Make player proc the timer &g_game.current_level.player_item_bar_popup_timer whenever an item is switched
+        const float item_displacement_x = 32;
+        g_game.player.actual_selected += ((float)g_game.player.selected_item - g_game.player.actual_selected) * 0.4;
+        const float selected_x = item_popup_start_x + (item_displacement_x * g_game.player.actual_selected);
+
+        // Draw the background and each item in the inventory
+        for (int32_t i = 0; i < INVENTORY_SIZE; i++) {
+            oct_DrawTexture(
+                oct_GetAsset(g_game.assets, "hud/itembg.png"),
+                (Oct_Vec2){item_popup_start_x + (item_displacement_x * i), item_popup_start_y});
+            draw_object(
+                &g_game.player.items[i].info,
+                (Oct_Vec2){item_popup_start_x + (item_displacement_x * i) + item_item_displacement_x, item_popup_start_y + item_item_displacement_y},
+                2, 1);
+        }
+        // Draw the selector thing over the selected item
+        oct_DrawTextureInt(
+            OCT_INTERPOLATE_ALL, ITEM_SELECTOR_ID,
+            oct_GetAsset(g_game.assets, "hud/itemselector.png"),
+                    (Oct_Vec2){selected_x, item_popup_start_y});
+    }
+
     oct_DrawTexture(
             oct_GetAsset(g_game.assets, "hud/hudbase.png"),
             (Oct_Vec2){0, 224});
@@ -223,9 +259,6 @@ void draw_ui() {
         oct_DrawTexture(
                 oct_GetAsset(g_game.assets, "hud/extraturn.png"),
                 (Oct_Vec2){132 + 17, 230 + 1});
-
-    // item location is 232, 232
-    // TODO: Item
 
     // weapon highlight is 259 + (32 * index), 227
     if (g_game.player.starting_weapon.type != WEAPON_TYPE_NONE) {

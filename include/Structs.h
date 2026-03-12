@@ -310,6 +310,10 @@ struct Character_s {
 
     // Timer to control when the character can start facing another way after attacking
     Timer face_away_timer;
+
+    // Characters can only benefit/use from their selected item
+    int32_t selected_item;
+    float actual_selected; // for tweening
 };
 
 // Things that can be on a tile in the dungeon
@@ -445,6 +449,9 @@ typedef struct Level_s {
         Traits traits; // traits associated with the attack
         char buffer[MAX_BUFFER_LENGTH + 1];
     } Attack;
+
+    // For showing the player's item bar popup
+    Timer player_item_bar_popup_timer;
 
     // For displaying enemy information
     Timer enemy_display_timer;
