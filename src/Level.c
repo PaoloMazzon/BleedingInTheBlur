@@ -56,7 +56,6 @@ bool characters_update() {
         if (done_turn_delay) {
             character_take_turn(enemy);
             timer_start(&g_game.current_level.enemy_move_timer, 30 / 2);
-            oct_Log("Started move timer for enemy %i", g_game.current_level.enemy_turn);
         } else if (!timer_in_use(&g_game.current_level.enemy_delayed_turn_timer) && !level_in_attack_animation() && !timer_in_use(&g_game.current_level.enemy_move_timer)) {
             if (tile_distance(enemy->pos, g_game.player.pos) > 5 || tiles_have_walls_between(enemy->pos, g_game.player.pos)) {
                 // Take turn instantly
@@ -65,7 +64,6 @@ bool characters_update() {
                 return true;
             } else {
                 timer_start(&g_game.current_level.enemy_delayed_turn_timer, 30 / 2);
-                oct_Log("Started delayed timer for enemy %i", g_game.current_level.enemy_turn);
             }
         } else if (!level_in_attack_animation() && (timer_in_use(&g_game.current_level.enemy_move_timer) || timer_in_use(&g_game.current_level.enemy_delayed_turn_timer))) {
             // Center camera on the enemy thats moving around
