@@ -170,6 +170,7 @@ void draw_ui() {
     timer_tick(&g_game.current_level.player_item_bar_popup_timer);
     if (timer_in_use(&g_game.current_level.player_item_bar_popup_timer)) {
         const float item_bar_normalized_timer = timer_get_normalized(&g_game.current_level.player_item_bar_popup_timer);
+        // TODO: This should not be based off of the timer and instead a moving target_y like everything else in case the timer is restarted multiple times (in the case of the player spamming item swap)
         const float y_displacement = item_bar_normalized_timer  < 0.1f ?
             ((item_bar_normalized_timer / 0.1f) * 32 /* pop up */) :
         (item_bar_normalized_timer > 0.9f ?

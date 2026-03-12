@@ -88,6 +88,10 @@ static bool player_interaction_state() {
         player->active_weapon = !player->active_weapon;
     }
 
+    if (oct_KeyPressed(BUTTON_ITEM_SWAP)) {
+        // TODO: Swap items
+    }
+
     // Process movement
     if (movement_direction[0] != 0 || movement_direction[1] != 0) {
         const Position target_position = {
@@ -116,7 +120,7 @@ void player_update() {
     }
 
     // Player can toggle the stat view anytime
-    if (oct_KeyPressed(BUTTON_STAT_TOGGLE)) {
+    if (oct_KeyPressed(BUTTON_STATUS_TOGGLE)) {
         g_game.current_level.stats_toggle = !g_game.current_level.stats_toggle;
     }
 
