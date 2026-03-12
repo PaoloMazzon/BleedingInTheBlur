@@ -55,4 +55,7 @@ void shutdown(void *ptr);
 void set_draw_target(Oct_Texture tex);
 void reset_draw_target(); // call after changing the draw target
 
+// Draw an arbitrary object
+void draw_object(ObjectInfo *object, Oct_Vec2 position, float scale, float alpha);
+
 void create_slime(Character *slot, Position pos);

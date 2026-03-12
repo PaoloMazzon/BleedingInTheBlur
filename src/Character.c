@@ -79,23 +79,23 @@ const char *get_skill_name(int32_t base_stat_index, int32_t skill_index) {
     return MARTIAL_STAT_NAMES[skill_index];
 }
 
-void character_draw(Character *c, Oct_Vec2 position, float alpha) {
-    if (c->info.drawn_type == DRAWN_TYPE_SPRITE) {
+void draw_object(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) {
+    if (info->drawn_type == DRAWN_TYPE_SPRITE) {
         oct_DrawSpriteIntColourExt(
-                OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, c->info.id,
-                c->info.sprite, &c->info.sprite_instance,
+                OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, info->id,
+                info->sprite, &info->sprite_instance,
                 &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
                 (Oct_Vec2){position[0] + 4, position[1] + 4},
-                (Oct_Vec2){c->info.scale_x, 1},
-                c->info.rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
-    } else if (c->info.drawn_type == DRAWN_TYPE_TEXTURE) {
+                (Oct_Vec2){info->scale_x * scale, scale},
+                info->rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
+    } else if (info->drawn_type == DRAWN_TYPE_TEXTURE) {
         oct_DrawTextureIntColourExt(
-                OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, c->info.id,
-                c->info.texture,
+                OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, info->id,
+                info->texture,
                 &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
                 (Oct_Vec2){position[0] + 4, position[1] + 4},
-                (Oct_Vec2){c->info.scale_x, 1},
-                c->info.rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
+                (Oct_Vec2){info->scale_x * scale, scale},
+                info->rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
     }
 }
 
