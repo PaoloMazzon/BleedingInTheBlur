@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <string.h>
 #include "Game.h"
 #include "Character.h"
 #include "Util.h"
@@ -67,8 +69,28 @@ static bool player_attack_view_state() {
 }
 
 static bool player_interaction_state() {
-    bool player_has_taken_actions = false;
     Character *player = &g_game.player;
+    int32_t item_index;
+    bool selected_the_weapon;
+
+    // Skip the turn if a popup just resolved
+    if (popup_get_weapon(g_game.current_level.weapon_popup, &selected_the_weapon)) {
+        if (selected_the_weapon) {
+            TileContents *tile = level_get_tile(player->pos);
+            assert(tile->type == TILE_CONTENTS_TYPE_WEAPON);
+            memcpy(&g_game.player.soul_bound_weapon, tile->weapon, sizeof(Weapon));
+        }
+        return true;
+    } else if (popup_get_item(g_game.current_level.weapon_popup, &item_index)) {
+        if (item_index != -1) {
+            TileContents *tile = level_get_tile(player->pos);
+            assert(tile->type == TILE_CONTENTS_TYPE_ITEM);
+            memcpy(&g_game.player.items[item_index], tile->item, sizeof(Item));
+        }
+        return true;
+    }
+
+    bool player_has_taken_actions = false;
     Position movement_direction = {0};
     if (oct_KeyPressed(BUTTON_LEFT)) movement_direction[0] = -1;
     else if (oct_KeyPressed(BUTTON_RIGHT)) movement_direction[0] = 1;
@@ -98,8 +120,17 @@ static bool player_interaction_state() {
                 g_game.player.pos[0] + movement_direction[0],
                 g_game.player.pos[1] + movement_direction[1],
         };
-        if (character_move(&g_game.player, target_position))
-            player_has_taken_actions = true;
+        if (character_move(&g_game.player, target_position)) {
+            // If we moved onto a weapon/item, we should show the popup to pick it up before passing turn
+            TileContents *tile = level_get_tile(player->pos);
+            if (tile->type == TILE_CONTENTS_TYPE_WEAPON) {
+                g_game.current_level.weapon_popup = popup_weapon_select(tile->weapon);
+            } else if (tile->type == TILE_CONTENTS_TYPE_ITEM) {
+                // TODO: This
+            } else {
+                player_has_taken_actions = true;
+            }
+        }
     }
 
     // Point camera at player

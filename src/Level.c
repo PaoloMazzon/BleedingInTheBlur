@@ -319,6 +319,10 @@ void draw_ui() {
         };
         oct_Draw(&cmd);
     }
+
+    if (popups_are_active())
+        draw_and_update_popups();
+
 }
 
 static TileVisibility tile_visible_to_player(Position tile, Statblock *player_current_stats) {
@@ -588,7 +592,7 @@ LevelIndex level_update() {
     while (next_character) {
         next_character = characters_update();
     }
-    
+
     player_update();
     const bool world_turn_occurred = g_game.current_level.world_turn;
     update_camera_coords();

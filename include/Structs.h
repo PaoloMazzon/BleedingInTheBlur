@@ -19,7 +19,8 @@ typedef int32_t Position[2];
 typedef int32_t IntRange[2];
 
 // These are a combination of an index into the popup stack and the generation of the popup
-typedef uint64_t PopupDicePointer;
+typedef uint64_t PopupWeaponSelectPointer;
+typedef uint64_t PopupItemSelectPointer;
 typedef uint64_t PopupInputPointer;
 
 // Stats are a mess, just collapse them in your editor
@@ -129,7 +130,8 @@ typedef enum {
     TILE_CONTENTS_TYPE_NONE      = 0,
     TILE_CONTENTS_TYPE_CHARACTER = 1,
     TILE_CONTENTS_TYPE_ITEM      = 2,
-    TILE_CONTENTS_TYPE_WALL      = 3,
+    TILE_CONTENTS_TYPE_WEAPON    = 4,
+    TILE_CONTENTS_TYPE_WALL      = 5,
 } TileContentsType;
 typedef enum {
     WEAPON_TYPE_NONE     = 0,
@@ -322,6 +324,7 @@ typedef struct TileContents_s {
     union {
         Character *character;
         Item *item;
+        Weapon *weapon;
         Tile tile; // tiles are owned by the TileContents they reside in
     };
 } TileContents;
@@ -337,13 +340,14 @@ typedef struct Label_s {
 } Label;
 
 typedef enum {
-    POPUP_TYPE_DICE = 0,
-    POPUP_TYPE_MESSAGE = 1,
-    POPUP_TYPE_TEXT_INPUT = 2,
+    POPUP_TYPE_WEAPON_SELECT = 0,
+    POPUP_TYPE_ITEM_SELECT   = 1,
+    POPUP_TYPE_MESSAGE       = 2,
+    POPUP_TYPE_TEXT_INPUT    = 3,
 } PopupType;
 
 // Pop-up like an input dialogue or dice rolling
-typedef struct {
+typedef struct Popup_s {
     PopupType type;
 
     // Generation is incremented when the popup is closed. value_available is set to true
@@ -356,10 +360,11 @@ typedef struct {
 
     union {
         struct {
-            int32_t pips;
-            int32_t dc;
-            int32_t result;
-        } Dice;
+            Weapon *weapon;
+        } Weapon;
+        struct {
+            Item *item;
+        } Item;
         struct {
             const char *message;
             bool needs_to_be_freed;
@@ -458,6 +463,9 @@ typedef struct Level_s {
     Timer enemy_display_timer;
     Character *enemy_displayed;
     float actual_displayed_health; // for tweening
+
+    // Player popup management
+    PopupWeaponSelectPointer weapon_popup;
 } Level;
 
 typedef struct Game_s {

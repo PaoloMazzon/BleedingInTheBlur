@@ -40,11 +40,13 @@ void draw_and_update_popups();
 // Popups are asynchronous "windows" whose output values need to be queried with their pointer
 void popup_message(const char *text, bool needs_to_be_freed);
 PopupInputPointer popup_input(const char *text, bool needs_to_be_freed);
-PopupDicePointer popup_dice(int32_t dc, int32_t pips);
+PopupWeaponSelectPointer popup_weapon_select(Weapon *weapon);
+PopupItemSelectPointer popup_item_select(Item *item);
 
 // Returns false if the popup is not yet resolved, true otherwise
 bool popup_get_input(PopupInputPointer input_pointer, const char *out);
-bool popup_get_dice(PopupDicePointer dice_pointer, int32_t *out);
+bool popup_get_weapon(PopupWeaponSelectPointer weapon_pointer, bool *selected);
+bool popup_get_item(PopupItemSelectPointer item_pointer, int32_t *index); // -1 means no new item
 
 void player_init(Position start_pos);
 void player_update();
