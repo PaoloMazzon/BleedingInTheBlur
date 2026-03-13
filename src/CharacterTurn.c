@@ -56,10 +56,12 @@ static void move_towards(Character *c, Position p) {
 }
 
 void character_take_turn(Character *c) {
+    if (!character_is_alive(c)) return;
+
     // Behaviour-controlling traits
     const bool b_lazy = c->info.traits.Character.lazy;
     const bool b_hostile = c->info.traits.Character.hostile;
-    const bool line_of_sight_on_player = tiles_have_walls_between(c->pos, g_game.player.pos);
+    const bool line_of_sight_on_player = !tiles_have_walls_between(c->pos, g_game.player.pos);
     const bool within_aggro_range = tile_distance(c->pos, g_game.player.pos) <= c->aggro_range;
 
     if (b_hostile && line_of_sight_on_player && within_aggro_range) {

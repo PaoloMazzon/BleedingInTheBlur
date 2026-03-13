@@ -18,7 +18,6 @@ static bool player_attack_view_state() {
     Position movement_direction = {0};
 
     if (level_attack_animation_complete()) {
-        oct_Log("Done player attack animation.");
         return true;
     }
 

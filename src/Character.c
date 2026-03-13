@@ -260,7 +260,7 @@ AttackFavour character_get_attack_stats(Character *c, const Traits *attack_trait
     int32_t dc = statblock_get_dc(current.martial);
 
     // Calculate base pips and dc for the situation
-    if (attack_traits->Attack.melee)
+    if (attack_traits->Attack.melee && !attack_traits->Attack.improvised)
         pip_count = current.blades;
     else if (attack_traits->Attack.ranged)
         pip_count = current.marksman;

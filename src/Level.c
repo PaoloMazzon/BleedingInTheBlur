@@ -584,14 +584,14 @@ LevelIndex level_update() {
     oct_UpdateCameraInt(OCT_INTERPOLATE_ALL, CAMERA_ID, g_game.world_camera, &camera_update);
 
     // Update logic/turn logic
-    player_update();
-    const bool world_turn_occurred = g_game.current_level.world_turn;
-    update_camera_coords();
-
     bool next_character = characters_update();
     while (next_character) {
         next_character = characters_update();
     }
+    
+    player_update();
+    const bool world_turn_occurred = g_game.current_level.world_turn;
+    update_camera_coords();
 
     // Drawing the world
     oct_LockCameras(g_game.world_camera);
