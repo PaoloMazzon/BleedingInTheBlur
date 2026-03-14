@@ -75,6 +75,7 @@ static bool player_interaction_state() {
 
     // Skip the turn if a popup just resolved
     if (popup_get_weapon(g_game.current_level.weapon_popup, &selected_the_weapon)) {
+        oct_Log("Player completed weapon popup with result %s.", selected_the_weapon ? "true" : "false");
         if (selected_the_weapon) {
             TileContents *tile = level_get_tile(player->pos);
             assert(tile->type == TILE_CONTENTS_TYPE_WEAPON);
@@ -89,6 +90,7 @@ static bool player_interaction_state() {
         }
         return true;
     } else if (popup_get_item(g_game.current_level.weapon_popup, &item_index)) {
+        oct_Log("Player completed item popup with result %i.", item_index);
         if (item_index != -1) {
             TileContents *tile = level_get_tile(player->pos);
             assert(tile->type == TILE_CONTENTS_TYPE_ITEM);
@@ -139,6 +141,7 @@ static bool player_interaction_state() {
             TileContents *tile = level_get_tile(player->pos);
             if (tile->type == TILE_CONTENTS_TYPE_WEAPON) {
                 g_game.current_level.weapon_popup = popup_weapon_select(tile->weapon);
+                oct_Log("Player hit weapon popup.");
             } else if (tile->type == TILE_CONTENTS_TYPE_ITEM) {
                 // TODO: This
             } else {
