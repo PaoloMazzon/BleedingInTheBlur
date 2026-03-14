@@ -21,7 +21,7 @@
     {
       "name": "fnt_dicesmall",
       "image": "fonts/dicefontsmall.png",
-      "cell size": [6, 7],
+      "cell size": [6, 8],
       "unicode range": [46, 62]
     }
   ],
