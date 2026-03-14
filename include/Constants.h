@@ -99,3 +99,4 @@ extern const Oct_Key BUTTON_DOWN;
 #define ENEMY_HUD_HEALTHBAR_BACKGROUND_ID 6
 #define                  ITEM_SELECTOR_ID 7
 #define                ITEM_BACKGROUND_ID 8
+#define                  POPUP_POINTER_ID 9

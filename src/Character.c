@@ -253,19 +253,25 @@ bool character_move(Character *c, const Position new_position) {
     return true;
 }
 
-AttackFavour character_get_attack_stats(Character *c, const Traits *attack_traits, Position target_position, const Traits *target_traits, int32_t *out_pips, int32_t *out_dc) {
+void character_get_attack_base_stats(Character *c, const Traits *attack_traits, int32_t *out_pips, int32_t *out_dc) {
     Statblock current;
     character_get_current_stats(c, &current);
     int32_t pip_count = 0;
-    int32_t dc = statblock_get_dc(current.martial);
-
-    // Calculate base pips and dc for the situation
+    int32_t dc = attack_traits->Attack.intricate ? statblock_get_dc(current.learning) : statblock_get_dc(current.martial);
     if (attack_traits->Attack.melee && !attack_traits->Attack.improvised)
         pip_count = current.blades;
     else if (attack_traits->Attack.ranged)
         pip_count = current.marksman;
     else
         pip_count = current.grappler;
+    if (out_dc) *out_dc = dc;
+    if (out_pips) *out_pips = pip_count;
+}
+
+AttackFavour character_get_attack_stats(Character *c, const Traits *attack_traits, Position target_position, const Traits *target_traits, int32_t *out_pips, int32_t *out_dc) {
+    int32_t pip_count;
+    int32_t dc;
+    character_get_attack_base_stats(c, attack_traits, &pip_count, &dc);
     const int32_t base_pips = pip_count;
 
     // Bonuses and detriments

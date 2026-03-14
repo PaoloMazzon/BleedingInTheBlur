@@ -180,6 +180,7 @@ typedef struct Traits_s {
         bool blade; // bladed weapon
         bool improvised; // improvised attack
         bool heavy; // heavy weapon
+        bool intricate; // this attack is not simple, ie it uses character's learning dc
     } Attack; // traits for attacks/weapons
 
     struct {
@@ -350,7 +351,7 @@ typedef enum {
 typedef struct Popup_s {
     PopupType type;
 
-    // Generation is incremented when the popup is closed. value_available is set to true
+    // Generation is incremented when the value is grabbed. value_available is set to true
     // when the value is made ready (dice finish rolling for example), and it is set to
     // false when the user grabs a value out of it. This means that the value grabbing function
     // can be absolutely sure the value coming out of the popup belongs to it, and popups
@@ -361,9 +362,13 @@ typedef struct Popup_s {
     union {
         struct {
             Weapon *weapon;
+            bool selected_yes;
+            Oct_Vec2 actual_pointer_pos;
+            float actual_pointer_rotation;
         } Weapon;
         struct {
             Item *item;
+            bool selected_yes;
         } Item;
         struct {
             const char *message;
@@ -433,6 +438,7 @@ typedef struct Level_s {
 
     Character characters[MAX_CHARACTERS];
     Item items[MAX_ITEMS];
+    Weapon weapons[MAX_ITEMS];
     Label labels[MAX_LABELS];
 
     // If the player does something, and it isn't an extra turn, the world gets a turn

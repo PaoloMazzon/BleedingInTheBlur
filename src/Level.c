@@ -6,6 +6,7 @@
 #include "Util.h"
 #include "Character.h"
 #include "LevelGenerator.h"
+#include "WeaponItem.h"
 
 // Returns true if a given tile is within range of the player's attack range
 static inline bool tile_in_range_of_player(Position target) {
@@ -499,7 +500,7 @@ void draw_labels() {
             Oct_Colour c = g_game.current_level.labels[i].colour;
             c.a = alpha;
             const Oct_FontAtlas font = g_game.current_level.labels[i].dice_font ?
-                                       oct_GetAsset(g_game.assets, "fnt_dice") :
+                                       oct_GetAsset(g_game.assets, "fnt_dicesmall") :
                                        oct_GetAsset(g_game.assets, "fnt_small");
             oct_DrawTextIntColour(
                     OCT_INTERPOLATE_ALL, LABELS_ID_START + i,
@@ -572,6 +573,12 @@ void level_begin() {
         level_get_spawn_point(slime_spawn);
         create_slime(level_get_character_slot(), slime_spawn);
     }
+    Position weapon_spawn;
+    get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.current_level.weapons[0]);
+    level_get_spawn_point(weapon_spawn);
+    TileContents *tile = level_get_tile(weapon_spawn);
+    tile->type = TILE_CONTENTS_TYPE_WEAPON;
+    tile->weapon = &g_game.current_level.weapons[0];
 }
 
 LevelIndex level_update() {
@@ -588,12 +595,14 @@ LevelIndex level_update() {
     oct_UpdateCameraInt(OCT_INTERPOLATE_ALL, CAMERA_ID, g_game.world_camera, &camera_update);
 
     // Update logic/turn logic
-    bool next_character = characters_update();
-    while (next_character) {
-        next_character = characters_update();
-    }
+    if (!popups_are_active()) {
+        bool next_character = characters_update();
+        while (next_character) {
+            next_character = characters_update();
+        }
 
-    player_update();
+        player_update();
+    }
     const bool world_turn_occurred = g_game.current_level.world_turn;
     update_camera_coords();
 
@@ -647,7 +656,7 @@ void create_dice_label(const char *text, const Position pos, Oct_Colour colour, 
             g_game.current_level.labels[i].max_ticks = 60;
             g_game.current_level.labels[i].needs_to_be_freed = needs_to_be_freed;
             g_game.current_level.labels[i].label = text;
-            g_game.current_level.labels[i].position[0] = ((float)pos[0] * CELL_WIDTH) - ((float)strlen(text) * 11.0f * 0.5f);
+            g_game.current_level.labels[i].position[0] = ((float)pos[0] * CELL_WIDTH) - ((float)strlen(text) * 6.0f * 0.5f);
             g_game.current_level.labels[i].position[1] = ((float)pos[1] * CELL_HEIGHT);
             g_game.current_level.labels[i].dice_font = true;
             return;

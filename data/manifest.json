@@ -17,6 +17,12 @@
       "image": "fonts/dicefont.png",
       "cell size": [12, 14],
       "unicode range": [46, 62]
+    },
+    {
+      "name": "fnt_dicesmall",
+      "image": "fonts/dicefontsmall.png",
+      "cell size": [6, 7],
+      "unicode range": [46, 62]
     }
   ],
   "font atlases":

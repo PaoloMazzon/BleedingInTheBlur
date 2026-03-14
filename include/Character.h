@@ -53,6 +53,10 @@ int32_t character_evade_pips(Character *c);
 // Moves a character (including the visual portion and not just the logic). Returns false if the character can't move
 bool character_move(Character *c, const Position new_position);
 
+// Returns the base pips and dc associated with an attack, before the target's traits are factored into it.
+// For instance, with a basic sword, this would return your "blades" stat as pips and martial DC.
+void character_get_attack_base_stats(Character *c, const Traits *attack_traits, int32_t *out_pips, int32_t *out_dc);
+
 // Takes an attacking character, a set of traits belonging to the target, and returns the pips that will
 // be rolled on the attack as well as the DC for the attack.
 AttackFavour character_get_attack_stats(Character *c, const Traits *attack_traits, Position target_position, const Traits *target_traits, int32_t *out_pips, int32_t *out_dc);
