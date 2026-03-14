@@ -10,6 +10,7 @@ extern const int32_t SOUL_BOUND_WEAPON_SLOT;
 extern const int32_t STARTING_WEAPON_SLOT;
 extern const char *WEAPON_TYPE_NAMES[6];
 extern const char *RARITY_NAMES[4];
+extern const char *GAME_STATES[7];
 
 // How many base stat points you have, no stat can have more than BASE_STAT_MAX
 extern const int32_t STARTING_BASE_STAT_POINTS;

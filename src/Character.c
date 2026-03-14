@@ -103,6 +103,24 @@ void draw_object(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) 
     }
 }
 
+void draw_object_raw(ObjectInfo *info, Oct_Vec2 position) {
+    if (info->drawn_type == DRAWN_TYPE_SPRITE) {
+        oct_DrawSpriteColourExt(
+                info->sprite, &info->sprite_instance,
+                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f},
+                (Oct_Vec2){position[0] + 4, position[1] + 4},
+                (Oct_Vec2){1, 1},
+                0, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
+    } else if (info->drawn_type == DRAWN_TYPE_TEXTURE) {
+        oct_DrawTextureColourExt(
+                info->texture,
+                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f},
+                (Oct_Vec2){position[0] + 4, position[1] + 4},
+                (Oct_Vec2){1, 1},
+                0, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
+    }
+}
+
 void character_create(Statblock *starting_stats, Position position, Character *out) {
     memset(out, 0, sizeof(Character));
     memcpy(&out->initial_statblock, starting_stats, sizeof(Statblock));

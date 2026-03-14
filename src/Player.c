@@ -79,6 +79,13 @@ static bool player_interaction_state() {
             TileContents *tile = level_get_tile(player->pos);
             assert(tile->type == TILE_CONTENTS_TYPE_WEAPON);
             memcpy(&g_game.player.soul_bound_weapon, tile->weapon, sizeof(Weapon));
+            for (int32_t i = 0; i < MAX_ITEMS; i++) {
+                if (&g_game.current_level.weapons[i] == tile->weapon) {
+                    g_game.current_level.weapons[i].type = WEAPON_TYPE_NONE;
+                    break;
+                }
+            }
+            tile->type = TILE_CONTENTS_TYPE_NONE;
         }
         return true;
     } else if (popup_get_item(g_game.current_level.weapon_popup, &item_index)) {
@@ -86,6 +93,13 @@ static bool player_interaction_state() {
             TileContents *tile = level_get_tile(player->pos);
             assert(tile->type == TILE_CONTENTS_TYPE_ITEM);
             memcpy(&g_game.player.items[item_index], tile->item, sizeof(Item));
+            for (int32_t i = 0; i < MAX_ITEMS; i++) {
+                if (&g_game.current_level.items[i] == tile->item) {
+                    g_game.current_level.items[i].type = ITEM_TYPE_NONE;
+                    break;
+                }
+            }
+            tile->type = TILE_CONTENTS_TYPE_NONE;
         }
         return true;
     }

@@ -34,7 +34,7 @@ const char *MARTIAL_STAT_NAMES[4] = {
         "Grappler",
         "Evade"
 };
-extern const char *WEAPON_TYPE_NAMES[6] = {
+const char *WEAPON_TYPE_NAMES[6] = {
         "Sword",
         "Spear",
         "Bow",
@@ -43,11 +43,21 @@ extern const char *WEAPON_TYPE_NAMES[6] = {
         "Other",
 };
 
-extern const char *RARITY_NAMES[4] = {
+const char *RARITY_NAMES[4] = {
         "Common",
         "Uncommon",
         "Rare",
         "Mythic",
+};
+
+const char *GAME_STATES[7] = {
+        "Player Interaction",
+        "Player Inventory",
+        "Player Stats",
+        "Player Spells",
+        "Player Attack",
+        "Enemy Turn",
+        "Player Death",
 };
 
 const int32_t SOUL_BOUND_WEAPON_SLOT    = 1;

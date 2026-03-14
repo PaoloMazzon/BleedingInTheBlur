@@ -370,12 +370,24 @@ static void draw_tiles() {
     const int32_t tile_vertical = (int32_t)ceilf((GAME_VIEW_WIDTH + (CELL_WIDTH * 2)) / CELL_WIDTH) + 1;
 
     set_draw_target(g_game.current_level.level_tex);
-    oct_DrawClear(&(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f});
+    oct_DrawClear(&(Oct_Colour){.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = 0.0f});
     oct_TilemapDrawPart(g_game.current_level.tilemap, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
     oct_TilemapDrawPart(g_game.current_level.decorations, start_draw_x, start_draw_y, tile_horizontal, tile_vertical);
     reset_draw_target();
 
     oct_DrawTexture(g_game.current_level.level_tex, (Oct_Vec2){0, 0});
+
+    // Draw the weapons/items on these tiles
+    for (int32_t y = start_draw_y; y < start_draw_y + tile_vertical; y++) {
+        for (int32_t x = start_draw_x; x < start_draw_x + tile_horizontal; x++) {
+            TileContents *tile = level_get_tile((Position){x, y});
+            if (tile && tile->type == TILE_CONTENTS_TYPE_WEAPON) {
+                draw_object_raw(&tile->weapon->info, (Oct_Vec2){x * CELL_WIDTH, y * CELL_HEIGHT});
+            } else if (tile && tile->type == TILE_CONTENTS_TYPE_ITEM) {
+                draw_object_raw(&tile->weapon->info, (Oct_Vec2){x * CELL_WIDTH, y * CELL_HEIGHT});
+            }
+        }
+    }
 }
 
 static void draw_fog_of_war() {
@@ -573,12 +585,15 @@ void level_begin() {
         level_get_spawn_point(slime_spawn);
         create_slime(level_get_character_slot(), slime_spawn);
     }
-    Position weapon_spawn;
-    get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.current_level.weapons[0]);
-    level_get_spawn_point(weapon_spawn);
-    TileContents *tile = level_get_tile(weapon_spawn);
-    tile->type = TILE_CONTENTS_TYPE_WEAPON;
-    tile->weapon = &g_game.current_level.weapons[0];
+
+    for (int i = 0; i < 10; i++) {
+        Position weapon_spawn;
+        get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.current_level.weapons[0]);
+        level_get_spawn_point(weapon_spawn);
+        TileContents *tile = level_get_tile(weapon_spawn);
+        tile->type = TILE_CONTENTS_TYPE_WEAPON;
+        tile->weapon = &g_game.current_level.weapons[0];
+    }
 }
 
 LevelIndex level_update() {

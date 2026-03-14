@@ -123,8 +123,8 @@ typedef enum {
     LEVEL_INDEX_QUIT        = 7, // quit the game
 } LevelIndex;
 typedef enum {
-    DRAWN_TYPE_SPRITE  = 0,
-    DRAWN_TYPE_TEXTURE = 1,
+    DRAWN_TYPE_TEXTURE = 0,
+    DRAWN_TYPE_SPRITE  = 1,
 } DrawnType;
 typedef enum {
     TILE_CONTENTS_TYPE_NONE      = 0,

@@ -15,6 +15,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->type = WEAPON_TYPE_SWORD;
         out->info.texture = oct_GetAsset(g_game.assets, "attacks/sword.png");
         out->icon = oct_GetAsset(g_game.assets, "attacks/sword_icon.png");
+        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
         out->info.name = "Sword";
         out->damage = 5;
         out->range = 1;
@@ -25,6 +26,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->type = WEAPON_TYPE_SPEAR;
         out->info.texture = oct_GetAsset(g_game.assets, "attacks/spear.png");
         out->icon = oct_GetAsset(g_game.assets, "attacks/spear_icon.png");
+        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
         out->info.name = "Spear";
         out->damage = 4;
         out->range = 2;
@@ -35,6 +37,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->type = WEAPON_TYPE_BOW;
         out->info.texture = oct_GetAsset(g_game.assets, "");
         out->icon = oct_GetAsset(g_game.assets, "");
+        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
         out->info.name = "Bow";
         out->damage = 2;
         out->range = 4;
@@ -43,6 +46,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->type = WEAPON_TYPE_CROSSBOW;
         out->info.texture = oct_GetAsset(g_game.assets, "");
         out->icon = oct_GetAsset(g_game.assets, "");
+        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
         out->info.name = "Crossbow";
         out->damage = 3;
         out->range = 4;
@@ -54,6 +58,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->type = WEAPON_TYPE_DAGGER;
         out->info.texture = oct_GetAsset(g_game.assets, "");
         out->icon = oct_GetAsset(g_game.assets, "");
+        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
         out->info.name = "Dagger";
         out->damage = 2;
         out->range = 1;
@@ -65,6 +70,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->type = WEAPON_TYPE_OTHER;
         out->info.texture = oct_GetAsset(g_game.assets, "");
         out->icon = oct_GetAsset(g_game.assets, "");
+        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
         out->info.name = "Claw";
         out->damage = 2;
         out->range = 1;

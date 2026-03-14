@@ -59,5 +59,6 @@ void reset_draw_target(); // call after changing the draw target
 
 // Draw an arbitrary object
 void draw_object(ObjectInfo *object, Oct_Vec2 position, float scale, float alpha);
+void draw_object_raw(ObjectInfo *info, Oct_Vec2 position);
 
 void create_slime(Character *slot, Position pos);
