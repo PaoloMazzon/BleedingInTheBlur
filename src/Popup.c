@@ -109,12 +109,66 @@ bool draw_and_update_weapon_popup(Popup *weapon_popup) {
     return weapon_popup->value_available && weapon_popup->alpha < 0.05;
 }
 
+bool draw_and_update_item_popup(Popup *item_popup) {
+    static const int32_t buffer_size = 50;
+    static char new_weapon_buffer[51];
+    static char old_weapon_buffer[51];
+    const float start_x = 72;
+    const float start_y = 64;
+
+    // Tween pointer rotation and position
+    const float target_x = 43 + (item_popup->Item.index * 32);
+    float target_alpha = item_popup->value_available ? 0 : 1;
+    item_popup->alpha += (target_alpha - item_popup->alpha) * 0.4f;
+    item_popup->Item.actual_pointer_x += (target_x - item_popup->Item.actual_pointer_x) * 0.4f;
+    Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = item_popup->alpha};
+
+    oct_DrawTextureColour(oct_GetAsset(g_game.assets, "hud/newweaponpopup.png"), &c, (Oct_Vec2){start_x, start_y});
+
+    // We are going to draw 4 pieces of text, so get all their metrics now
+    Oct_Vec2 item_name_size;
+    const Oct_FontAtlas pretty_font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    oct_GetTextSize(pretty_font, item_name_size, 1, "%s", item_popup->Item.item->info.name);
+
+    // Actually draw the text
+    oct_DrawTextColour(pretty_font,
+                       (Oct_Vec2){start_x + 60 - (item_name_size[0] / 2), start_y + 25 - (item_name_size[1] / 2)},
+                       &c,
+                       1,
+                       item_popup->Item.item->info.name);
+
+    // Draw the weapon icons
+    draw_object_raw(&item_popup->Item.item->info, (Oct_Vec2){start_x + 128, start_y + 16}, 2, item_popup->alpha);
+    for (int32_t i = 0; i < INVENTORY_SIZE; i++) { // 16, 64
+        if (g_game.player.items[i].type == ITEM_TYPE_NONE) continue;
+        draw_object_raw(&g_game.player.items[i].info, (Oct_Vec2){start_x + 16 + (32 * (float)i), start_y + 64}, 2, item_popup->alpha);
+    }
+
+    // Draw the selection thing
+    oct_DrawTextureInt(
+            OCT_INTERPOLATE_ALL, POPUP_POINTER_ID,
+            oct_GetAsset(g_game.assets, "hud/weaponselect.png"),
+            (Oct_Vec2){start_x + item_popup->Item.actual_pointer_x, start_y + 59});
+
+    // Handle the controls
+    if (oct_KeyPressed(BUTTON_LEFT))
+        item_popup->Item.index = item_popup->Item.index == -1 ? 3 : item_popup->Item.index - 1;
+    if (oct_KeyPressed(BUTTON_RIGHT))
+        item_popup->Item.index = item_popup->Item.index == 3 ? -1 : item_popup->Item.index + 1;
+    if (oct_KeyPressed(BUTTON_CONFIRM)) {
+        item_popup->value_available = true;
+    }
+    return item_popup->value_available && item_popup->alpha < 0.05;
+}
+
 void draw_and_update_popups() {
     const int32_t top_of_stack = g_game.current_level.popup_stack_pointer - 1;
     if (top_of_stack >= 0) {
         bool pop_stack = false;
         if (g_game.current_level.popup_stack[top_of_stack].type == POPUP_TYPE_WEAPON_SELECT) {
             pop_stack = draw_and_update_weapon_popup(&g_game.current_level.popup_stack[top_of_stack]);
+        } else if (g_game.current_level.popup_stack[top_of_stack].type == POPUP_TYPE_ITEM_SELECT) {
+            pop_stack = draw_and_update_item_popup(&g_game.current_level.popup_stack[top_of_stack]);
         } else {
             oct_Raise(OCT_STATUS_ERROR, true, "Unimplemented popup type %i.", g_game.current_level.popup_stack[top_of_stack].type);
         }
@@ -140,6 +194,7 @@ PopupInputPointer popup_input(const char *text, bool needs_to_be_freed) {
     pop->type = POPUP_TYPE_TEXT_INPUT;
     pop->TextInput.needs_to_be_freed = needs_to_be_freed;
     pop->TextInput.message = text;
+    pop->generation += 1;
     memset(pop->TextInput.user_input, 0, MAX_USER_INPUT_SIZE);
 
     return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
@@ -155,6 +210,7 @@ PopupWeaponSelectPointer popup_weapon_select(Weapon *weapon) {
     pop->Weapon.weapon = weapon;
     pop->Weapon.actual_pointer_pos[0] = 69 + 68;
     pop->Weapon.actual_pointer_pos[1] = 49 + 79;
+    pop->generation += 1;
 
     return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
 }
@@ -166,6 +222,7 @@ PopupItemSelectPointer popup_item_select(Item *item) {
     memset(pop, 0, sizeof(Popup));
     pop->type = POPUP_TYPE_ITEM_SELECT;
     pop->Item.item = item;
+    pop->generation += 1;
 
     return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
 }

@@ -299,7 +299,6 @@ struct Character_s {
         Weapon weapons[2];
     };
     int32_t active_weapon;
-    bool has_soul_bound_weapon;
 
     // At 100 the character gets an extra turn
     int32_t cumulative_movement;
@@ -377,7 +376,8 @@ typedef struct Popup_s {
         } Weapon;
         struct {
             Item *item;
-            bool selected_yes;
+            int32_t index;
+            float actual_pointer_x;
         } Item;
         struct {
             const char *message;
@@ -481,6 +481,7 @@ typedef struct Level_s {
 
     // Player popup management
     PopupWeaponSelectPointer weapon_popup;
+    PopupItemSelectPointer item_popup;
 } Level;
 
 typedef struct Game_s {

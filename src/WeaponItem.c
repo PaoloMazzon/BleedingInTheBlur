@@ -1,7 +1,9 @@
 #include <string.h>
 #include "WeaponItem.h"
-#include "Character.h"
 #include "Game.h"
+
+// is this bad practice? maybe idk
+#include "ItemCallbacks.c"
 
 void get_starting_weapon(WeaponType weapon_type, Weapon *out) {
     memset(out, 0, sizeof(Weapon));
@@ -79,4 +81,17 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
     } else {
         oct_Raise(OCT_STATUS_ERROR, true, "Weapon type %i hasn't been implemented.", weapon_type);
     }
+}
+
+// Sets an item to reasonable defaults
+static void prep_item(Item *out, const char *name, int32_t charges, Oct_Texture tex) {
+    memset(out, 0, sizeof(Item));
+    out->info.name = "n/a";
+    out->charges_remaining = 1;
+    out->charges = 1;
+}
+
+void get_small_health_potion(Item *out) {
+    prep_item(out, "Potion", 1, oct_GetAsset(g_game.assets, "items/healthpotion.png"));
+    out->enter_inventory_callback = nullptr;
 }

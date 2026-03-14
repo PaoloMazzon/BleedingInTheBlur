@@ -583,13 +583,22 @@ void level_begin() {
         create_slime(level_get_character_slot(), slime_spawn);
     }
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 2; i++) {
         Position weapon_spawn;
-        get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.current_level.weapons[0]);
+        get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.current_level.weapons[i]);
         level_get_spawn_point(weapon_spawn);
         TileContents *tile = level_get_tile(weapon_spawn);
         tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_WEAPON;
-        tile->weapon = &g_game.current_level.weapons[0];
+        tile->weapon = &g_game.current_level.weapons[i];
+    }
+
+    for (int i = 0; i < 5; i++) {
+        Position item_spawn;
+        get_small_health_potion(&g_game.current_level.items[i]);
+        level_get_spawn_point(item_spawn);
+        TileContents *tile = level_get_tile(item_spawn);
+        tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_ITEM;
+        tile->item = &g_game.current_level.items[i];
     }
 }
 

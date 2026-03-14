@@ -41,7 +41,7 @@ void print_statblock(Statblock *s) {
     char skill_score[26] = "=========================";
     char skill_name_offset[13] = "            ";
     for (int base_stat = 0; base_stat < 4; base_stat++) {
-        oct_Log("---------- %s: %i", BASE_STAT_NAMES[base_stat], s->base_stats[base_stat]);
+        debug("---------- %s: %i", BASE_STAT_NAMES[base_stat], s->base_stats[base_stat]);
         for (int skill = 0; skill < 4; skill++) {
             const int32_t skill_pips = *get_skill_pip(s, base_stat, skill);
             const char *skill_name = get_skill_name(base_stat, skill);
@@ -49,12 +49,12 @@ void print_statblock(Statblock *s) {
             skill_name_offset[12 - strlen(skill_name)] = '\0'; // might cause problems on a rename
             // If this fails that means a name was changed without updating the skill_name_offset size
             assert(strlen(skill_name) <= 12);
-            oct_Log("%s%s |%s", skill_name_offset, skill_name, skill_score);
+            debug("%s%s |%s", skill_name_offset, skill_name, skill_score);
             skill_score[skill_pips] = '=';
             skill_name_offset[12 - strlen(skill_name)] = ' ';
         }
     }
-    oct_Log("----------");
+    debug("----------");
 }
 
 int32_t *get_skill_pip(Statblock *s, int32_t base_stat_index, int32_t skill_index) {
@@ -103,20 +103,20 @@ void draw_object(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) 
     }
 }
 
-void draw_object_raw(ObjectInfo *info, Oct_Vec2 position) {
+void draw_object_raw(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) {
     if (info->drawn_type == DRAWN_TYPE_SPRITE) {
         oct_DrawSpriteColourExt(
                 info->sprite, &info->sprite_instance,
-                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f},
+                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
                 (Oct_Vec2){position[0] + 4, position[1] + 4},
-                (Oct_Vec2){1, 1},
+                (Oct_Vec2){scale, scale},
                 0, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
     } else if (info->drawn_type == DRAWN_TYPE_TEXTURE) {
         oct_DrawTextureColourExt(
                 info->texture,
-                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f},
+                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
                 (Oct_Vec2){position[0] + 4, position[1] + 4},
-                (Oct_Vec2){1, 1},
+                (Oct_Vec2){scale, scale},
                 0, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
     }
 }

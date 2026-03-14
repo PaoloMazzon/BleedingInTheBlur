@@ -7,3 +7,6 @@ void get_starting_weapon(WeaponType weapon_type, Weapon *out);
 
 // For soul-bound weapons
 void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out);
+
+// Creates a health potion that restores recovery hp
+void get_small_health_potion(Item *out);

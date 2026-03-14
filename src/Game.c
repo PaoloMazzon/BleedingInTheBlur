@@ -1,5 +1,6 @@
-#include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <math.h>
 #include "Game.h"
 #include "Structs.h"
@@ -7,7 +8,7 @@
 Game g_game;
 
 void *startup() {
-    oct_Log("Starting the game.");
+    debug("Starting the game.");
 
     // Octarine things
     g_game.backbuffer = oct_CreateSurface((Oct_Vec2){VIRTUAL_WIDTH, VIRTUAL_HEIGHT});
@@ -38,7 +39,7 @@ void *startup() {
 
 void *update(void *ptr) {
 #ifndef NDEBUG
-    static bool debug = true;
+    static bool debug_mode = true;
 #else
     static bool debug = false;
 #endif
@@ -49,11 +50,11 @@ void *update(void *ptr) {
     if (g_game.level_index == LEVEL_INDEX_MENU) {
         const LevelIndex new_index = menu_update();
         if (new_index == LEVEL_INDEX_QUIT) {
-            oct_Log("Quitting from the menu.");
+            debug("Quitting from the menu.");
             menu_end();
             abort();
         } else if (new_index != LEVEL_INDEX_MENU) {
-            oct_Log("Switching from the menu to level index %i.", new_index);
+            debug("Switching from the menu to level index %i.", new_index);
             menu_end();
             g_game.level_index = new_index;
             level_begin();
@@ -61,16 +62,16 @@ void *update(void *ptr) {
     } else {
         const LevelIndex new_index = level_update();
         if (new_index == LEVEL_INDEX_MENU) {
-            oct_Log("Quitting from level %i to the menu.", g_game.level_index);
+            debug("Quitting from level %i to the menu.", g_game.level_index);
             level_end();
             g_game.level_index = new_index;
             menu_begin();
         } else if (new_index == LEVEL_INDEX_QUIT) {
-            oct_Log("Quitting from level %i.", g_game.level_index);
+            debug("Quitting from level %i.", g_game.level_index);
             level_end();
             abort();
         } else if (new_index != g_game.level_index) {
-            oct_Log("Going from level %i to level %i.", g_game.level_index, new_index);
+            debug("Going from level %i to level %i.", g_game.level_index, new_index);
             level_end();
             g_game.level_index = new_index;
             level_begin();
@@ -88,7 +89,7 @@ void *update(void *ptr) {
     if (oct_KeyPressed(OCT_KEY_3))
         g_game.scale_mode = SCALE_MODE_STRETCH;
     if (oct_KeyPressed(OCT_KEY_F1))
-        debug = !debug;
+        debug_mode = !debug_mode;
     const float window_width = oct_WindowWidth();
     const float window_height = oct_WindowHeight();
 
@@ -133,7 +134,7 @@ void *update(void *ptr) {
                 0, (Oct_Vec2){0, 0});
     }
 
-    if (debug) {
+    if (debug_mode) {
         // Draw debug info
         oct_DrawText(oct_GetAsset(g_game.assets, "fnt_small"),
                      (Oct_Vec2) {1, 0}, 1,
@@ -163,4 +164,16 @@ void set_draw_target(Oct_Texture tex) {
 void reset_draw_target() {
     oct_SetDrawTarget(g_game.backbuffer);
     oct_SetTextureCamerasEnabled(true);
+}
+
+void debug(const char *fmt, ...) {
+    va_list l;
+    va_start(l, fmt);
+#ifndef NDEBUG
+    printf("[\x1b[94mdebug\033[0m] ");
+    vprintf(fmt, l);
+    printf("\n");
+    fflush(stdout);
+#endif
+    va_end(l);
 }
