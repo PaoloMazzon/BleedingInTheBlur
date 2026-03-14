@@ -78,14 +78,9 @@ static bool player_interaction_state() {
         oct_Log("Player completed weapon popup with result %s.", selected_the_weapon ? "true" : "false");
         if (selected_the_weapon) {
             TileContents *tile = level_get_tile(player->pos);
-            assert(tile->type == TILE_CONTENTS_TYPE_WEAPON);
+            assert(tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_WEAPON);
+            tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_NONE;
             memcpy(&g_game.player.soul_bound_weapon, tile->weapon, sizeof(Weapon));
-            for (int32_t i = 0; i < MAX_ITEMS; i++) {
-                if (&g_game.current_level.weapons[i] == tile->weapon) {
-                    g_game.current_level.weapons[i].type = WEAPON_TYPE_NONE;
-                    break;
-                }
-            }
             tile->type = TILE_CONTENTS_TYPE_NONE;
         }
         return true;
@@ -93,7 +88,8 @@ static bool player_interaction_state() {
         oct_Log("Player completed item popup with result %i.", item_index);
         if (item_index != -1) {
             TileContents *tile = level_get_tile(player->pos);
-            assert(tile->type == TILE_CONTENTS_TYPE_ITEM);
+            assert(tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_ITEM);
+            tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_NONE;
             memcpy(&g_game.player.items[item_index], tile->item, sizeof(Item));
             for (int32_t i = 0; i < MAX_ITEMS; i++) {
                 if (&g_game.current_level.items[i] == tile->item) {
@@ -139,10 +135,10 @@ static bool player_interaction_state() {
         if (character_move(&g_game.player, target_position)) {
             // If we moved onto a weapon/item, we should show the popup to pick it up before passing turn
             TileContents *tile = level_get_tile(player->pos);
-            if (tile->type == TILE_CONTENTS_TYPE_WEAPON) {
+            if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_WEAPON) {
                 g_game.current_level.weapon_popup = popup_weapon_select(tile->weapon);
                 oct_Log("Player hit weapon popup.");
-            } else if (tile->type == TILE_CONTENTS_TYPE_ITEM) {
+            } else if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_ITEM) {
                 // TODO: This
             } else {
                 player_has_taken_actions = true;

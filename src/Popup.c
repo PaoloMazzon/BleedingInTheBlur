@@ -18,30 +18,35 @@ bool draw_and_update_weapon_popup(Popup *weapon_popup) {
     static const int32_t buffer_size = 50;
     static char new_weapon_buffer[51];
     static char old_weapon_buffer[51];
-    const float start_x = 84;
-    const float start_y = 84;
-    oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/newweaponpopup.png"), (Oct_Vec2){start_x, start_y});
+    const float start_x = 68;
+    const float start_y = 79;
 
     // Tween pointer rotation and position
     float target_rotation = 0;
     Oct_Vec2 target_position = {0};
+    float target_alpha = weapon_popup->value_available ? 0 : 1;
     if (weapon_popup->Weapon.selected_yes) {
-        target_position[0] = start_x + 90;
-        target_position[1] = start_y + 44;
+        target_position[0] = start_x + 115;
+        target_position[1] = start_y + 49;
         target_rotation = 0;
     } else {
-        target_position[0] = start_x + 61;
-        target_position[1] = start_y + 43;
+        target_position[0] = start_x + 69;
+        target_position[1] = start_y + 49;
         target_rotation = 3.141592635f;
     }
+    weapon_popup->alpha += (target_alpha - weapon_popup->alpha) * 0.4f;
     weapon_popup->Weapon.actual_pointer_pos[0] += (target_position[0] - weapon_popup->Weapon.actual_pointer_pos[0]) * 0.4f;
     weapon_popup->Weapon.actual_pointer_pos[1] += (target_position[1] - weapon_popup->Weapon.actual_pointer_pos[1]) * 0.4f;
     weapon_popup->Weapon.actual_pointer_rotation += (target_rotation - weapon_popup->Weapon.actual_pointer_rotation) * 0.4f;
+    Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = weapon_popup->alpha};
+
+    oct_DrawTextureColour(oct_GetAsset(g_game.assets, "hud/newweaponpopup.png"), &c, (Oct_Vec2){start_x, start_y});
 
     // Draw pointer
-    oct_DrawTextureIntExt(
+    oct_DrawTextureIntColourExt(
             OCT_INTERPOLATE_ALL, POPUP_POINTER_ID,
             oct_GetAsset(g_game.assets, "hud/selectionarrow.png"),
+            &c,
             weapon_popup->Weapon.actual_pointer_pos,
             (Oct_Vec2){1, 1},
             weapon_popup->Weapon.actual_pointer_rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
@@ -55,48 +60,53 @@ bool draw_and_update_weapon_popup(Popup *weapon_popup) {
     character_get_attack_base_stats(&g_game.player, &g_game.player.soul_bound_weapon.info.traits, &old_weapon_pips, &old_weapon_dc);
     snprintf(new_weapon_buffer, buffer_size, "1%s%i%s%s%i", GLYPH_D8, new_weapon_pips, GLYPH_D6, GLYPH_ARROW, new_weapon_dc);
     snprintf(old_weapon_buffer, buffer_size, "1%s%i%s%s%i", GLYPH_D8, old_weapon_pips, GLYPH_D6, GLYPH_ARROW, old_weapon_dc);
-    float new_weapon_stats_size = (float)strlen(new_weapon_buffer) * 6.0f;
-    float old_weapon_stats_size = (float)strlen(old_weapon_buffer) * 6.0f;
+    float new_weapon_stats_size = (float)strlen(new_weapon_buffer) * 12.0f;
+    float old_weapon_stats_size = (float)strlen(old_weapon_buffer) * 12.0f;
     const Oct_FontAtlas pretty_font = oct_GetAsset(g_game.assets, "fnt_pixel");
     const Oct_FontAtlas dice_font = oct_GetAsset(g_game.assets, "fnt_dice");
     oct_GetTextSize(pretty_font, new_weapon_name_size, 1, "%s", weapon_popup->Weapon.weapon->info.name);
     oct_GetTextSize(pretty_font, old_weapon_name_size, 1, "%s", g_game.player.soul_bound_weapon.info.name);
 
     // Actually draw the text
-    oct_DrawText(pretty_font,
-                 (Oct_Vec2){start_x + 35 - (new_weapon_name_size[0] / 2), start_y + 18 - (new_weapon_name_size[1] / 2)},
+    oct_DrawTextColour(pretty_font,
+                 (Oct_Vec2){start_x + 140 - (new_weapon_name_size[0] / 2), start_y + 21 - (new_weapon_name_size[1] / 2)},
+                 &c,
                  1,
                  weapon_popup->Weapon.weapon->info.name);
-    oct_DrawText(pretty_font,
-                 (Oct_Vec2){start_x + 115 - (new_weapon_name_size[0] / 2), start_y + 18 - (new_weapon_name_size[1] / 2)},
+    oct_DrawTextColour(pretty_font,
+                 (Oct_Vec2){start_x + 43 - (new_weapon_name_size[0] / 2), start_y + 21 - (new_weapon_name_size[1] / 2)},
+                 &c,
                  1,
                  g_game.player.soul_bound_weapon.info.name);
-    oct_DrawText(dice_font,
-                 (Oct_Vec2){start_x + 35 - (new_weapon_stats_size / 2), start_y + 60},
+    oct_DrawTextColour(dice_font,
+                 (Oct_Vec2){start_x + 137 - (new_weapon_stats_size / 2), start_y + 67},
+                 &c,
                  1,
                  new_weapon_buffer);
-    oct_DrawText(dice_font,
-                 (Oct_Vec2){start_x + 115 - (new_weapon_stats_size / 2), start_y + 60},
+    oct_DrawTextColour(dice_font,
+                 (Oct_Vec2){start_x + 46 - (old_weapon_stats_size / 2), start_y + 67},
+                 &c,
                  1,
                  old_weapon_buffer);
 
     // Draw the weapon icons
-    oct_DrawTexture(
+    oct_DrawTextureColour(
             weapon_popup->Weapon.weapon->icon,
-            (Oct_Vec2){start_x + 28, start_y + 36});
+            &c,
+            (Oct_Vec2){start_x + 132, start_y + 41});
     if (g_game.player.soul_bound_weapon.type != WEAPON_TYPE_NONE)
-        oct_DrawTexture(
+        oct_DrawTextureColour(
                 g_game.player.soul_bound_weapon.icon,
-                (Oct_Vec2){start_x + 108, start_y + 36});
+                &c,
+                (Oct_Vec2){start_x + 36, start_y + 41});
 
     // Handle the controls
     if (oct_KeyPressed(BUTTON_LEFT) || oct_KeyPressed(BUTTON_RIGHT))
         weapon_popup->Weapon.selected_yes = !weapon_popup->Weapon.selected_yes;
     if (oct_KeyPressed(BUTTON_CONFIRM)) {
         weapon_popup->value_available = true;
-        return true;
     }
-    return false;
+    return weapon_popup->value_available && weapon_popup->alpha < 0.05;
 }
 
 void draw_and_update_popups() {
@@ -140,8 +150,11 @@ PopupWeaponSelectPointer popup_weapon_select(Weapon *weapon) {
     if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
             oct_Raise(OCT_STATUS_ERROR, true, "Input popup was created on a full stack.");
     Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
+    memset(pop, 0, sizeof(Popup));
     pop->type = POPUP_TYPE_WEAPON_SELECT;
     pop->Weapon.weapon = weapon;
+    pop->Weapon.actual_pointer_pos[0] = 69 + 68;
+    pop->Weapon.actual_pointer_pos[1] = 49 + 79;
 
     return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
 }
@@ -150,8 +163,9 @@ PopupItemSelectPointer popup_item_select(Item *item) {
     if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
             oct_Raise(OCT_STATUS_ERROR, true, "Input popup was created on a full stack.");
     Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
+    memset(pop, 0, sizeof(Popup));
     pop->type = POPUP_TYPE_ITEM_SELECT;
-    pop->Weapon.weapon = item;
+    pop->Item.item = item;
 
     return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
 }

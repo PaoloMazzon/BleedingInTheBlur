@@ -129,10 +129,13 @@ typedef enum {
 typedef enum {
     TILE_CONTENTS_TYPE_NONE      = 0,
     TILE_CONTENTS_TYPE_CHARACTER = 1,
-    TILE_CONTENTS_TYPE_ITEM      = 2,
-    TILE_CONTENTS_TYPE_WEAPON    = 4,
-    TILE_CONTENTS_TYPE_WALL      = 5,
+    TILE_CONTENTS_TYPE_WALL      = 2,
 } TileContentsType;
+typedef enum {
+    TILE_EXTRA_CONTENTS_TYPE_NONE      = 0,
+    TILE_EXTRA_CONTENTS_TYPE_ITEM      = 1,
+    TILE_EXTRA_CONTENTS_TYPE_WEAPON    = 2,
+} TileExtraContentsType;
 typedef enum {
     WEAPON_TYPE_NONE     = 0,
     WEAPON_TYPE_SWORD    = 1,
@@ -322,11 +325,14 @@ struct Character_s {
 // Things that can be on a tile in the dungeon
 typedef struct TileContents_s {
     TileContentsType type;
+    TileExtraContentsType extra_contents_type;
     union {
         Character *character;
+        Tile tile; // tiles are owned by the TileContents they reside in
+    };
+    union {
         Item *item;
         Weapon *weapon;
-        Tile tile; // tiles are owned by the TileContents they reside in
     };
 } TileContents;
 
@@ -358,6 +364,9 @@ typedef struct Popup_s {
     // are only reused once value_available is false again.
     uint32_t generation;
     bool value_available;
+
+    // For tweening
+    float alpha;
 
     union {
         struct {

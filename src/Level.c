@@ -381,10 +381,9 @@ static void draw_tiles() {
     for (int32_t y = start_draw_y; y < start_draw_y + tile_vertical; y++) {
         for (int32_t x = start_draw_x; x < start_draw_x + tile_horizontal; x++) {
             TileContents *tile = level_get_tile((Position){x, y});
-            if (tile && tile->type == TILE_CONTENTS_TYPE_WEAPON) {
-                draw_object_raw(&tile->weapon->info, (Oct_Vec2){x * CELL_WIDTH, y * CELL_HEIGHT});
-            } else if (tile && tile->type == TILE_CONTENTS_TYPE_ITEM) {
-                draw_object_raw(&tile->weapon->info, (Oct_Vec2){x * CELL_WIDTH, y * CELL_HEIGHT});
+            if (tile && tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_WEAPON ||
+                tile && tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_ITEM) {
+                oct_DrawTexture(oct_GetAsset(g_game.assets, "objects/item.png"), (Oct_Vec2){x * CELL_WIDTH, y * CELL_HEIGHT});
             }
         }
     }
@@ -476,11 +475,9 @@ void draw_attack_view_ui() {
 
     // Show roll stats if cursor is on something
     const TileContents *contents = level_get_tile(g_game.current_level.attack_view.attack_cursor);
-    if (contents && (contents->type == TILE_CONTENTS_TYPE_CHARACTER || contents->type == TILE_CONTENTS_TYPE_ITEM)) {
+    if (contents && (contents->type == TILE_CONTENTS_TYPE_CHARACTER)) {
         if (contents->type == TILE_CONTENTS_TYPE_CHARACTER && contents->character == &g_game.player) return;
-        const Traits *target_traits = contents->type == TILE_CONTENTS_TYPE_CHARACTER ?
-                                      &contents->character->info.traits :
-                                      &contents->item->info.traits;
+        const Traits *target_traits = &contents->character->info.traits;
         int32_t dc, pips;
         const AttackFavour favour =  character_get_attack_stats(&g_game.player,
                                                                 &g_game.player.weapons[g_game.player.active_weapon].info.traits,
@@ -591,7 +588,7 @@ void level_begin() {
         get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.current_level.weapons[0]);
         level_get_spawn_point(weapon_spawn);
         TileContents *tile = level_get_tile(weapon_spawn);
-        tile->type = TILE_CONTENTS_TYPE_WEAPON;
+        tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_WEAPON;
         tile->weapon = &g_game.current_level.weapons[0];
     }
 }
@@ -692,13 +689,6 @@ TileContents *level_get_tile(Position pos) {
     if (pos[0] < 0 || pos[0] >= g_game.current_level.level_width || pos[1] < 0 || pos[1] >= g_game.current_level.level_height)
         return nullptr;
     return &g_game.current_level.tiles[(pos[1] * g_game.current_level.level_width) + pos[0]];
-}
-
-Traits *level_get_tile_traits(Position pos) {
-    const TileContents *t = level_get_tile(pos);
-    if (t && t->type == TILE_CONTENTS_TYPE_CHARACTER) return &t->character->info.traits;
-    if (t && t->type == TILE_CONTENTS_TYPE_ITEM) return &t->item->info.traits;
-    return nullptr;
 }
 
 TileContentsType level_get_tile_type(int32_t x, int32_t y) {
