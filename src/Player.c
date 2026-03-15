@@ -151,6 +151,8 @@ static bool player_interaction_state() {
                                      t->character,
                                      player->weapons[player->active_weapon].damage);
             level_set_displayed_enemy(t->character);
+            g_game.current_level.attack_view.attack_cursor[0] = target_position[0];
+            g_game.current_level.attack_view.attack_cursor[1] = target_position[1];
             g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
         }
     }
