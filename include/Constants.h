@@ -62,6 +62,7 @@ extern const int32_t TILE_WALL_SHADOW_LEFT_RIGHT_BOTTOM;
 // Controls
 extern const Oct_Key BUTTON_ATTACK_VIEW;
 extern const Oct_Key BUTTON_ITEM_SWAP;
+extern const Oct_Key BUTTON_ITEM_USE;
 extern const Oct_Key BUTTON_STATUS_TOGGLE;
 extern const Oct_Key BUTTON_CONFIRM;
 extern const Oct_Key BUTTON_SWAP_WEAPON;
@@ -101,3 +102,4 @@ extern const Oct_Key BUTTON_DOWN;
 #define                  ITEM_SELECTOR_ID 7
 #define                ITEM_BACKGROUND_ID 8
 #define                  POPUP_POINTER_ID 9
+#define                      ITEM_NAME_ID 10

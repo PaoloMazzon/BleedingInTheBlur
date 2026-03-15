@@ -105,19 +105,39 @@ void draw_object(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) 
 
 void draw_object_raw(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) {
     if (info->drawn_type == DRAWN_TYPE_SPRITE) {
+        oct_DrawSpriteIntColourExt(
+                OCT_INTERPOLATE_ALL, info->id,
+                info->sprite, &info->sprite_instance,
+                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
+                (Oct_Vec2){position[0], position[1]},
+                (Oct_Vec2){scale, scale},
+                0, (Oct_Vec2){0, 0});
+    } else if (info->drawn_type == DRAWN_TYPE_TEXTURE) {
+        oct_DrawTextureIntColourExt(
+                OCT_INTERPOLATE_ALL, info->id,
+                info->texture,
+                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
+                (Oct_Vec2){position[0], position[1]},
+                (Oct_Vec2){scale, scale},
+                0, (Oct_Vec2){0, 0});
+    }
+}
+
+void draw_object_raw_no_int(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) {
+    if (info->drawn_type == DRAWN_TYPE_SPRITE) {
         oct_DrawSpriteColourExt(
                 info->sprite, &info->sprite_instance,
                 &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
-                (Oct_Vec2){position[0] + 4, position[1] + 4},
+                (Oct_Vec2){position[0], position[1]},
                 (Oct_Vec2){scale, scale},
-                0, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
+                0, (Oct_Vec2){0, 0});
     } else if (info->drawn_type == DRAWN_TYPE_TEXTURE) {
         oct_DrawTextureColourExt(
                 info->texture,
                 &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
-                (Oct_Vec2){position[0] + 4, position[1] + 4},
+                (Oct_Vec2){position[0], position[1]},
                 (Oct_Vec2){scale, scale},
-                0, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
+                0, (Oct_Vec2){0, 0});
     }
 }
 

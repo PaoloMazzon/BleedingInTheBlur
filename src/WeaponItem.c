@@ -1,6 +1,7 @@
 #include <string.h>
 #include "WeaponItem.h"
 #include "Game.h"
+#include "Util.h"
 
 // is this bad practice? maybe idk
 #include "ItemCallbacks.c"
@@ -83,15 +84,28 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
     }
 }
 
+bool use_item(Item *item, Character *c) {
+    if (item->use_callback) {
+        item->use_callback(c);
+        item->charges_remaining -= 1;
+        return item->charges_remaining > 0;
+    }
+    return true;
+}
+
 // Sets an item to reasonable defaults
 static void prep_item(Item *out, const char *name, int32_t charges, Oct_Texture tex) {
     memset(out, 0, sizeof(Item));
-    out->info.name = "n/a";
-    out->charges_remaining = 1;
-    out->charges = 1;
+    out->info.name = name;
+    out->charges_remaining = charges;
+    out->charges = charges;
+    out->info.texture = tex;
+    out->info.drawn_type = DRAWN_TYPE_TEXTURE;
+    out->info.id = new_oct_id();
 }
 
 void get_small_health_potion(Item *out) {
     prep_item(out, "Potion", 1, oct_GetAsset(g_game.assets, "items/healthpotion.png"));
-    out->enter_inventory_callback = nullptr;
+    out->type = ITEM_TYPE_POTION;
+    out->use_callback = small_potion_callback;
 }

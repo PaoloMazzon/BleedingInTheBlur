@@ -32,6 +32,10 @@ void level_transition_to_enemy_turns();
 void level_next_enemy_turn();
 bool tiles_have_walls_between(Position tile1, Position tile2);
 
+// Move item/weapon from a tile into a new slot. It is an error to call this with a tile that does not contain an item/weapon
+void level_extract_tile_item(Position tile, Item *out_item);
+void level_extract_tile_weapon(Position tile, Weapon *out_weapon);
+
 // Returns true if there is anything in the popup stack
 bool popups_are_active();
 void draw_and_update_popups();
@@ -60,5 +64,6 @@ void debug(const char *fmt, ...);
 // Draw an arbitrary object
 void draw_object(ObjectInfo *object, Oct_Vec2 position, float scale, float alpha);
 void draw_object_raw(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha);
+void draw_object_raw_no_int(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha);
 
 void create_slime(Character *slot, Position pos);

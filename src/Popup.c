@@ -123,7 +123,7 @@ bool draw_and_update_item_popup(Popup *item_popup) {
     item_popup->Item.actual_pointer_x += (target_x - item_popup->Item.actual_pointer_x) * 0.4f;
     Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = item_popup->alpha};
 
-    oct_DrawTextureColour(oct_GetAsset(g_game.assets, "hud/newweaponpopup.png"), &c, (Oct_Vec2){start_x, start_y});
+    oct_DrawTextureColour(oct_GetAsset(g_game.assets, "hud/itempopup.png"), &c, (Oct_Vec2){start_x, start_y});
 
     // We are going to draw 4 pieces of text, so get all their metrics now
     Oct_Vec2 item_name_size;
@@ -141,21 +141,42 @@ bool draw_and_update_item_popup(Popup *item_popup) {
     draw_object_raw(&item_popup->Item.item->info, (Oct_Vec2){start_x + 128, start_y + 16}, 2, item_popup->alpha);
     for (int32_t i = 0; i < INVENTORY_SIZE; i++) { // 16, 64
         if (g_game.player.items[i].type == ITEM_TYPE_NONE) continue;
-        draw_object_raw(&g_game.player.items[i].info, (Oct_Vec2){start_x + 16 + (32 * (float)i), start_y + 64}, 2, item_popup->alpha);
+        draw_object_raw(&g_game.player.items[i].info, (Oct_Vec2){start_x + 16 + (32 * (float)(i + 1)), start_y + 64}, 2, item_popup->alpha);
     }
 
     // Draw the selection thing
-    oct_DrawTextureInt(
+    oct_DrawTextureIntColour(
             OCT_INTERPOLATE_ALL, POPUP_POINTER_ID,
             oct_GetAsset(g_game.assets, "hud/weaponselect.png"),
+            &c,
             (Oct_Vec2){start_x + item_popup->Item.actual_pointer_x, start_y + 59});
 
+    // Draw the inventory item's name
+    Item *old_item = item_popup->Item.index != -1 ? &g_game.player.items[item_popup->Item.index] : nullptr;
+    if (old_item && old_item->type != ITEM_TYPE_NONE) {
+        Oct_Vec2 old_item_name_size;
+        oct_GetTextSize(pretty_font, old_item_name_size, 1, "%s", old_item->info.name);
+        oct_DrawTextColour(
+                pretty_font,
+                (Oct_Vec2){start_x + 88 - (old_item_name_size[0] / 2), start_y + 47 - (old_item_name_size[1] / 2)},
+                &c, 1,
+                "%s", old_item->info.name);
+    } else if (!old_item) {
+        Oct_Vec2 old_item_name_size;
+        oct_GetTextSize(pretty_font, old_item_name_size, 1, "Don't pickup");
+        oct_DrawTextColour(
+                pretty_font,
+                (Oct_Vec2){start_x + 88 - (old_item_name_size[0] / 2), start_y + 47 - (old_item_name_size[1] / 2)},
+                &c, 1,
+                "Don't pickup");
+    }
+
     // Handle the controls
-    if (oct_KeyPressed(BUTTON_LEFT))
+    if (oct_KeyPressed(BUTTON_LEFT) && item_popup->alpha >= 0.5)
         item_popup->Item.index = item_popup->Item.index == -1 ? 3 : item_popup->Item.index - 1;
-    if (oct_KeyPressed(BUTTON_RIGHT))
+    if (oct_KeyPressed(BUTTON_RIGHT) && item_popup->alpha >= 0.5)
         item_popup->Item.index = item_popup->Item.index == 3 ? -1 : item_popup->Item.index + 1;
-    if (oct_KeyPressed(BUTTON_CONFIRM)) {
+    if (oct_KeyPressed(BUTTON_CONFIRM) && item_popup->alpha >= 0.5) {
         item_popup->value_available = true;
     }
     return item_popup->value_available && item_popup->alpha < 0.05;
@@ -246,6 +267,16 @@ bool popup_get_weapon(PopupWeaponSelectPointer weapon_pointer, bool *selected) {
 }
 
 bool popup_get_item(PopupItemSelectPointer item_pointer, int32_t *index) {
-    return false; // TODO: This
+    const uint64_t popup_index = UNPACK_INDEX(item_pointer);
+    const uint64_t generation = UNPACK_GENERATION(item_pointer);
+    assert(popup_index >= 0);
+    assert(popup_index < MAX_POPUP_STACK);
+    if (generation == g_game.current_level.popup_stack[popup_index].generation && g_game.current_level.popup_stack[popup_index].value_available) {
+        g_game.current_level.popup_stack[popup_index].generation++;
+        g_game.current_level.popup_stack[popup_index].value_available = false;
+        *index = g_game.current_level.popup_stack[popup_index].Item.index;
+        return true;
+    }
+    return false;
 }
 

@@ -325,7 +325,6 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
                 if (overlapping)
                     debug("Re-rolling spot [%i,%i]", level->spawn_points[((i - 1) * spawns_per_room) + j][0], level->spawn_points[((i - 1) * spawns_per_room) + j][1]);
             }
-            debug("Found spot [%i,%i]", level->spawn_points[((i - 1) * spawns_per_room) + j][0], level->spawn_points[((i - 1) * spawns_per_room) + j][1]);
         }
     }
 

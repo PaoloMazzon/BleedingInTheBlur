@@ -77,27 +77,20 @@ static bool player_interaction_state() {
     if (popup_get_weapon(g_game.current_level.weapon_popup, &selected_the_weapon)) {
         debug("Player completed weapon popup with result %s.", selected_the_weapon ? "true" : "false");
         if (selected_the_weapon) {
-            TileContents *tile = level_get_tile(player->pos);
-            assert(tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_WEAPON);
-            tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_NONE;
-            memcpy(&g_game.player.soul_bound_weapon, tile->weapon, sizeof(Weapon));
-            tile->type = TILE_CONTENTS_TYPE_NONE;
+            level_extract_tile_weapon(g_game.player.pos, &g_game.player.soul_bound_weapon);
         }
         return true;
-    } else if (popup_get_item(g_game.current_level.weapon_popup, &item_index)) {
+    }
+    if (popup_get_item(g_game.current_level.item_popup, &item_index)) {
         debug("Player completed item popup with result %i.", item_index);
         if (item_index != -1) {
-            TileContents *tile = level_get_tile(player->pos);
-            assert(tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_ITEM);
-            tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_NONE;
-            memcpy(&g_game.player.items[item_index], tile->item, sizeof(Item));
-            for (int32_t i = 0; i < MAX_ITEMS; i++) {
-                if (&g_game.current_level.items[i] == tile->item) {
-                    g_game.current_level.items[i].type = ITEM_TYPE_NONE;
-                    break;
-                }
-            }
-            tile->type = TILE_CONTENTS_TYPE_NONE;
+            // Call the old item's exit inventory callback
+            if (g_game.player.items[item_index].exit_inventory_callback)
+                g_game.player.items[item_index].exit_inventory_callback(&g_game.player);
+            level_extract_tile_item(g_game.player.pos, &g_game.player.items[item_index]);
+            // Call the new item's enter inventory callback
+            if (g_game.player.items[item_index].enter_inventory_callback)
+                g_game.player.items[item_index].enter_inventory_callback(&g_game.player);
         }
         return true;
     }
@@ -126,12 +119,19 @@ static bool player_interaction_state() {
         g_game.player.selected_item = (g_game.player.selected_item + 1) % INVENTORY_SIZE;
     }
 
+    if (oct_KeyPressed(BUTTON_ITEM_USE) && player->items[player->selected_item].type != ITEM_TYPE_NONE) {
+        if (!use_item(&player->items[player->selected_item], player)) {
+            player->items[player->selected_item].type = ITEM_TYPE_NONE;
+        }
+    }
+
     // Process movement
     if (movement_direction[0] != 0 || movement_direction[1] != 0) {
         const Position target_position = {
                 g_game.player.pos[0] + movement_direction[0],
                 g_game.player.pos[1] + movement_direction[1],
         };
+        TileContents *t = level_get_tile(target_position);
         if (character_move(&g_game.player, target_position)) {
             // If we moved onto a weapon/item, we should show the popup to pick it up before passing turn
             TileContents *tile = level_get_tile(player->pos);
@@ -144,6 +144,14 @@ static bool player_interaction_state() {
             } else {
                 player_has_taken_actions = true;
             }
+        } else if (t && t->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(target_position, player->pos) <= player->weapons[player->active_weapon].range) {
+            // Auto-attack characters by moving into them
+            character_attempt_attack(player,
+                                     &player->weapons[player->active_weapon].info.traits,
+                                     t->character,
+                                     player->weapons[player->active_weapon].damage);
+            level_set_displayed_enemy(t->character);
+            g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
         }
     }
 

@@ -2,6 +2,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 #include "Game.h"
 #include "Util.h"
 #include "Character.h"
@@ -144,7 +145,7 @@ void draw_characters() {
         ObjectInfo *rcvr_info = &level->Attack.receiver->info;
         atk_info->actual_position[0] = atk_info->actual_position[0] + (((float)attacker_target_tile[0] * CELL_WIDTH) - atk_info->actual_position[0]) * interpolation;
         atk_info->actual_position[1] = atk_info->actual_position[1] + (((float)attacker_target_tile[1] * CELL_HEIGHT) - atk_info->actual_position[1]) * interpolation;
-        atk_info->rotation = interpolation * atk_info->facing_direction * 1.5f;
+        atk_info->rotation = interpolation * atk_info->facing_direction * 0.5f;
 
         // Account for facing the wrong way
         atk_info->facing_direction = (level->Attack.attacker->pos[0] <= level->Attack.receiver->pos[0]) ? 1 : -1;
@@ -156,13 +157,14 @@ void draw_characters() {
         character_draw(level->Attack.attacker, atk_info->actual_position, 1.0f);
         rcvr_info->actual_position[0] = rcvr_info->actual_position[0] + (((float)rcvr_target_tile[0] * CELL_WIDTH) - rcvr_info->actual_position[0]) * interpolation;
         rcvr_info->actual_position[1] = rcvr_info->actual_position[1] + (((float)rcvr_target_tile[1] * CELL_HEIGHT) - rcvr_info->actual_position[1]) * interpolation;
-        rcvr_info->rotation = interpolation * -rcvr_info->facing_direction * 1.5f;
+        rcvr_info->rotation = interpolation * -rcvr_info->facing_direction * 0.5f;
     }
 }
 
 void draw_ui() {
     static float actual_weapon_indicator_offset = 0;
     static float actual_movement_scale = 0;
+    const Oct_FontAtlas pretty_font = oct_GetAsset(g_game.assets, "fnt_pixel");
 
     // We process this all the time
     const float target_item_bar_y = timer_in_use(&g_game.current_level.player_item_bar_popup_timer) ? 0 : 32;
@@ -191,7 +193,8 @@ void draw_ui() {
 
         // Draw the background and each item in the inventory
         for (int32_t i = 0; i < INVENTORY_SIZE; i++) {
-            draw_object(
+            if (g_game.player.items[i].type == ITEM_TYPE_NONE) continue;
+            draw_object_raw(
                 &g_game.player.items[i].info,
                 (Oct_Vec2){item_start_x + (item_displacement_x * (float)i), item_start_y},
                 2, 1);
@@ -201,6 +204,19 @@ void draw_ui() {
             OCT_INTERPOLATE_ALL, ITEM_SELECTOR_ID,
             oct_GetAsset(g_game.assets, "hud/weaponselect.png"),
                     (Oct_Vec2){selected_x, selected_y + y_displacement});
+
+        // Draw text for the item name
+        if (g_game.player.items[g_game.player.selected_item].type != ITEM_TYPE_NONE) {
+            Oct_Vec2 text_size;
+            oct_GetTextSize(pretty_font, text_size, 1, "%s",
+                            g_game.player.items[g_game.player.selected_item].info.name);
+            oct_DrawTextIntColour(
+                    OCT_INTERPOLATE_ALL, ITEM_NAME_ID,
+                    pretty_font,
+                    (Oct_Vec2) {item_popup_start_x + 64 - (text_size[0] / 2), item_popup_start_y - text_size[1]},
+                    &(Oct_Colour) {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f - (y_displacement / 32.0f)},
+                    1, "%s", g_game.player.items[g_game.player.selected_item].info.name);
+        }
     }
 
     oct_DrawTexture(
@@ -277,6 +293,13 @@ void draw_ui() {
             OCT_INTERPOLATE_ALL, WEAPON_INDICATOR_ID,
             oct_GetAsset(g_game.assets, "hud/weaponselect.png"),
                    (Oct_Vec2){259 + actual_weapon_indicator_offset, 227});
+
+    // Draw the currently selected item
+    if (g_game.player.items[g_game.player.selected_item].type != ITEM_TYPE_NONE)
+        draw_object_raw_no_int(
+                &g_game.player.items[g_game.player.selected_item].info,
+                (Oct_Vec2){232, 232},
+                2, 1);
 
     // Draw enemy info if one needs to be displayed
     timer_tick(&g_game.current_level.enemy_display_timer);
@@ -583,7 +606,7 @@ void level_begin() {
         create_slime(level_get_character_slot(), slime_spawn);
     }
 
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 5; i++) {
         Position weapon_spawn;
         get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.current_level.weapons[i]);
         level_get_spawn_point(weapon_spawn);
@@ -592,14 +615,23 @@ void level_begin() {
         tile->weapon = &g_game.current_level.weapons[i];
     }
 
-    for (int i = 0; i < 5; i++) {
-        Position item_spawn;
-        get_small_health_potion(&g_game.current_level.items[i]);
-        level_get_spawn_point(item_spawn);
-        TileContents *tile = level_get_tile(item_spawn);
-        tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_ITEM;
-        tile->item = &g_game.current_level.items[i];
-    }
+    Position item_spawn = {
+            g_game.player.pos[0] + 1,
+            g_game.player.pos[1]
+    };
+    get_small_health_potion(&g_game.current_level.items[5]);
+    TileContents *tile = level_get_tile(item_spawn);
+    tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_ITEM;
+    tile->item = &g_game.current_level.items[5];
+
+    Position item_spawn2 = {
+            g_game.player.pos[0] - 1,
+            g_game.player.pos[1]
+    };
+    get_small_health_potion(&g_game.current_level.items[6]);
+    tile = level_get_tile(item_spawn2);
+    tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_ITEM;
+    tile->item = &g_game.current_level.items[6];
 }
 
 LevelIndex level_update() {
@@ -778,4 +810,40 @@ void level_next_enemy_turn() {
     }
     g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
     g_game.current_level.world_turn = false;
+}
+
+void level_extract_tile_item(Position tile, Item *out_item) {
+    TileContents *t = level_get_tile(tile);
+    assert(t);
+    assert(t->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_ITEM);
+
+    // Move the contents over and remove it from the tile
+    memcpy(out_item, t->item, sizeof(Item));
+    t->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_NONE;
+
+    // Remove it from the level list
+    for (int32_t i = 0; i < MAX_ITEMS; i++) {
+        if (t->item == &g_game.current_level.items[i]) {
+            g_game.current_level.items[i].type = ITEM_TYPE_NONE;
+            break;
+        }
+    }
+}
+
+void level_extract_tile_weapon(Position tile, Weapon *out_weapon) {
+    TileContents *t = level_get_tile(tile);
+    assert(t);
+    assert(t->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_WEAPON);
+
+    // Move the contents over and remove it from the tile
+    memcpy(out_weapon, t->item, sizeof(Weapon));
+    t->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_NONE;
+
+    // Remove it from the level list
+    for (int32_t i = 0; i < MAX_ITEMS; i++) {
+        if (t->weapon == &g_game.current_level.weapons[i]) {
+            g_game.current_level.weapons[i].type = WEAPON_TYPE_NONE;
+            break;
+        }
+    }
 }
