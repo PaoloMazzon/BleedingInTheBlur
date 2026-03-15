@@ -344,6 +344,13 @@ void draw_ui() {
         oct_Draw(&cmd);
     }
 
+    // Draw controls -> 1, 135
+    const float controls_opacity = 0.5f;
+    oct_DrawTextureColour(
+            oct_GetAsset(g_game.assets, "hud/controls.png"),
+            &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = controls_opacity},
+            (Oct_Vec2){1, 133});
+
     if (popups_are_active())
         draw_and_update_popups();
 

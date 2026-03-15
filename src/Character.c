@@ -228,6 +228,12 @@ int32_t character_take_damage(Character *c, int32_t damage, Traits *source_trait
         create_label("Evaded!", c->pos, (Oct_Colour){.r = 0.3f, .g = 1.0f, .b = 0.3f, .a = 1.0f}, false);
         return 0;
     }
+    // They can roll death's door if they would die
+    if (c->current_hp - damage <= 0 && !c->info.traits.Character.undying && roll_ups(current_statblock.deaths_door, 1, nullptr)) {
+        c->current_hp = 1;
+        create_label("Momento mori", c->pos, (Oct_Colour){.r = 0.3f, .g = 1.0f, .b = 0.3f, .a = 1.0f}, false);
+        return 0;
+    }
 
     c->current_hp = non_negative(c->current_hp - damage);
 
