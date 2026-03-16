@@ -243,6 +243,8 @@ typedef struct Tile_s {
 
 typedef struct Item_s {
     ObjectInfo info;
+    bool identified; // if the player successfully identified it
+    const char *real_name; // what the player sees if they identify it
     ItemType type;
     int32_t charges;
     int32_t charges_remaining;
