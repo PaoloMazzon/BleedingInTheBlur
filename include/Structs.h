@@ -400,6 +400,11 @@ typedef struct AttackView_s {
 } AttackView;
 
 typedef enum {
+    ATTACK_ANIMATION_TYPE_MELEE  = 0, // general melee attack
+    ATTACK_ANIMATION_TYPE_RANGED = 1, // general ranged attack, uses a projectile
+} AttackAnimationType;
+
+typedef enum {
     // Player may move, pause, trigger the attack view, attack an adjacent tile, or pass
     LEVEL_STATE_PLAYER_INTERACTION = 0,
 
@@ -464,10 +469,11 @@ typedef struct Level_s {
         int32_t damage;
         bool successful;
         Timer animation_timer;
-        Oct_Texture tex;
-        bool ranged; // if the tex should return to the sender
+        AttackAnimationType attack_animation_type;
+        Oct_Texture tex; // projectile texture
         Character *attacker;
-        Character *receiver;
+        Character *receiver; // may be null for some animations
+        Position target_tile;
         Traits traits; // traits associated with the attack
         char buffer[MAX_BUFFER_LENGTH + 1];
     } Attack;

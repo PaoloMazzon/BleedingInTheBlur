@@ -4,6 +4,7 @@
 #include "Character.h"
 #include "Util.h"
 #include "Game.h"
+#include "AttackAnimations.h"
 
 void base_statblock(Statblock *sb) {
     memset(sb, 0, sizeof(Statblock));
@@ -344,15 +345,7 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
     bool passed = roll_dice(pips, dc, &result);
     const int32_t bonus_damage = passed ? result - dc : 0;
 
-    // Setup the level attack animation
-    g_game.current_level.Attack.damage = bonus_damage + base_attack_damage;
-    g_game.current_level.Attack.successful = passed;
-    timer_start(&g_game.current_level.Attack.animation_timer, ATTACK_ANIMATION_DURATION);
-    g_game.current_level.Attack.tex = oct_GetAsset(g_game.assets, "attacks/spear.png");
-    g_game.current_level.Attack.ranged = attack_traits->Attack.ranged;
-    g_game.current_level.Attack.attacker = c;
-    g_game.current_level.Attack.receiver = rcvr;
-    g_game.current_level.Attack.traits = *attack_traits;
+    setup_melee_animation(c, rcvr, attack_traits, passed, bonus_damage + base_attack_damage);
 
     // Make a dice label
     const Oct_Colour red = {
