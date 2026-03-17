@@ -169,10 +169,11 @@ typedef enum {
     SCALE_MODE_STRETCH      = 2, // Stretch to fit the screen
 } ScaleMode;
 typedef enum {
-    ITEM_TYPE_NONE   = 0, // not a valid item
-    ITEM_TYPE_POTION = 1, // some sort of potion, could be garbage
-    ITEM_TYPE_SPELL  = 2, // spell with x charges
-    ITEM_TYPE_USABLE = 3, // usable item with x charges
+    ITEM_TYPE_NONE          = 0, // not a valid item
+    ITEM_TYPE_POTION        = 1, // some sort of potion, could be garbage
+    ITEM_TYPE_ATTACK_SPELL  = 2, // spell with x charges, the use ability is used by attack view to initiate the spell
+    ITEM_TYPE_UTILITY_SPELL = 3, // spell that doesn't require a target, basically
+    ITEM_TYPE_USABLE        = 4, // usable item with x charges
 } ItemType;
 
 // These should all be bools
@@ -397,6 +398,7 @@ typedef struct Popup_s {
 typedef struct AttackView_s {
     Position attack_cursor;
     Oct_Vec2 cursor_real_pos; // for tweening
+    Item *spell; // if this is non-null, the attack is a weapon attack. Otherwise it is a spell attack and the item use function will be used to initiate the attack
 } AttackView;
 
 typedef enum {

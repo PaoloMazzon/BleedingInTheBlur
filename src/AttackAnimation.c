@@ -5,6 +5,12 @@
 #include "AttackAnimations.h"
 #include "Character.h"
 
+static void draw_ranged_animation() {
+    // If it is a success, the projectile bounces off the target.
+    // If it fails, the projectile flies past the target and fades out.
+    *((int*)nullptr) = 0; // fuck you
+}
+
 static void draw_melee_animation() {
     Level *level = &g_game.current_level;
     Position rcvr_target_tile = {
@@ -44,12 +50,15 @@ void draw_attack_animation() {
         case ATTACK_ANIMATION_TYPE_MELEE:
             draw_melee_animation();
             break;
+        case ATTACK_ANIMATION_TYPE_RANGED:
+            draw_ranged_animation();
+            break;
         default:
             oct_Raise(OCT_STATUS_ERROR, true, "Unimplemented attack animation %i", g_game.current_level.Attack.attack_animation_type);
     }
 }
 
-static void complete_melee_attack() {
+static void complete_melee_or_ranged_attack() {
     if (!g_game.current_level.Attack.successful) return;
     const bool crit = random_int(1, 101) <= character_crit_chance(g_game.current_level.Attack.attacker);
     const int32_t multiplier = crit ? 2 : 1;
@@ -78,8 +87,9 @@ static void complete_melee_attack() {
 
 void complete_attack_animation() {
     switch (g_game.current_level.Attack.attack_animation_type) {
+        case ATTACK_ANIMATION_TYPE_RANGED:
         case ATTACK_ANIMATION_TYPE_MELEE:
-            complete_melee_attack();
+            complete_melee_or_ranged_attack();
             break;
         default:
             oct_Raise(OCT_STATUS_ERROR, true, "Unimplemented attack animation %i", g_game.current_level.Attack.attack_animation_type);
@@ -87,12 +97,22 @@ void complete_attack_animation() {
 }
 
 void setup_melee_animation(Character *attacker, Character *receiver, const Traits *attack_traits, bool passed, int32_t damage) {
-    // Setup the level attack animation
     g_game.current_level.Attack.attack_animation_type = ATTACK_ANIMATION_TYPE_MELEE;
     g_game.current_level.Attack.damage = damage;
     g_game.current_level.Attack.successful = passed;
     timer_start(&g_game.current_level.Attack.animation_timer, ATTACK_ANIMATION_DURATION);
     g_game.current_level.Attack.tex = OCT_NO_ASSET;
+    g_game.current_level.Attack.attacker = attacker;
+    g_game.current_level.Attack.receiver = receiver;
+    g_game.current_level.Attack.traits = *attack_traits;
+}
+
+void setup_ranged_animation(Character *attacker, Character *receiver, const Traits *attack_traits, bool passed, int32_t damage, Oct_Texture projectile) {
+    g_game.current_level.Attack.attack_animation_type = ATTACK_ANIMATION_TYPE_RANGED;
+    g_game.current_level.Attack.damage = damage;
+    g_game.current_level.Attack.successful = passed;
+    timer_start(&g_game.current_level.Attack.animation_timer, ATTACK_ANIMATION_DURATION);
+    g_game.current_level.Attack.tex = projectile;
     g_game.current_level.Attack.attacker = attacker;
     g_game.current_level.Attack.receiver = receiver;
     g_game.current_level.Attack.traits = *attack_traits;

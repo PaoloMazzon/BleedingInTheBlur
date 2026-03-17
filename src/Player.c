@@ -50,6 +50,7 @@ static bool player_attack_view_state() {
     if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_CONFIRM)) {
         const TileContents *tile = level_get_tile(g_game.current_level.attack_view.attack_cursor);
         if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= player->weapons[player->active_weapon].range) {
+            // TODO: Handle spell attacks (ie, g_game.current_level.attack_view.spell != nullptr)
             character_attempt_attack(player,
                                      &player->weapons[player->active_weapon].info.traits,
                                      tile->character,
@@ -108,6 +109,7 @@ static bool player_interaction_state() {
         g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
         g_game.current_level.attack_view.cursor_real_pos[0] = (float)g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH;
         g_game.current_level.attack_view.cursor_real_pos[1] = (float)g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT;
+        g_game.current_level.attack_view.spell = nullptr;
     }
 
     if (oct_KeyPressed(BUTTON_SWAP_WEAPON)) {
@@ -120,7 +122,15 @@ static bool player_interaction_state() {
     }
 
     if (oct_KeyPressed(BUTTON_ITEM_USE) && player->items[player->selected_item].type != ITEM_TYPE_NONE) {
-        if (!use_item(&player->items[player->selected_item], player)) {
+
+        if (player->items[player->selected_item].type == ITEM_TYPE_ATTACK_SPELL) {
+            g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
+            g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
+            g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
+            g_game.current_level.attack_view.cursor_real_pos[0] = (float)g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH;
+            g_game.current_level.attack_view.cursor_real_pos[1] = (float)g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT;
+            g_game.current_level.attack_view.spell = &player->items[player->selected_item];
+        } else if (!use_item(&player->items[player->selected_item], player)) {
             player->items[player->selected_item].type = ITEM_TYPE_NONE;
         }
     }
@@ -153,6 +163,7 @@ static bool player_interaction_state() {
             level_set_displayed_enemy(t->character);
             g_game.current_level.attack_view.attack_cursor[0] = target_position[0];
             g_game.current_level.attack_view.attack_cursor[1] = target_position[1];
+            g_game.current_level.attack_view.spell = nullptr;
             g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
         }
     }
