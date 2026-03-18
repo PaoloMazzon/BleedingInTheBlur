@@ -578,7 +578,7 @@ void level_begin() {
             g_game.player.pos[0] - 1,
             g_game.player.pos[1]
     };
-    get_small_health_potion(&g_game.current_level.items[6]);
+    get_evil_rock(&g_game.current_level.items[6]);
     tile = level_get_tile(item_spawn2);
     tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_ITEM;
     tile->item = &g_game.current_level.items[6];

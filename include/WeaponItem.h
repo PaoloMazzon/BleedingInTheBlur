@@ -13,3 +13,5 @@ bool use_item(Item *item, Character *c);
 
 // Creates a health potion that restores recovery hp
 void get_small_health_potion(Item *out);
+
+void get_evil_rock(Item *out);

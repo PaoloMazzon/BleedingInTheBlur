@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <assert.h>
 #include "Character.h"
+#include "AttackAnimations.h"
 
 // In case I want to change the parameters of these callbacks later
 #define ITEM_USE_CALLBACK(name) bool name(Character *c)
@@ -27,10 +29,29 @@ static const char *get_hp_string(int32_t base_healing, int32_t bonus_healing) {
     return buf;
 }
 
-ITEM_USE_CALLBACK(small_potion_callback) {
+// Gets a zero'd traits block valid until the next call to this
+static Traits *get_traits_block() {
+    static Traits t;
+    memset(&t, 0, sizeof(Traits));
+    return &t;
+}
+
+ITEM_USE_CALLBACK(small_potion_use_callback) {
     int32_t base_hp = 5;
     const int32_t bonus_hp = get_bonus_hp(c);
     c->current_hp += base_hp + bonus_hp;
     create_label(get_hp_string(base_hp, bonus_hp), c->pos, (Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f, }, true);
     return true;
 }
+
+ITEM_USE_CALLBACK(evil_rock_use_callback) {
+    TileContents *t = level_get_tile(g_game.current_level.attack_view.attack_cursor);
+    assert(t && t->type == TILE_CONTENTS_TYPE_CHARACTER);
+    Traits *traits = get_traits_block();
+    traits->Attack.ranged = true;
+    traits->occult = true;
+    traits->Attack.improvised = true;
+    character_attempt_attack(c, traits, t->character, 1);
+    return true;
+}
+

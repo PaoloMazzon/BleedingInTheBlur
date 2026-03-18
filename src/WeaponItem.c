@@ -107,5 +107,11 @@ static void prep_item(Item *out, const char *name, int32_t charges, Oct_Texture 
 void get_small_health_potion(Item *out) {
     prep_item(out, "Potion", 1, oct_GetAsset(g_game.assets, "items/healthpotion.png"));
     out->type = ITEM_TYPE_POTION;
-    out->use_callback = small_potion_callback;
+    out->use_callback = small_potion_use_callback;
+}
+
+void get_evil_rock(Item *out) {
+    prep_item(out, "Evil Rock", 1, oct_GetAsset(g_game.assets, "items/rock.png"));
+    out->type = ITEM_TYPE_ATTACK_SPELL;
+    out->use_callback = evil_rock_use_callback;
 }
