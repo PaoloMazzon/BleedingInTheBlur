@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include "Structs.h"
 #include "Util.h"
@@ -8,7 +9,40 @@
 static void draw_ranged_animation() {
     // If it is a success, the projectile bounces off the target.
     // If it fails, the projectile flies past the target and fades out.
-    *((int*)nullptr) = 0; // fuck you
+    Level *level = &g_game.current_level;
+    const float start_x = (float)level->Attack.attacker->pos[0] * CELL_WIDTH;
+    const float start_y = (float)level->Attack.attacker->pos[1] * CELL_HEIGHT;
+    const float normalized_time = timer_get_normalized(&level->Attack.animation_timer);
+    const float frames_passed = normalized_time * 30;
+    float drawn_rotation = level->Attack.rotation;
+    Oct_Colour colour = {
+            .r = 1.0f,
+            .g = 1.0f,
+            .b = 1.0f,
+            .a = 1.0f,
+    };
+    Oct_Vec2 drawn_location = {
+            start_x + (cosf(level->Attack.rotation) * level->Attack.speed * frames_passed),
+            start_y + (sinf(level->Attack.rotation) * level->Attack.speed * frames_passed),
+    };
+    if (level->Attack.successful && normalized_time > level->Attack.percent_time_before_fadeout) {
+        drawn_location[0] = start_x + (cosf(level->Attack.rotation) * level->Attack.speed * 30 * level->Attack.percent_time_before_fadeout);
+        drawn_location[1] = start_y + (sinf(level->Attack.rotation) * level->Attack.speed * 30 * level->Attack.percent_time_before_fadeout);
+        const float excess_frames = (float)ATTACK_ANIMATION_DURATION - frames_passed;
+        drawn_location[0] += (cosf(level->Attack.rotation) * level->Attack.speed * excess_frames * 0.5f);
+        drawn_location[1] += (sinf(level->Attack.rotation) * level->Attack.speed * excess_frames * 0.5f);
+        drawn_rotation += 0.3f;
+    }
+    if (normalized_time > level->Attack.percent_time_before_fadeout)
+        colour.a = (normalized_time - level->Attack.percent_time_before_fadeout) / (1 - level->Attack.percent_time_before_fadeout);
+    oct_DrawTextureIntColourExt(
+            OCT_INTERPOLATE_ALL, PROJECTILE_ID,
+            level->Attack.tex,
+            &colour,
+            drawn_location,
+            (Oct_Vec2){1, 1},
+            drawn_rotation,
+            (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
 }
 
 static void draw_melee_animation() {
@@ -116,4 +150,8 @@ void setup_ranged_animation(Character *attacker, Character *receiver, const Trai
     g_game.current_level.Attack.attacker = attacker;
     g_game.current_level.Attack.receiver = receiver;
     g_game.current_level.Attack.traits = *attack_traits;
+    g_game.current_level.Attack.percent_time_before_fadeout = 0.8f;
+    const float angle = oct_PointAngle((Oct_Vec2){(float)attacker->pos[0] * CELL_WIDTH, (float)attacker->pos[1] * CELL_HEIGHT}, (Oct_Vec2){(float)receiver->pos[0] * CELL_WIDTH, (float)receiver->pos[1] * CELL_HEIGHT});
+    g_game.current_level.Attack.rotation = passed ? angle : angle - 0.2f;
+    g_game.current_level.Attack.speed = oct_PointDistance((Oct_Vec2){(float)attacker->pos[0] * CELL_WIDTH, (float)attacker->pos[1] * CELL_HEIGHT}, (Oct_Vec2){(float)receiver->pos[0] * CELL_WIDTH, (float)receiver->pos[1] * CELL_HEIGHT}) / ((float)ATTACK_ANIMATION_DURATION * g_game.current_level.Attack.percent_time_before_fadeout);
 }

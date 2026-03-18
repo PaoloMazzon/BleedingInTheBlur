@@ -103,3 +103,4 @@ extern const Oct_Key BUTTON_DOWN;
 #define                ITEM_BACKGROUND_ID 8
 #define                  POPUP_POINTER_ID 9
 #define                      ITEM_NAME_ID 10
+#define                     PROJECTILE_ID 11

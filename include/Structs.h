@@ -478,6 +478,11 @@ typedef struct Level_s {
         Position target_tile;
         Traits traits; // traits associated with the attack
         char buffer[MAX_BUFFER_LENGTH + 1];
+
+        // Ranged specific
+        float rotation;
+        float speed;
+        float percent_time_before_fadeout;
     } Attack;
 
     // For showing the player's item bar popup
