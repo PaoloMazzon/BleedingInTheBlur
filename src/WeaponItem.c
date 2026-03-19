@@ -114,4 +114,5 @@ void get_evil_rock(Item *out) {
     prep_item(out, "Evil Rock", 1, oct_GetAsset(g_game.assets, "items/rock.png"));
     out->type = ITEM_TYPE_ATTACK_SPELL;
     out->use_callback = evil_rock_use_callback;
+    out->get_traits_callback = evil_rock_get_traits_callback;
 }

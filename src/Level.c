@@ -10,9 +10,21 @@
 #include "WeaponItem.h"
 #include "AttackAnimations.h"
 
+static inline int32_t get_player_current_attack_range() {
+    if (g_game.current_level.attack_view.spell) {
+        int32_t range;
+        assert(g_game.current_level.attack_view.spell->get_traits_callback); // if this is triggered that means an attack was started with a non-spell item
+        g_game.current_level.attack_view.spell->get_traits_callback(&g_game.player, nullptr, &range);
+        return range;
+    } else {
+        return g_game.player.weapons[g_game.player.active_weapon].range;
+    }
+    assert(false); // unreachable
+}
+
 // Returns true if a given tile is within range of the player's attack range
 static inline bool tile_in_range_of_player(Position target) {
-    return tile_distance(target, g_game.player.pos) <= g_game.player.weapons[g_game.player.active_weapon].range;
+    return tile_distance(target, g_game.player.pos) <= get_player_current_attack_range();
 }
 
 bool tiles_have_walls_between(Position tile1, Position tile2) {
@@ -473,9 +485,16 @@ void draw_attack_view_ui() {
     if (contents && (contents->type == TILE_CONTENTS_TYPE_CHARACTER)) {
         if (contents->type == TILE_CONTENTS_TYPE_CHARACTER && contents->character == &g_game.player) return;
         const Traits *target_traits = &contents->character->info.traits;
+        Traits attack_traits;
+        // Use spell attack traits if the attack view resulted from an attack spell
+        if (g_game.current_level.attack_view.spell) {
+            assert(g_game.current_level.attack_view.spell->get_traits_callback(&g_game.player, &attack_traits, nullptr));
+        } else {
+            memcpy(&attack_traits, &g_game.player.weapons[g_game.player.active_weapon].info.traits, sizeof(Traits));
+        }
         int32_t dc, pips;
         const AttackFavour favour =  character_get_attack_stats(&g_game.player,
-                                                                &g_game.player.weapons[g_game.player.active_weapon].info.traits,
+                                                                &attack_traits,
                                                                 g_game.current_level.attack_view.attack_cursor,
                                                                 target_traits,
                                                                 &pips, &dc);

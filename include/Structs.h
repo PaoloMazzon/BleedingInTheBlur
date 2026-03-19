@@ -16,7 +16,7 @@ typedef bool (*AlarmCallback)(Character *);
 typedef bool (*ItemEnterInventoryCallback)(Character *);
 typedef bool (*ItemExitInventoryCallback)(Character *);
 typedef bool (*ItemUseCallback)(Character *);
-typedef bool (*ItemGetTraitsCallback)(Character *, Traits *);
+typedef bool (*ItemGetTraitsCallback)(Character *, Traits *, int32_t *);
 typedef int32_t Position[2];
 typedef int32_t IntRange[2];
 
@@ -254,7 +254,7 @@ typedef struct Item_s {
     ItemEnterInventoryCallback enter_inventory_callback;
     ItemExitInventoryCallback exit_inventory_callback;
     ItemUseCallback use_callback;
-    ItemGetTraitsCallback get_stats_callback; // for spell attacks to determine their attack stats
+    ItemGetTraitsCallback get_traits_callback; // for spell attacks to determine their attack stats
 
 } Item;
 
