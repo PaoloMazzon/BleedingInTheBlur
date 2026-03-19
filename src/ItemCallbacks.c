@@ -5,8 +5,15 @@
 
 // In case I want to change the parameters of these callbacks later
 #define ITEM_USE_CALLBACK(name) bool name(Character *c)
+#define ITEM_GET_TRAITS_CALLBACK(name) bool name(Character *c, Traits *t)
 #define ENTER_INVENTORY_CALLBACK(name) bool name(Character *c)
 #define EXIT_INVENTORY_CALLBACK(name) bool name(Character *c)
+
+static const Traits EVIL_ROCK_ATTACK_TRAITS = {
+    .Attack.ranged = true,
+    .Attack.improvised = true,
+    .occult = true,
+};
 
 // rolls healing (against grit) and on a pass there is bonus hp
 static int32_t get_bonus_hp(Character *c) {
@@ -47,11 +54,10 @@ ITEM_USE_CALLBACK(small_potion_use_callback) {
 ITEM_USE_CALLBACK(evil_rock_use_callback) {
     TileContents *t = level_get_tile(g_game.current_level.attack_view.attack_cursor);
     assert(t && t->type == TILE_CONTENTS_TYPE_CHARACTER);
-    Traits *traits = get_traits_block();
-    traits->Attack.ranged = true;
-    traits->occult = true;
-    traits->Attack.improvised = true;
-    character_attempt_attack(c, traits, t->character, 1);
+    character_attempt_attack(c, &EVIL_ROCK_ATTACK_TRAITS, t->character, 1);
     return true;
 }
 
+ITEM_GET_TRAITS_CALLBACK(evil_rock_get_stats) {
+    memcpy(t, &EVIL_ROCK_ATTACK_TRAITS, sizeof(Traits));
+}

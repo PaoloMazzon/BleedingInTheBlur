@@ -11,10 +11,12 @@
 
 // Types
 typedef struct Character_s Character;
+typedef struct Traits_s Traits;
 typedef bool (*AlarmCallback)(Character *);
 typedef bool (*ItemEnterInventoryCallback)(Character *);
 typedef bool (*ItemExitInventoryCallback)(Character *);
 typedef bool (*ItemUseCallback)(Character *);
+typedef bool (*ItemGetTraitsCallback)(Character *, Traits *);
 typedef int32_t Position[2];
 typedef int32_t IntRange[2];
 
@@ -177,7 +179,7 @@ typedef enum {
 } ItemType;
 
 // These should all be bools
-typedef struct Traits_s {
+struct Traits_s {
     struct {
         bool melee; // melee attack
         bool ranged; // ranged attack
@@ -198,7 +200,7 @@ typedef struct Traits_s {
     // Traits that can be either
     bool occult;
     bool holy;
-} Traits;
+};
 
 // These are countdowns, above 0 means its active this turn
 typedef struct StatusEffects_s {
@@ -252,6 +254,8 @@ typedef struct Item_s {
     ItemEnterInventoryCallback enter_inventory_callback;
     ItemExitInventoryCallback exit_inventory_callback;
     ItemUseCallback use_callback;
+    ItemGetTraitsCallback get_stats_callback; // for spell attacks to determine their attack stats
+
 } Item;
 
 // For keeping track of time (in terms of frames)

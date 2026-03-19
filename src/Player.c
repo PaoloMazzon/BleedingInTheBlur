@@ -50,11 +50,15 @@ static bool player_attack_view_state() {
     if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_CONFIRM)) {
         const TileContents *tile = level_get_tile(g_game.current_level.attack_view.attack_cursor);
         if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= player->weapons[player->active_weapon].range) {
-            // TODO: Handle spell attacks (ie, g_game.current_level.attack_view.spell != nullptr)
-            character_attempt_attack(player,
-                                     &player->weapons[player->active_weapon].info.traits,
-                                     tile->character,
-                                     player->weapons[player->active_weapon].damage);
+            if (!g_game.current_level.attack_view.spell) {
+                character_attempt_attack(player,
+                                         &player->weapons[player->active_weapon].info.traits,
+                                         tile->character,
+                                         player->weapons[player->active_weapon].damage);
+            } else {
+                if (!use_item(g_game.current_level.attack_view.spell, &g_game.player))
+                    g_game.player.items[g_game.player.selected_item].type = ITEM_TYPE_NONE;
+            }
         }
     }
 
