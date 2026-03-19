@@ -545,6 +545,11 @@ void draw_labels() {
     }
 }
 
+void draw_level_menu() {
+    if (g_game.current_level.state != LEVEL_STATE_PLAYER_MENU) return;
+    // TODO: Draw the pop-up menu
+}
+
 void process_character_attack() {
     if (level_attack_animation_complete()) {
         complete_attack_animation();
@@ -640,6 +645,7 @@ LevelIndex level_update() {
     oct_LockCameras(g_game.ui_camera);
     draw_attack_view_ui();
     draw_ui();
+    draw_level_menu();
 
     process_character_attack();
 

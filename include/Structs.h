@@ -402,8 +402,23 @@ typedef struct Popup_s {
 typedef struct AttackView_s {
     Position attack_cursor;
     Oct_Vec2 cursor_real_pos; // for tweening
-    Item *spell; // if this is non-null, the attack is a weapon attack. Otherwise it is a spell attack and the item use function will be used to initiate the attack
+    Item *spell; // if this is non-null, the attack is a weapon attack. Otherwise, it is a spell attack and the item use function will be used to initiate the attack
 } AttackView;
+
+// Different tabs the player can be in while in the in-game menu
+typedef enum {
+    MENU_TAB_STATS   = 0,
+    MENU_TAB_ITEMS   = 1,
+    MENU_TAB_WEAPONS = 2,
+    MENU_TAB_OPTIONS = 3,
+    MENU_TAB_MAX     = 4,
+} MenuTab;
+
+// Information for the menu state
+typedef struct LevelMenu_s {
+    MenuTab tab;
+    float real_y; // for tweening
+} LevelMenu;
 
 typedef enum {
     ATTACK_ANIMATION_TYPE_MELEE  = 0, // general melee attack
@@ -418,7 +433,7 @@ typedef enum {
     LEVEL_STATE_PLAYER_INVENTORY = 1,
 
     // Player is browsing their stats
-    LEVEL_STATE_PLAYER_STATS = 2,
+    LEVEL_STATE_PLAYER_MENU = 2,
 
     // Player may select a spell then move to the attack view
     LEVEL_STATE_PLAYER_SPELLS = 3,
@@ -441,6 +456,8 @@ typedef struct Level_s {
     TileContents *tiles;
     int32_t level_width;
     int32_t level_height;
+
+    LevelMenu menu;
 
     // Current state of the level, user interaction and phases are FSM
     LevelState state;

@@ -15,6 +15,17 @@ void player_init(Position start_pos) {
     get_starting_weapon(WEAPON_TYPE_SPEAR, &g_game.player.starting_weapon);
 }
 
+static void player_menu_state() {
+    int32_t tab_mover = 0;
+    if (oct_KeyPressed(BUTTON_NEXT_TAB))
+        tab_mover += 1;
+    if (oct_KeyPressed(BUTTON_PREVIOUS_TAB))
+        tab_mover -= 1;
+    g_game.current_level.menu.tab = (g_game.current_level.menu.tab + tab_mover) % MENU_TAB_MAX;
+
+    // TODO: Move cursor for future menus
+}
+
 static bool player_attack_view_state() {
     Character *player = &g_game.player;
     Position movement_direction = {0};
@@ -120,6 +131,10 @@ static bool player_interaction_state() {
         player->active_weapon = !player->active_weapon;
     }
 
+    if (oct_KeyPressed(BUTTON_MENU_TOGGLE)) {
+        g_game.current_level.state = LEVEL_STATE_PLAYER_MENU;
+    }
+
     if (oct_KeyPressed(BUTTON_ITEM_SWAP)) {
         timer_start(&g_game.current_level.player_item_bar_popup_timer, 30 * 3);
         g_game.player.selected_item = (g_game.player.selected_item + 1) % INVENTORY_SIZE;
@@ -190,7 +205,7 @@ void player_update() {
     }
 
     // Player can toggle the stat view anytime
-    if (oct_KeyPressed(BUTTON_STATUS_TOGGLE)) {
+    if (oct_KeyPressed(BUTTON_MENU_TOGGLE)) {
         g_game.current_level.stats_toggle = !g_game.current_level.stats_toggle;
     }
 
