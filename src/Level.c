@@ -10,18 +10,6 @@
 #include "WeaponItem.h"
 #include "AttackAnimations.h"
 
-static inline int32_t get_player_current_attack_range() {
-    if (g_game.current_level.attack_view.spell) {
-        int32_t range;
-        assert(g_game.current_level.attack_view.spell->get_traits_callback); // if this is triggered that means an attack was started with a non-spell item
-        g_game.current_level.attack_view.spell->get_traits_callback(&g_game.player, nullptr, &range);
-        return range;
-    } else {
-        return g_game.player.weapons[g_game.player.active_weapon].range;
-    }
-    assert(false); // unreachable
-}
-
 // Returns true if a given tile is within range of the player's attack range
 static inline bool tile_in_range_of_player(Position target) {
     return tile_distance(target, g_game.player.pos) <= get_player_current_attack_range();
@@ -548,6 +536,14 @@ void draw_labels() {
 void draw_level_menu() {
     if (g_game.current_level.state != LEVEL_STATE_PLAYER_MENU) return;
     // TODO: Draw the pop-up menu
+
+    // Distance between each pip being drawn
+    const float pip_move_x = 4;
+    const float pip_move_y = 8; // for each new skill
+    // wits start 76, 57
+    // martial start 76, 121
+    // grit start 165, 57
+    // learning start 165, 121
 }
 
 void process_character_attack() {

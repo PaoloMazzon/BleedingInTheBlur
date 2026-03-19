@@ -53,6 +53,7 @@ bool popup_get_item(PopupItemSelectPointer item_pointer, int32_t *index); // -1 
 
 void player_init(Position start_pos);
 void player_update();
+int32_t get_player_current_attack_range();
 
 void *startup();
 void *update(void *ptr);

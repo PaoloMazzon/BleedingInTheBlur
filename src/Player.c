@@ -53,14 +53,14 @@ static bool player_attack_view_state() {
             g_game.current_level.attack_view.attack_cursor[1]);
 
     // Let player cancel attack selection
-    if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_ATTACK_VIEW)) {
+    if (!level_in_attack_animation() && (oct_KeyPressed(BUTTON_ATTACK_VIEW) || (oct_KeyPressed(BUTTON_ITEM_USE) && g_game.current_level.attack_view.spell))) {
         g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
     }
 
     // Attack things at target
     if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_CONFIRM)) {
         const TileContents *tile = level_get_tile(g_game.current_level.attack_view.attack_cursor);
-        if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= player->weapons[player->active_weapon].range) {
+        if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= get_player_current_attack_range()) {
             if (!g_game.current_level.attack_view.spell) {
                 character_attempt_attack(player,
                                          &player->weapons[player->active_weapon].info.traits,
@@ -222,4 +222,16 @@ void player_update() {
         }
         g_game.player.cumulative_movement = oct_Clampi(0, 100, g_game.player.cumulative_movement + character_movement(&g_game.player));
     }
+}
+
+int32_t get_player_current_attack_range() {
+    if (g_game.current_level.attack_view.spell) {
+        int32_t range;
+        assert(g_game.current_level.attack_view.spell->get_traits_callback); // if this is triggered that means an attack was started with a non-spell item
+        g_game.current_level.attack_view.spell->get_traits_callback(&g_game.player, nullptr, &range);
+        return range;
+    } else {
+        return g_game.player.weapons[g_game.player.active_weapon].range;
+    }
+    assert(false); // unreachable
 }

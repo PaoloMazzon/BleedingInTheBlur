@@ -345,7 +345,11 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
     bool passed = roll_dice(pips, dc, &result);
     const int32_t bonus_damage = passed ? result - dc : 0;
 
-    setup_melee_animation(c, rcvr, attack_traits, passed, bonus_damage + base_attack_damage);
+    // TODO: Make this more dynamic with different weapon traits as they're made
+    if (attack_traits->Attack.ranged)
+        setup_ranged_animation(c, rcvr, attack_traits, passed, bonus_damage + base_attack_damage, oct_GetAsset(g_game.assets, "items/rock.png"));
+    else
+        setup_melee_animation(c, rcvr, attack_traits, passed, bonus_damage + base_attack_damage);
 
     // Make a dice label
     const Oct_Colour red = {
