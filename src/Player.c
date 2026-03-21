@@ -23,6 +23,9 @@ static void player_menu_state() {
         tab_mover -= 1;
     g_game.current_level.menu.tab = (g_game.current_level.menu.tab + tab_mover) % MENU_TAB_MAX;
 
+    if (oct_KeyPressed(BUTTON_MENU_TOGGLE))
+        g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
+
     // TODO: Move cursor for future menus
 }
 
@@ -202,6 +205,8 @@ void player_update() {
         player_has_taken_actions = player_attack_view_state();
     } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_INTERACTION) {
         player_has_taken_actions = player_interaction_state();
+    } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_MENU) {
+        player_menu_state();
     }
 
     // Player can toggle the stat view anytime

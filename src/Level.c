@@ -538,7 +538,7 @@ static void draw_pips(Oct_Vec2 position, float direction, int32_t count, int32_t
     const float y = position[1];
     const float pip_horizontal_jump = direction * 4;
     const Oct_Asset pip_tex = oct_GetAsset(g_game.assets, "hud/ingamepip.png");
-    float x = position[0] - (direction == -1.0f ? 3.0f : 0.0f);
+    float x = position[0];
     const int32_t max = count > initial_count ? count : initial_count;
     Oct_Colour bad_colour = {.r = 0.54f, .g = 0.08f, .b = 0.08f, .a = 0.3f};
     Oct_Colour good_colour = {.r = 0.35f, .g = 0.54f, .b = 0.08f, .a = 1.0f};
@@ -573,30 +573,38 @@ static void draw_skill_pips_for_group(Oct_Vec2 position, float direction, Statbl
 }
 
 void draw_level_menu() {
-    if (g_game.current_level.state != LEVEL_STATE_PLAYER_MENU) return;
+    // We don't bother drawing if the menu has been tweened off-screen
+    const float target_y = g_game.current_level.state == LEVEL_STATE_PLAYER_MENU ? 16 : -193;
+    g_game.current_level.menu.real_y += (target_y - g_game.current_level.menu.real_y) * 0.4f;
+    if (g_game.current_level.menu.real_y < -192) return;
 
     // Distance between each pip being drawn
-    const float pip_move_x = 4;
-    const float pip_move_y = 8; // for each new skill
+    const float start_x = 32;
+    const float start_y = g_game.current_level.menu.real_y;
+
+    oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menubackground.png"), (Oct_Vec2){start_x, start_y});
+
+    if (g_game.current_level.menu.tab == MENU_TAB_STATS)
+        oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menustatspage.png"), (Oct_Vec2){start_x, start_y});
 
     // Draw the skill pips
     Statblock sb;
     character_get_current_stats(&g_game.player, &sb);
-    draw_skill_pips_for_group((Oct_Vec2){ 76,  57}, +1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_WITS);
-    draw_skill_pips_for_group((Oct_Vec2){ 76, 121}, +1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_MARTIAL);
-    draw_skill_pips_for_group((Oct_Vec2){165,  57}, -1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_GRIT);
-    draw_skill_pips_for_group((Oct_Vec2){165, 121}, -1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_LEARNING);
+    draw_skill_pips_for_group((Oct_Vec2){start_x +  76, start_y +  57}, +1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_WITS);
+    draw_skill_pips_for_group((Oct_Vec2){start_x +  76, start_y + 121}, +1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_MARTIAL);
+    draw_skill_pips_for_group((Oct_Vec2){start_x + 165, start_y +  57}, -1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_GRIT);
+    draw_skill_pips_for_group((Oct_Vec2){start_x + 165, start_y + 121}, -1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_LEARNING);
 
     // Draw the DCs for each skill
     Oct_Vec2 text_size;
     Oct_Asset font = oct_GetAsset(g_game.assets, "fnt_pixel");
-    const float vertical_offset = 12;
-    oct_DrawText(font, (Oct_Vec2){ 76 + 2,  57 - vertical_offset}, 1, "%i", statblock_get_dc(sb.wits));
-    oct_DrawText(font, (Oct_Vec2){ 76 + 2, 121 - vertical_offset}, 1, "%i", statblock_get_dc(sb.martial));
-    oct_GetTextSize(font, text_size, 1, "%i", statblock_get_dc(sb.grit));
-    oct_DrawText(font, (Oct_Vec2){165 - text_size[0] - 2,  57 - vertical_offset}, 1, "%i", statblock_get_dc(sb.grit));
-    oct_GetTextSize(font, text_size, 1, "%i", statblock_get_dc(sb.learning));
-    oct_DrawText(font, (Oct_Vec2){165 - text_size[0] - 2, 121 - vertical_offset}, 1, "%i", statblock_get_dc(sb.learning));
+    const float vertical_offset = 16;
+    oct_DrawText(font, (Oct_Vec2){ start_x + 76 + 4, start_y +  57 - vertical_offset}, 1, "- %i", statblock_get_dc(sb.wits));
+    oct_DrawText(font, (Oct_Vec2){ start_x + 76 + 4, start_y + 121 - vertical_offset}, 1, "- %i", statblock_get_dc(sb.martial));
+    oct_GetTextSize(font, text_size, 1, "%i -", statblock_get_dc(sb.grit));
+    oct_DrawText(font, (Oct_Vec2){start_x + 165 - text_size[0], start_y +  57 - vertical_offset}, 1, "%i -", statblock_get_dc(sb.grit));
+    oct_GetTextSize(font, text_size, 1, "%i -", statblock_get_dc(sb.learning));
+    oct_DrawText(font, (Oct_Vec2){start_x + 165 - text_size[0], start_y + 121 - vertical_offset}, 1, "%i -", statblock_get_dc(sb.learning));
 }
 
 void process_character_attack() {
