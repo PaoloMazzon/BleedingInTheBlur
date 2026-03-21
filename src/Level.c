@@ -533,17 +533,58 @@ void draw_labels() {
     }
 }
 
+// Draws count pips going in either the left (-1) or right (1) starting at position
+static void draw_pips(Oct_Vec2 position, float direction, int32_t count) {
+    const float y = position[1];
+    const float pip_horizontal_jump = direction * 4;
+    const Oct_Asset pip_tex = oct_GetAsset(g_game.assets, "hud/ingamepip.png");
+    float x = position[0] - (direction == -1.0f ? 3.0f : 0.0f);
+    for (int32_t i = 0; i < count; i++) {
+        oct_DrawTexture(
+            pip_tex,
+            (Oct_Vec2){x, y});
+        x += pip_horizontal_jump;
+    }
+}
+
+// Draws all the skill pips for a skill going down, does not draw the base stat
+static void draw_skill_pips_for_group(Oct_Vec2 position, float direction, Statblock *initial_sb, Statblock *sb, BaseStatType group) {
+    // TODO: Draw stats that are lower than normal as red and stats higher as green
+    const float x = position[0];
+    float y = position[1];
+    const float pip_move_y = 8;
+    for (int32_t i = 0; i < 4; i++) {
+        const int32_t *stat = get_skill_pip(sb, group, i);
+        draw_pips((Oct_Vec2){x, y}, direction, *stat);
+        y += pip_move_y;
+    }
+}
+
 void draw_level_menu() {
     if (g_game.current_level.state != LEVEL_STATE_PLAYER_MENU) return;
-    // TODO: Draw the pop-up menu
 
     // Distance between each pip being drawn
     const float pip_move_x = 4;
     const float pip_move_y = 8; // for each new skill
-    // wits start 76, 57
-    // martial start 76, 121
-    // grit start 165, 57
-    // learning start 165, 121
+
+    // Draw the skill pips
+    Statblock sb;
+    character_get_current_stats(&g_game.player, &sb);
+    draw_skill_pips_for_group((Oct_Vec2){ 76,  57}, +1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_WITS);
+    draw_skill_pips_for_group((Oct_Vec2){ 76, 121}, +1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_MARTIAL);
+    draw_skill_pips_for_group((Oct_Vec2){165,  57}, -1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_GRIT);
+    draw_skill_pips_for_group((Oct_Vec2){165, 121}, -1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_LEARNING);
+
+    // Draw the DCs for each skill
+    Oct_Vec2 text_size;
+    Oct_Asset font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    const float vertical_offset = 12;
+    oct_DrawText(font, (Oct_Vec2){ 76 + 2,  57 - vertical_offset}, 1, "%i", statblock_get_dc(sb.wits));
+    oct_DrawText(font, (Oct_Vec2){ 76 + 2, 121 - vertical_offset}, 1, "%i", statblock_get_dc(sb.martial));
+    oct_GetTextSize(font, text_size, 1, "%i", statblock_get_dc(sb.grit));
+    oct_DrawText(font, (Oct_Vec2){165 - text_size[0] - 2,  57 - vertical_offset}, 1, "%i", statblock_get_dc(sb.grit));
+    oct_GetTextSize(font, text_size, 1, "%i", statblock_get_dc(sb.learning));
+    oct_DrawText(font, (Oct_Vec2){165 - text_size[0] - 2, 121 - vertical_offset}, 1, "%i", statblock_get_dc(sb.learning));
 }
 
 void process_character_attack() {
