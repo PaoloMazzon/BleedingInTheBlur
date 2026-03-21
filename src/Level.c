@@ -534,14 +534,25 @@ void draw_labels() {
 }
 
 // Draws count pips going in either the left (-1) or right (1) starting at position
-static void draw_pips(Oct_Vec2 position, float direction, int32_t count) {
+static void draw_pips(Oct_Vec2 position, float direction, int32_t count, int32_t initial_count) {
     const float y = position[1];
     const float pip_horizontal_jump = direction * 4;
     const Oct_Asset pip_tex = oct_GetAsset(g_game.assets, "hud/ingamepip.png");
     float x = position[0] - (direction == -1.0f ? 3.0f : 0.0f);
-    for (int32_t i = 0; i < count; i++) {
-        oct_DrawTexture(
+    const int32_t max = count > initial_count ? count : initial_count;
+    Oct_Colour bad_colour = {.r = 0.54f, .g = 0.08f, .b = 0.08f, .a = 0.3f};
+    Oct_Colour good_colour = {.r = 0.35f, .g = 0.54f, .b = 0.08f, .a = 1.0f};
+    Oct_Colour base_colour = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f};
+    for (int32_t i = 0; i < max; i++) {
+        const int32_t pip_index = i + 1;
+        Oct_Colour *c = &base_colour;
+        if (pip_index > initial_count)
+            c = &good_colour;
+        else if (pip_index > count)
+            c = &bad_colour;
+        oct_DrawTextureColour(
             pip_tex,
+            c,
             (Oct_Vec2){x, y});
         x += pip_horizontal_jump;
     }
@@ -555,7 +566,8 @@ static void draw_skill_pips_for_group(Oct_Vec2 position, float direction, Statbl
     const float pip_move_y = 8;
     for (int32_t i = 0; i < 4; i++) {
         const int32_t *stat = get_skill_pip(sb, group, i);
-        draw_pips((Oct_Vec2){x, y}, direction, *stat);
+        const int32_t *initial_stat = get_skill_pip(initial_sb, group, i);
+        draw_pips((Oct_Vec2){x, y}, direction, *stat, *initial_stat);
         y += pip_move_y;
     }
 }
