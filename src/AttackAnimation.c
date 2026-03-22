@@ -15,6 +15,8 @@ static void draw_ranged_animation() {
     const float normalized_time = timer_get_normalized(&level->Attack.animation_timer);
     const float frames_passed = normalized_time * 30;
     float drawn_rotation = level->Attack.rotation;
+    const float computed_cast_x = cosf(level->Attack.rotation + (3.141592635f / 6));
+    const float computed_cast_y = sinf(level->Attack.rotation + (3.141592635f / 6));
     Oct_Colour colour = {
             .r = 1.0f,
             .g = 1.0f,
@@ -22,15 +24,15 @@ static void draw_ranged_animation() {
             .a = 1.0f,
     };
     Oct_Vec2 drawn_location = {
-            start_x + (cosf(level->Attack.rotation) * level->Attack.speed * frames_passed),
-            start_y + (sinf(level->Attack.rotation) * level->Attack.speed * frames_passed),
+            start_x + (computed_cast_x * level->Attack.speed * frames_passed),
+            start_y + (computed_cast_y * level->Attack.speed * frames_passed),
     };
     if (level->Attack.successful && normalized_time > level->Attack.percent_time_before_fadeout) {
-        drawn_location[0] = start_x + (cosf(level->Attack.rotation) * level->Attack.speed * 30 * level->Attack.percent_time_before_fadeout);
-        drawn_location[1] = start_y + (sinf(level->Attack.rotation) * level->Attack.speed * 30 * level->Attack.percent_time_before_fadeout);
+        drawn_location[0] = start_x + (computed_cast_x * level->Attack.speed * 30 * level->Attack.percent_time_before_fadeout);
+        drawn_location[1] = start_y + (computed_cast_y * level->Attack.speed * 30 * level->Attack.percent_time_before_fadeout);
         const float excess_frames = (float)ATTACK_ANIMATION_DURATION - frames_passed;
-        drawn_location[0] += (cosf(level->Attack.rotation) * level->Attack.speed * excess_frames * 0.5f);
-        drawn_location[1] += (sinf(level->Attack.rotation) * level->Attack.speed * excess_frames * 0.5f);
+        drawn_location[0] += (computed_cast_x * level->Attack.speed * excess_frames * 0.5f);
+        drawn_location[1] += (computed_cast_y * level->Attack.speed * excess_frames * 0.5f);
         drawn_rotation += 0.3f;
     }
     if (normalized_time > level->Attack.percent_time_before_fadeout)

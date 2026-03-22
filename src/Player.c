@@ -78,7 +78,7 @@ static bool player_attack_view_state() {
 
     // Focus on enemies the player is looking directly at
     const TileContents *tile = level_get_tile(g_game.current_level.attack_view.attack_cursor);
-    if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= player->weapons[player->active_weapon].range && &g_game.player != tile->character) {
+    if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= get_player_current_attack_range() && &g_game.player != tile->character) {
         level_set_displayed_enemy(tile->character);
     }
 
