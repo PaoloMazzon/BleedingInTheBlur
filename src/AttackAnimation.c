@@ -6,42 +6,55 @@
 #include "AttackAnimations.h"
 #include "Character.h"
 
+const float PI = 3.141592635f;
+
+static void rotate_by_theta(Oct_Vec2 base, float theta) {
+    // [cos(theta) -sin(theta)] [x]
+    // [sin(theta)  cos(theta)] [y]
+    const float cos_theta = cosf(theta);
+    const float sin_theta = sinf(theta);
+    const float x = base[0];
+    const float y = base[1];
+    base[0] = (cos_theta * x) + (-sin_theta * y);
+    base[1] = (sin_theta * x) + ( cos_theta * y);
+}
+
 static void draw_ranged_animation() {
     // If it is a success, the projectile bounces off the target.
     // If it fails, the projectile flies past the target and fades out.
     Level *level = &g_game.current_level;
-    const float start_x = (float)level->Attack.attacker->pos[0] * CELL_WIDTH;
-    const float start_y = (float)level->Attack.attacker->pos[1] * CELL_HEIGHT;
     const float normalized_time = timer_get_normalized(&level->Attack.animation_timer);
     const float frames_passed = normalized_time * 30;
-    float drawn_rotation = level->Attack.rotation;
-    const float computed_cast_x = cosf(level->Attack.rotation + (3.141592635f / 6));
-    const float computed_cast_y = sinf(level->Attack.rotation + (3.141592635f / 6));
+    const float drawn_rotation = g_game.current_level.Attack.projectile_rotation;
+    // FIXME: This seems to be backwards
+    const bool is_it_fadeout_time = frames_passed > (float)ATTACK_ANIMATION_DURATION * g_game.current_level.Attack.percent_time_before_fadeout;
     Oct_Colour colour = {
             .r = 1.0f,
             .g = 1.0f,
             .b = 1.0f,
-            .a = 1.0f,
+            .a = is_it_fadeout_time ? (normalized_time - g_game.current_level.Attack.percent_time_before_fadeout) / (1 - g_game.current_level.Attack.percent_time_before_fadeout) : 1.0f
     };
-    Oct_Vec2 drawn_location = {
-            start_x + (computed_cast_x * level->Attack.speed * frames_passed),
-            start_y + (computed_cast_y * level->Attack.speed * frames_passed),
-    };
-    if (level->Attack.successful && normalized_time > level->Attack.percent_time_before_fadeout) {
-        drawn_location[0] = start_x + (computed_cast_x * level->Attack.speed * 30 * level->Attack.percent_time_before_fadeout);
-        drawn_location[1] = start_y + (computed_cast_y * level->Attack.speed * 30 * level->Attack.percent_time_before_fadeout);
-        const float excess_frames = (float)ATTACK_ANIMATION_DURATION - frames_passed;
-        drawn_location[0] += (computed_cast_x * level->Attack.speed * excess_frames * 0.5f);
-        drawn_location[1] += (computed_cast_y * level->Attack.speed * excess_frames * 0.5f);
-        drawn_rotation += 0.3f;
+
+    // If we have hit the other character in the case of a successful attack
+    if (is_it_fadeout_time && g_game.current_level.Attack.successful) {
+        Oct_Vec2 current_velocity = {
+                g_game.current_level.Attack.projectile_velocity[0],
+                g_game.current_level.Attack.projectile_velocity[1]
+        };
+        rotate_by_theta(current_velocity, PI / 6);
+        g_game.current_level.Attack.projectile_position[0] += current_velocity[0];
+        g_game.current_level.Attack.projectile_position[1] += current_velocity[1];
+        g_game.current_level.Attack.projectile_rotation += 0.05;
+    } else {
+        g_game.current_level.Attack.projectile_position[0] += g_game.current_level.Attack.projectile_velocity[0];
+        g_game.current_level.Attack.projectile_position[1] += g_game.current_level.Attack.projectile_velocity[1];
     }
-    if (normalized_time > level->Attack.percent_time_before_fadeout)
-        colour.a = (normalized_time - level->Attack.percent_time_before_fadeout) / (1 - level->Attack.percent_time_before_fadeout);
+
     oct_DrawTextureIntColourExt(
             OCT_INTERPOLATE_ALL, PROJECTILE_ID,
             level->Attack.tex,
             &colour,
-            drawn_location,
+            g_game.current_level.Attack.projectile_position,
             (Oct_Vec2){1, 1},
             drawn_rotation,
             (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
@@ -153,7 +166,20 @@ void setup_ranged_animation(Character *attacker, Character *receiver, const Trai
     g_game.current_level.Attack.receiver = receiver;
     g_game.current_level.Attack.traits = *attack_traits;
     g_game.current_level.Attack.percent_time_before_fadeout = 0.8f;
-    const float angle = oct_PointAngle((Oct_Vec2){(float)attacker->pos[0] * CELL_WIDTH, (float)attacker->pos[1] * CELL_HEIGHT}, (Oct_Vec2){(float)receiver->pos[0] * CELL_WIDTH, (float)receiver->pos[1] * CELL_HEIGHT});
-    g_game.current_level.Attack.rotation = passed ? angle : angle - 0.2f;
-    g_game.current_level.Attack.speed = oct_PointDistance((Oct_Vec2){(float)attacker->pos[0] * CELL_WIDTH, (float)attacker->pos[1] * CELL_HEIGHT}, (Oct_Vec2){(float)receiver->pos[0] * CELL_WIDTH, (float)receiver->pos[1] * CELL_HEIGHT}) / ((float)ATTACK_ANIMATION_DURATION * g_game.current_level.Attack.percent_time_before_fadeout);
+    const float attacker_x = (float)attacker->pos[0] * CELL_WIDTH;
+    const float attacker_y = (float)attacker->pos[1] * CELL_HEIGHT;
+    const float receiver_x = (float)receiver->pos[0] * CELL_WIDTH;
+    const float receiver_y = (float)receiver->pos[1] * CELL_HEIGHT;
+    const float angle = oct_PointAngle(
+            (Oct_Vec2){(float)attacker->pos[0] * CELL_WIDTH, (float)attacker->pos[1] * CELL_HEIGHT},
+            (Oct_Vec2){(float)receiver->pos[0] * CELL_WIDTH, (float)receiver->pos[1] * CELL_HEIGHT});
+    const float frames_before_fadeout = ((float)ATTACK_ANIMATION_DURATION * g_game.current_level.Attack.percent_time_before_fadeout);
+    g_game.current_level.Attack.projectile_velocity[0] = (receiver_x - attacker_x) / frames_before_fadeout;
+    g_game.current_level.Attack.projectile_velocity[1] = (receiver_y - attacker_y) / frames_before_fadeout;
+    if (!passed) {
+        rotate_by_theta(g_game.current_level.Attack.projectile_velocity, PI / 4);
+    }
+    g_game.current_level.Attack.projectile_position[0] = ((float)attacker->pos[0] * CELL_WIDTH) + 4;
+    g_game.current_level.Attack.projectile_position[1] = ((float)attacker->pos[1] * CELL_HEIGHT) + 4;
+    g_game.current_level.Attack.projectile_rotation = angle;
 }

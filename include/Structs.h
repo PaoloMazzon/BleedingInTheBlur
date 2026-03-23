@@ -501,8 +501,9 @@ typedef struct Level_s {
         char buffer[MAX_BUFFER_LENGTH + 1];
 
         // Ranged specific
-        float rotation;
-        float speed;
+        Oct_Vec2 projectile_position;
+        Oct_Vec2 projectile_velocity;
+        float projectile_rotation;
         float percent_time_before_fadeout;
     } Attack;
 
