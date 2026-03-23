@@ -250,6 +250,7 @@ typedef struct Item_s {
     bool identified; // if the player successfully identified it
     const char *real_name; // what the player sees if they identify it
     ItemType type;
+    int32_t mana_requirement;
     int32_t charges;
     int32_t charges_remaining;
     ItemEnterInventoryCallback enter_inventory_callback;
