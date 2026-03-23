@@ -23,11 +23,9 @@ static void draw_ranged_animation() {
     // If it is a success, the projectile bounces off the target.
     // If it fails, the projectile flies past the target and fades out.
     Level *level = &g_game.current_level;
-    const float normalized_time = timer_get_normalized(&level->Attack.animation_timer);
-    const float frames_passed = normalized_time * 30;
+    const float normalized_time = 1.0f - timer_get_normalized(&level->Attack.animation_timer);
     const float drawn_rotation = g_game.current_level.Attack.projectile_rotation;
-    // FIXME: This seems to be backwards
-    const bool is_it_fadeout_time = frames_passed > (float)ATTACK_ANIMATION_DURATION * g_game.current_level.Attack.percent_time_before_fadeout;
+    const bool is_it_fadeout_time = normalized_time > g_game.current_level.Attack.percent_time_before_fadeout;
     Oct_Colour colour = {
             .r = 1.0f,
             .g = 1.0f,
@@ -41,10 +39,10 @@ static void draw_ranged_animation() {
                 g_game.current_level.Attack.projectile_velocity[0],
                 g_game.current_level.Attack.projectile_velocity[1]
         };
-        rotate_by_theta(current_velocity, PI / 6);
+        rotate_by_theta(current_velocity, PI / 4);
         g_game.current_level.Attack.projectile_position[0] += current_velocity[0];
         g_game.current_level.Attack.projectile_position[1] += current_velocity[1];
-        g_game.current_level.Attack.projectile_rotation += 0.05;
+        g_game.current_level.Attack.projectile_rotation += 0.2f;
     } else {
         g_game.current_level.Attack.projectile_position[0] += g_game.current_level.Attack.projectile_velocity[0];
         g_game.current_level.Attack.projectile_position[1] += g_game.current_level.Attack.projectile_velocity[1];
@@ -114,7 +112,8 @@ static void complete_melee_or_ranged_attack() {
     const int32_t actual_damage = character_take_damage(
             g_game.current_level.Attack.receiver,
             g_game.current_level.Attack.damage * multiplier,
-            &g_game.current_level.Attack.traits);
+            &g_game.current_level.Attack.traits,
+            g_game.current_level.Attack.attacker);
     if (actual_damage != 0) {
         if (!crit)
             snprintf(g_game.current_level.Attack.buffer, MAX_BUFFER_LENGTH - 1, "%i dmg", actual_damage);

@@ -45,7 +45,7 @@ int32_t character_crit_chance(Character *c);
 bool character_is_alive(Character *c);
 
 // Returns actual damage taken
-int32_t character_take_damage(Character *c, int32_t damage, Traits *source_traits);
+int32_t character_take_damage(Character *c, int32_t damage, Traits *source_traits, Character *attacker);
 
 // Returns actual evade pips
 int32_t character_evade_pips(Character *c);

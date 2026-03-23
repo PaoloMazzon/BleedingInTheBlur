@@ -195,6 +195,7 @@ struct Traits_s {
         bool hostile; // attacks the player
         bool lazy; // will only pursue the player if the player is close
         bool nimble; // good against ranged
+        bool scared; // runs away if aggro'd
     } Character; // traits for characters
 
     // Traits that can be either
@@ -296,6 +297,9 @@ struct Character_s {
     Item items[INVENTORY_SIZE];
     StatusEffects status_effects; // status effects are decremented every turn
     int32_t aggro_range;
+    int32_t aggro_timer; // how many turns since a character last attacked them
+    Character *aggrod_character; // who attacked them
+    int32_t deaths_door_cooldown; // cant happen ad nauseam
 
     // Weapons
     union {

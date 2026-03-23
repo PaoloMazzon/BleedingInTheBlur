@@ -219,10 +219,19 @@ int32_t character_crit_chance(Character *c) {
     return c->bonus_crit_chance + current_statblock.martial;
 }
 
-int32_t character_take_damage(Character *c, int32_t damage, Traits *source_traits) {
+int32_t character_take_damage(Character *c, int32_t damage, Traits *source_traits, Character *attacker) {
     Statblock current_statblock;
     character_get_current_stats(c, &current_statblock);
     const int32_t initial = c->current_hp;
+
+    // They aggro no matter what
+    if (attacker) {
+        c->aggro_timer = 3;
+        c->aggrod_character = attacker;
+    }
+
+    // Cooldown for death's door
+    if (c->deaths_door_cooldown > 0) c->deaths_door_cooldown -= 1;
 
     // They can evade
     if (roll_ups(current_statblock.evade, 2, nullptr)) {
@@ -230,8 +239,12 @@ int32_t character_take_damage(Character *c, int32_t damage, Traits *source_trait
         return 0;
     }
     // They can roll death's door if they would die
-    if (c->current_hp - damage <= 0 && !c->info.traits.Character.undying && roll_ups(current_statblock.deaths_door, 1, nullptr)) {
+    if (c->current_hp - damage <= 0
+    && !c->info.traits.Character.undying
+    && roll_ups(current_statblock.deaths_door, 1, nullptr)
+    && c->deaths_door_cooldown == 0) {
         c->current_hp = 1;
+        c->deaths_door_cooldown = 3;
         create_label("Momento mori", c->pos, (Oct_Colour){.r = 0.3f, .g = 1.0f, .b = 0.3f, .a = 1.0f}, false);
         return 0;
     }

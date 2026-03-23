@@ -629,6 +629,7 @@ void level_begin() {
     g_game.current_level.tile_visibilities = oct_Zalloc(g_game.allocator, sizeof(int32_t) * params.level_size[0] * params.level_size[1]);
     g_game.current_level.tile_visibilities_turn = oct_Zalloc(g_game.allocator, sizeof(int32_t) * params.level_size[0] * params.level_size[1]);
     player_init(player_start_pos);
+    g_game.current_level.menu.real_y = -150;
 
     // Debug
     for (int32_t i = 0; i < 2; i++) {
