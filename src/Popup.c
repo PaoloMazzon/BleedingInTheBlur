@@ -138,10 +138,10 @@ bool draw_and_update_item_popup(Popup *item_popup) {
                        item_popup->Item.item->info.name);
 
     // Draw the weapon icons
-    draw_object_raw(&item_popup->Item.item->info, (Oct_Vec2){start_x + 128, start_y + 16}, 2, item_popup->alpha);
+    draw_item(item_popup->Item.item, (Oct_Vec2){start_x + 128, start_y + 16}, item_popup->alpha);
     for (int32_t i = 0; i < INVENTORY_SIZE; i++) { // 16, 64
         if (g_game.player.items[i].type == ITEM_TYPE_NONE) continue;
-        draw_object_raw(&g_game.player.items[i].info, (Oct_Vec2){start_x + 16 + (32 * (float)(i + 1)), start_y + 64}, 2, item_popup->alpha);
+        draw_item(&g_game.player.items[i], (Oct_Vec2){start_x + 16 + (32 * (float)(i + 1)), start_y + 64}, item_popup->alpha);
     }
 
     // Draw the selection thing

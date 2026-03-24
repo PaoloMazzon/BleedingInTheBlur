@@ -164,7 +164,7 @@ void setup_ranged_animation(Character *attacker, Character *receiver, const Trai
     g_game.current_level.Attack.attacker = attacker;
     g_game.current_level.Attack.receiver = receiver;
     g_game.current_level.Attack.traits = *attack_traits;
-    g_game.current_level.Attack.percent_time_before_fadeout = 0.8f;
+    g_game.current_level.Attack.percent_time_before_fadeout = 0.6f;
     const float attacker_x = (float)attacker->pos[0] * CELL_WIDTH;
     const float attacker_y = (float)attacker->pos[1] * CELL_HEIGHT;
     const float receiver_x = (float)receiver->pos[0] * CELL_WIDTH;

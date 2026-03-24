@@ -104,6 +104,29 @@ void draw_object(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) 
     }
 }
 
+static void draw_item_charges(Item *item, const Oct_Vec2 position, bool interpolate) {
+    float x = position[0] - 1;
+    float y = position[1] - 1;
+    if (item->charges == 1) return; // dont draw only 1 charge, thats a given
+    for (int32_t i = 0; i < item->charges_remaining; i++) {
+        oct_DrawTextureInt(
+                interpolate ? OCT_INTERPOLATE_ALL : 0, (item->info.id * OBJECT_ID_RESERVED_MULTIPLIER) + i,
+                oct_GetAsset(g_game.assets, "hud/itemchargepip.png"),
+                (Oct_Vec2){x, y});
+        y += 2;
+    }
+}
+
+void draw_item(Item *item, Oct_Vec2 position, float alpha) {
+    draw_object_raw(&item->info, position, 2, alpha);
+    draw_item_charges(item, position, true);
+}
+
+void draw_item_no_int(Item *item, Oct_Vec2 position, float alpha) {
+    draw_object_raw_no_int(&item->info, position, 2, alpha);
+    draw_item_charges(item, position, false);
+}
+
 void draw_object_raw(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) {
     if (info->drawn_type == DRAWN_TYPE_SPRITE) {
         oct_DrawSpriteIntColourExt(

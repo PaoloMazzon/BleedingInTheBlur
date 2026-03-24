@@ -95,6 +95,8 @@ extern const Oct_Key BUTTON_DOWN;
 #define LABELS_ID_START 100 // needs at least MAX_LABELS
 #define ATTACK_CURSOR_ID_START 200 // needs at least 9
 #define ITEM_ID_STAR 300 // items on the hud
+#define OBJECT_ID_START 1000000 // when objects start getting assigned permanent IDs
+#define OBJECT_ID_RESERVED_MULTIPLIER 1000 // each object has the id [id * 1000, id * 1000 + 1000) reserved in addition to its original id
 #define                         CAMERA_ID 1
 #define               WEAPON_INDICATOR_ID 2
 #define                   MOVEMENT_BAR_ID 3

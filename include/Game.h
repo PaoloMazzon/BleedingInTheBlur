@@ -62,6 +62,10 @@ void set_draw_target(Oct_Texture tex);
 void reset_draw_target(); // call after changing the draw target
 void debug(const char *fmt, ...);
 
+// Drawing items
+void draw_item(Item *item, Oct_Vec2 position, float alpha);
+void draw_item_no_int(Item *item, Oct_Vec2 position, float alpha);
+
 // Draw an arbitrary object
 void draw_object(ObjectInfo *object, Oct_Vec2 position, float scale, float alpha);
 void draw_object_raw(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha);

@@ -156,13 +156,12 @@ void draw_ui() {
                 oct_GetAsset(g_game.assets, "hud/itembackground.png"),
                 (Oct_Vec2){item_popup_start_x, item_popup_start_y});
 
-        // Draw the background and each item in the inventory
+        // Draw each item in the inventory
         for (int32_t i = 0; i < INVENTORY_SIZE; i++) {
             if (g_game.player.items[i].type == ITEM_TYPE_NONE) continue;
-            draw_object_raw(
-                &g_game.player.items[i].info,
-                (Oct_Vec2){item_start_x + (item_displacement_x * (float)i), item_start_y},
-                2, 1);
+            draw_item(
+                &g_game.player.items[i],
+                (Oct_Vec2){item_start_x + (item_displacement_x * (float)i), item_start_y}, 1);
         }
         // Draw the selector thing over the selected item
         oct_DrawTextureInt(
@@ -261,10 +260,9 @@ void draw_ui() {
 
     // Draw the currently selected item
     if (g_game.player.items[g_game.player.selected_item].type != ITEM_TYPE_NONE)
-        draw_object_raw_no_int(
-                &g_game.player.items[g_game.player.selected_item].info,
-                (Oct_Vec2){232, 232},
-                2, 1);
+        draw_item_no_int(
+                &g_game.player.items[g_game.player.selected_item],
+                (Oct_Vec2){232, 232}, 1);
 
     // Draw enemy info if one needs to be displayed
     timer_tick(&g_game.current_level.enemy_display_timer);
@@ -629,7 +627,7 @@ void level_begin() {
     g_game.current_level.tile_visibilities = oct_Zalloc(g_game.allocator, sizeof(int32_t) * params.level_size[0] * params.level_size[1]);
     g_game.current_level.tile_visibilities_turn = oct_Zalloc(g_game.allocator, sizeof(int32_t) * params.level_size[0] * params.level_size[1]);
     player_init(player_start_pos);
-    g_game.current_level.menu.real_y = -150;
+    g_game.current_level.menu.real_y = -200;
 
     // Debug
     for (int32_t i = 0; i < 2; i++) {

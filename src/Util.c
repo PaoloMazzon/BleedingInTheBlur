@@ -9,7 +9,7 @@ static float camera_actual_zoom = 1;
 static float camera_w = 160;
 static float camera_h = 128;
 static Position camera_lookat;
-static uint64_t object_id_counter = 1000000;
+static uint64_t object_id_counter = OBJECT_ID_START;
 
 int32_t non_negative(int32_t x) {
     return x < 0 ? 0 : x;
