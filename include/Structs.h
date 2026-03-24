@@ -187,6 +187,12 @@ struct Traits_s {
         bool improvised; // improvised attack
         bool heavy; // heavy weapon
         bool intricate; // this attack is not simple, ie it uses character's learning dc
+        bool rusted; // might hurt the attacker
+        bool vengeful; // +1D against characters that just attacked you
+        bool lightning; // attack involves lightning magic
+        bool fire; // attack involves fire magic
+        bool blood; // attack involves blood magic
+        bool blur; // attacks get +2D but deal 2 damage to wielder
     } Attack; // traits for attacks/weapons
 
     struct {
@@ -196,6 +202,16 @@ struct Traits_s {
         bool lazy; // will only pursue the player if the player is close
         bool nimble; // good against ranged
         bool scared; // runs away if aggro'd
+        bool blood_thirsty; // health on kills
+        bool withering; // damage taken impacts max hp
+        bool haunted; // passes through walls
+        bool sharp; // can "hear" (see) through walls up to 3 blocks away
+        bool abyssal; // -1D to hit an abyssal creature near death
+        bool friendly; // attacks non-player characters
+        bool berserker; // attacks whoever is nearest
+        bool dumb; // -1D against blood magic
+        bool wet; // -1D against lightning magic
+        bool sleeping; // doing nothing until something happens
     } Character; // traits for characters
 
     // Traits that can be either
