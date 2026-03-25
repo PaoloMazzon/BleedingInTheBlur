@@ -75,7 +75,7 @@ extern const Oct_Key BUTTON_DOWN;
 
 struct Traits_s;
 extern const struct Traits_s BLUR_SELF_DAMAGE_TRAITS;
-extern const struct Tratis_s RUST_SELF_DAMAGE_TRAITS;
+extern const struct Traits_s RUST_SELF_DAMAGE_TRAITS;
 
 // Glyphs in the dice font
 #define GLYPH_D8 "."

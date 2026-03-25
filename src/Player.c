@@ -62,7 +62,7 @@ static bool player_attack_view_state() {
 
     // Attack things at target
     const TileContents *tile = level_get_tile(g_game.current_level.attack_view.attack_cursor);
-    if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_CONFIRM) && tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER) {
+    if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_CONFIRM) && tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile->character != &g_game.player) {
         // Check mana in the case that it's a spell
         if (g_game.current_level.attack_view.spell && g_game.player.current_mana < g_game.current_level.attack_view.spell->mana_requirement) {
             create_label("Not enough mana!", g_game.player.pos, (Oct_Colour){.r = 1, .g = 1, .b = 1, .a = 1}, false);

@@ -61,6 +61,19 @@ Here are the base skills and their derivative skills:
 Any skill that says the number of ups will always be rolled as an ups skill
 whereas all others are always pip checks.
 
+## Important Places
+
+ - Most trait-related effects go in `process_attack_traits@AttackAnimation.c`
+   (Evade, escape, critical hits, and death's door are exceptions)
+ - All dice-related bonuses go in `character_get_attack_stats@Character.c`
+ - All character-related behavioural code goes in 
+   `character_take_turn@CharacterTurn.c`
+ - Weapons and items creation code is all in `WeaponItem.h`, all code that 
+   defines item-related callbacks is in `ItemCallbacks.c`, use 
+   `SpellAttackProfile@ItemCallbacks.c` to store spell attack details
+ - Any alarm-related code (alarms are status effects) are in 
+   `PersistentEffeccts.h`
+
 ## License
 The code in this repository is all MIT licensed. Feel free to use it to your
 heart's content. Don't use the stuff in `data/`.

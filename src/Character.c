@@ -257,7 +257,10 @@ int32_t character_take_damage(Character *c, int32_t damage, Traits *source_trait
     if (c->deaths_door_cooldown > 0) c->deaths_door_cooldown -= 1;
 
     // They can evade
-    if (roll_ups(current_statblock.evade, 2, nullptr) && attacker != c) {
+    if (!source_traits->Attack.intricate && roll_ups(current_statblock.evade, 2, nullptr) && attacker != c) {
+        create_label("Evaded!", c->pos, (Oct_Colour){.r = 0.3f, .g = 1.0f, .b = 0.3f, .a = 1.0f}, false);
+        return 0;
+    } else if (source_traits->Attack.intricate && roll_ups(current_statblock.escape, 2, nullptr) && attacker != c) {
         create_label("Evaded!", c->pos, (Oct_Colour){.r = 0.3f, .g = 1.0f, .b = 0.3f, .a = 1.0f}, false);
         return 0;
     }

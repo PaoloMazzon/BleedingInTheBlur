@@ -2,6 +2,7 @@
 #pragma once
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <oct/Octarine.h>
 #include "Constants.h"
 
