@@ -105,8 +105,26 @@ void draw_attack_animation() {
     }
 }
 
+// Handles more general traits like blur that have effects on
+static void process_attack_traits() {
+    Character *attacker = g_game.current_level.Attack.attacker;
+    Character *defender = g_game.current_level.Attack.receiver;
+    Traits *attack_traits = &g_game.current_level.Attack.traits;
+    Traits *defender_traits = &defender->info.traits;
+
+    if (attack_traits->Attack.blur) {
+        character_take_damage(attacker, 2, &BLUR_SELF_DAMAGE_TRAITS, attacker);
+    }
+    if (attack_traits->Attack.rusted && random_int(0, 4) == 0) {
+        character_take_damage(attacker, 1, &RUST_SELF_DAMAGE_TRAITS, attacker);
+    }
+}
+
 static void complete_melee_or_ranged_attack() {
+    // Some traits need to be applied regardless of attack success, but the rest doesn't need to happen
+    process_attack_traits();
     if (!g_game.current_level.Attack.successful) return;
+
     const bool crit = random_int(1, 101) <= character_crit_chance(g_game.current_level.Attack.attacker);
     const int32_t multiplier = crit ? 2 : 1;
     const int32_t actual_damage = character_take_damage(

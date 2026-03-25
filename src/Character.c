@@ -248,7 +248,7 @@ int32_t character_take_damage(Character *c, int32_t damage, Traits *source_trait
     const int32_t initial = c->current_hp;
 
     // They aggro no matter what
-    if (attacker) {
+    if (attacker && attacker != c) {
         c->aggro_timer = 3;
         c->aggrod_character = attacker;
     }
@@ -257,7 +257,7 @@ int32_t character_take_damage(Character *c, int32_t damage, Traits *source_trait
     if (c->deaths_door_cooldown > 0) c->deaths_door_cooldown -= 1;
 
     // They can evade
-    if (roll_ups(current_statblock.evade, 2, nullptr)) {
+    if (roll_ups(current_statblock.evade, 2, nullptr) && attacker != c) {
         create_label("Evaded!", c->pos, (Oct_Colour){.r = 0.3f, .g = 1.0f, .b = 0.3f, .a = 1.0f}, false);
         return 0;
     }
@@ -354,6 +354,11 @@ AttackFavour character_get_attack_stats(Character *c, const Traits *attack_trait
     int32_t dc;
     character_get_attack_base_stats(c, attack_traits, &pip_count, &dc);
     const int32_t base_pips = pip_count;
+    const TileContents *target_tile = level_get_tile(target_position);
+    const Character *defender = target_tile->type == TILE_CONTENTS_TYPE_CHARACTER ? target_tile->character : nullptr;
+    const int32_t defender_hp = defender ? defender->current_hp : 0;
+    const int32_t defender_max_hp = defender ? character_max_hp(defender) : 0;
+    const bool target_is_previous_attacker = defender && defender == c->aggrod_character && c->aggro_timer > 0;
 
     // Bonuses and detriments
     if (target_traits->Character.nimble && attack_traits->Attack.ranged) pip_count -= 1;
@@ -361,6 +366,12 @@ AttackFavour character_get_attack_stats(Character *c, const Traits *attack_trait
     if (target_traits->occult && attack_traits->holy) pip_count += 1;
     if (target_traits->holy && attack_traits->occult) pip_count += 1;
     if (tile_distance(target_position, c->pos) == 1 && attack_traits->Attack.ranged) pip_count -= 1;
+    if (attack_traits->Attack.blur) pip_count += 2;
+    if (target_traits->Character.dumb && attack_traits->Attack.blood) pip_count += 1;
+    if (target_traits->Character.wet && attack_traits->Attack.lightning) pip_count += 1;
+    if (target_traits->Character.abyssal && defender_hp < defender_max_hp * 0.3) pip_count -= 1;
+    if (c->info.traits.Character.dumb && random_int(0, 4) == 0) pip_count -= 1;
+    if (target_traits->Attack.vengeful && target_is_previous_attacker) pip_count += 1;
 
     // Calculate if this roll is favoured, ill favoured, or neutral
     if (out_dc) *out_dc = dc;

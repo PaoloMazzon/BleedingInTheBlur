@@ -112,3 +112,13 @@ const Oct_Key BUTTON_LEFT          = OCT_KEY_LEFT;
 const Oct_Key BUTTON_RIGHT         = OCT_KEY_RIGHT;
 const Oct_Key BUTTON_UP            = OCT_KEY_UP;
 const Oct_Key BUTTON_DOWN          = OCT_KEY_DOWN;
+
+const Traits BLUR_SELF_DAMAGE_TRAITS = {
+        .Attack.blur = true,
+        .Attack.blood = true,
+        .occult = true,
+};
+const Traits RUST_SELF_DAMAGE_TRAITS = {
+        .Attack.melee = true,
+        .Attack.blood = true,
+};

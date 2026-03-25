@@ -1,7 +1,7 @@
 /// \brief All the structs and other related datatypes in the game
 #pragma once
 #include <stdint.h>
-#include <stdbool.h>
+#include <stdlib.h>
 #include <oct/Octarine.h>
 #include "Constants.h"
 
@@ -187,7 +187,7 @@ struct Traits_s {
         bool improvised; // improvised attack
         bool heavy; // heavy weapon
         bool intricate; // this attack is not simple, ie it uses character's learning dc
-        bool rusted; // might hurt the attacker
+        bool rusted; // might hurt the attacker (25%)
         bool vengeful; // +1D against characters that just attacked you
         bool lightning; // attack involves lightning magic
         bool fire; // attack involves fire magic
@@ -209,7 +209,7 @@ struct Traits_s {
         bool abyssal; // -1D to hit an abyssal creature near death
         bool friendly; // attacks non-player characters
         bool berserker; // attacks whoever is nearest
-        bool dumb; // -1D against blood magic
+        bool dumb; // -1D against blood magic, 25% change to get -1D
         bool wet; // -1D against lightning magic
         bool sleeping; // doing nothing until something happens
     } Character; // traits for characters

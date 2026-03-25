@@ -106,6 +106,11 @@ void character_take_turn(Character *c) {
     const bool line_of_sight_on_player = !tiles_have_walls_between(c->pos, g_game.player.pos) || !tiles_have_walls_between(g_game.player.pos, c->pos);
     const bool within_aggro_range = tile_distance(c->pos, g_game.player.pos) <= c->aggro_range;
     const bool is_aggrod_by_character = c->aggro_timer > 0;
+    const bool is_sleeping = c->info.traits.Character.sleeping;
+
+    // TODO: Process berserker trait (attack nearest character instead of player)
+    // TODO: Process friendly trait (attack aggro target first then non-player non-friendly characters)
+    // TODO: Process sleeping trait (if player is within a certain range roll player's deception)
 
     // Attack this character might choose to use
     const int32_t base_attack_damage = c->starting_weapon.damage;
