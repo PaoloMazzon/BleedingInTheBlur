@@ -185,7 +185,7 @@ struct Traits_s {
         bool ranged; // ranged attack
         bool blade; // bladed weapon
         bool improvised; // improvised attack
-        bool heavy; // heavy weapon
+        bool heavy; // better against lazy, might apply crushed hand status effect that reduces marksman
         bool intricate; // this attack is not simple, ie it uses character's learning dc
         bool rusted; // might hurt the attacker (25%)
         bool vengeful; // +1D against characters that just attacked you
@@ -193,6 +193,7 @@ struct Traits_s {
         bool fire; // attack involves fire magic
         bool blood; // attack involves blood magic
         bool blur; // attacks get +2D but deal 2 damage to wielder
+        bool precise; // for ranged attacks, -1 if the target is only 1 away (+1 if 3 or more away), for melee +1 if the target is within 1
     } Attack; // traits for attacks/weapons
 
     struct {
@@ -202,16 +203,16 @@ struct Traits_s {
         bool lazy; // will only pursue the player if the player is close
         bool nimble; // good against ranged
         bool scared; // runs away if aggro'd
-        bool blood_thirsty; // health on kills
-        bool withering; // damage taken impacts max hp
-        bool haunted; // passes through walls
-        bool sharp; // can "hear" (see) through walls up to 3 blocks away
         bool abyssal; // -1D to hit an abyssal creature near death
-        bool friendly; // attacks non-player characters
-        bool berserker; // attacks whoever is nearest
         bool dumb; // -1D against blood magic, 25% change to get -1D
         bool wet; // -1D against lightning magic
-        bool sleeping; // doing nothing until something happens
+        bool blood_thirsty; // health on kills                            NOT IMPLEMENTED
+        bool withering; // damage taken impacts max hp                    NOT IMPLEMENTED
+        bool haunted; // passes through walls                             NOT IMPLEMENTED
+        bool sharp; // can "hear" (see) through walls up to 3 blocks away NOT IMPLEMENTED
+        bool friendly; // attacks non-player characters                   NOT IMPLEMENTED
+        bool berserker; // attacks whoever is nearest                     NOT IMPLEMENTED
+        bool sleeping; // doing nothing until something happens           NOT IMPLEMENTED
     } Character; // traits for characters
 
     // Traits that can be either
@@ -284,6 +285,7 @@ typedef struct Timer_s {
 
 typedef struct Alarm_s {
     int32_t turns_left;
+    Oct_Texture icon; // icon for this particular status
     AlarmCallback callback;
 } Alarm;
 

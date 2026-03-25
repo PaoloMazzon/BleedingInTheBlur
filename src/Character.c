@@ -353,6 +353,7 @@ AttackFavour character_get_attack_stats(Character *c, const Traits *attack_trait
     int32_t pip_count;
     int32_t dc;
     character_get_attack_base_stats(c, attack_traits, &pip_count, &dc);
+    const int32_t distance = tile_distance(c->pos, target_position);
     const int32_t base_pips = pip_count;
     const TileContents *target_tile = level_get_tile(target_position);
     const Character *defender = target_tile->type == TILE_CONTENTS_TYPE_CHARACTER ? target_tile->character : nullptr;
@@ -372,6 +373,9 @@ AttackFavour character_get_attack_stats(Character *c, const Traits *attack_trait
     if (target_traits->Character.abyssal && defender_hp < defender_max_hp * 0.3) pip_count -= 1;
     if (c->info.traits.Character.dumb && random_int(0, 4) == 0) pip_count -= 1;
     if (target_traits->Attack.vengeful && target_is_previous_attacker) pip_count += 1;
+    if (attack_traits->Attack.precise && attack_traits->Attack.melee && distance == 1) pip_count += 1;
+    if (attack_traits->Attack.precise && attack_traits->Attack.ranged && distance == 1) pip_count -= 1;
+    if (attack_traits->Attack.precise && attack_traits->Attack.ranged && distance >= 3) pip_count += 1;
 
     // Calculate if this roll is favoured, ill favoured, or neutral
     if (out_dc) *out_dc = dc;
@@ -392,11 +396,12 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
     bool passed = roll_dice(pips, dc, &result);
     const int32_t bonus_damage = passed ? result - dc : 0;
 
-    // TODO: Make this more dynamic with different weapon traits as they're made
     if (attack_traits->Attack.ranged)
         setup_ranged_animation(c, rcvr, attack_traits, passed, bonus_damage + base_attack_damage, oct_GetAsset(g_game.assets, "items/rock.png"));
-    else
+    else if (attack_traits->Attack.melee)
         setup_melee_animation(c, rcvr, attack_traits, passed, bonus_damage + base_attack_damage);
+    else
+        oct_Raise(OCT_STATUS_ERROR, true, "Attempted to start an attack animation for a non-ranged, non-melee attack");
 
     // Make a dice label
     const Oct_Colour red = {
@@ -419,4 +424,15 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
                       passed ? green : red, true);
 
     return passed;
+}
+
+void character_process_alarms(Character *c) {
+    for (int32_t i = 0; i < MAX_ALARMS; i++) {
+        if (c->alarms[i].turns_left > 0) {
+            c->alarms[i].turns_left -= 1;
+            if (c->alarms[i].turns_left == 0) {
+                c->alarms[i].callback(c);
+            }
+        }
+    }
 }

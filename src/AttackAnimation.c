@@ -5,8 +5,15 @@
 #include "Game.h"
 #include "AttackAnimations.h"
 #include "Character.h"
+#include "PersistentEffects.h"
 
 const float PI = 3.141592635f;
+const Oct_Colour WHITE = {
+    .r = 1,
+    .g = 1,
+    .b = 1,
+    .a = 1,
+};
 
 static void rotate_by_theta(Oct_Vec2 base, float theta) {
     // [cos(theta) -sin(theta)] [x]
@@ -117,6 +124,10 @@ static void process_attack_traits() {
     }
     if (attack_traits->Attack.rusted && random_int(0, 4) == 0) {
         character_take_damage(attacker, 1, &RUST_SELF_DAMAGE_TRAITS, attacker);
+    }
+    if (attack_traits->Attack.heavy && random_int(0, 4) == 0) {
+        apply_crushed_hand_status_effect(defender);
+        create_label("Crushed hand!", defender->pos, WHITE, false);
     }
 }
 

@@ -67,3 +67,6 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
 
 // Processes character turn, actions are determined by environment and traits
 void character_take_turn(Character *c);
+
+// Process all alarms on a character -- call this once per turn
+void character_process_alarms(Character *c);

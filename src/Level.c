@@ -307,6 +307,8 @@ void draw_ui() {
         oct_Draw(&cmd);
     }
 
+    // TODO: Draw status effect icons
+
     // Draw controls -> 1, 135
     const float controls_opacity = 0.5f;
     oct_DrawTextureColour(

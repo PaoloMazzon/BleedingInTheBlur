@@ -132,4 +132,6 @@ void character_take_turn(Character *c) {
     } else {
         random_movement(c);
     }
+
+    character_process_alarms(c);
 }
