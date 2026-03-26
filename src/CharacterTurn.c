@@ -89,6 +89,26 @@ static void general_aggression(Character *c, Character *other, int32_t range, Tr
     }
 }
 
+// Returns the closest character to c that has one of the specified traits, if its not nullptr c can see the target and the target is within aggro range
+Character *find_nearest_character_with_trait(Character *c, bool hostile, bool friendly, bool non_player, int32_t aggro_range) {
+    Character *found = nullptr;
+    int32_t max_distance = INT32_MAX;
+    for (int32_t i = 0; i < MAX_CHARACTERS; i++) {
+        Character *current = &g_game.current_level.characters[i];
+        const int32_t distance = tile_distance(c->pos, current->pos);
+        if (character_is_alive(current)
+            && distance < max_distance
+            && !tiles_have_walls_between(c->pos, current->pos)
+            && ((!hostile && !friendly) || (current->info.traits.Character.hostile && hostile) || (current->info.traits.Character.friendly && friendly))
+            && ((non_player && current != &g_game.player) || !non_player)
+            && distance < aggro_range) {
+            max_distance = tile_distance(c->pos, current->pos);
+            found = current;
+        }
+    }
+    return found;
+}
+
 void character_take_turn(Character *c) {
     if (!character_is_alive(c)) return;
 
@@ -103,10 +123,13 @@ void character_take_turn(Character *c) {
     const bool b_lazy = c->info.traits.Character.lazy;
     const bool b_hostile = c->info.traits.Character.hostile;
     const bool b_scared = c->info.traits.Character.scared;
-    const bool line_of_sight_on_player = !tiles_have_walls_between(c->pos, g_game.player.pos) || !tiles_have_walls_between(g_game.player.pos, c->pos);
-    const bool within_aggro_range = tile_distance(c->pos, g_game.player.pos) <= c->aggro_range;
     const bool is_aggrod_by_character = c->aggro_timer > 0;
     const bool is_sleeping = c->info.traits.Character.sleeping;
+    const bool b_berserker = c->info.traits.Character.berserker;
+    const bool b_friendly = c->info.traits.Character.friendly;
+    const Character *berserk_target = b_berserker ? find_nearest_character_with_trait(c, false, false, false, c->aggro_range) : nullptr;
+    const Character *friendly_target = b_friendly ? find_nearest_character_with_trait(c, true, false, true, c->aggro_range) : nullptr;
+    const Character *hostile_target = b_hostile ? find_nearest_character_with_trait(c, false, true, false, c->aggro_range) : nullptr;
 
     // TODO: Process berserker trait (attack nearest character instead of player)
     // TODO: Process friendly trait (attack aggro target first then non-player non-friendly characters)
@@ -117,21 +140,31 @@ void character_take_turn(Character *c) {
     const int32_t attack_range = c->starting_weapon.range;
     const Traits *attack_traits = &c->starting_weapon.info.traits;
 
+    // This logic train is decently complicated:
+    //  1. If the character is currently aggrod by another character, attack the aggro target (ie, another character hit it so they should return the aggression)
+    //  2. Berserker enemies will just attack anything they can see.
+    //  3. Friendly characters will prioritize hostile characters
+    //  4. Hostile creatures will attack friendly creatures they can see
+    //  5. Walk around aimlessly otherwise (lazy characters walk around less often)
     if (is_aggrod_by_character) {
         if (b_scared) {
             move_away_from(c, c->aggrod_character->pos);
         } else {
             general_aggression(c, c->aggrod_character, attack_range, attack_traits, base_attack_damage);
         }
-    } else if (b_hostile && line_of_sight_on_player && within_aggro_range) {
-        general_aggression(c, &g_game.player, attack_range, attack_traits, base_attack_damage);
+    } else if (b_berserker && berserk_target) {
+        general_aggression(c, berserk_target, attack_range, attack_traits, base_attack_damage);
+    } else if (b_friendly && friendly_target) {
+        general_aggression(c, friendly_target, attack_range, attack_traits, base_attack_damage);
+    } else if (b_hostile && hostile_target) {
+        general_aggression(c, hostile_target, attack_range, attack_traits, base_attack_damage);
     } else if (b_lazy) {
         if (oct_Random(0, 1) < 0.25) {
             random_movement(c);
         }
     } else {
         random_movement(c);
-    }
+    } // TODO: Friendly creatures should follow the player
 
     character_process_alarms(c);
 }

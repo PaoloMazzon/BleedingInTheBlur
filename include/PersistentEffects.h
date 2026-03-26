@@ -6,3 +6,6 @@
 
 // Temporary debuff to marksman from heavy weapons
 void apply_crushed_hand_status_effect(Character *c);
+
+// Returns true if a given alarm is currently in use
+bool alarm_is_active(Character *c, int32_t index);

@@ -41,7 +41,7 @@ void *update(void *ptr) {
 #ifndef NDEBUG
     static bool debug_mode = true;
 #else
-    static bool debug = false;
+    static bool debug_mode = false;
 #endif
     oct_SetDrawTarget(g_game.backbuffer);
     oct_DrawClear(&(Oct_Colour){.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = 1.0f});

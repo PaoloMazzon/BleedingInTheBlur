@@ -5,6 +5,7 @@
 #include "Util.h"
 #include "Game.h"
 #include "AttackAnimations.h"
+#include "PersistentEffects.h"
 
 void base_statblock(Statblock *sb) {
     memset(sb, 0, sizeof(Statblock));
@@ -431,7 +432,7 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
 
 void character_process_alarms(Character *c) {
     for (int32_t i = 0; i < MAX_ALARMS; i++) {
-        if (c->alarms[i].turns_left > 0) {
+        if (alarm_is_active(c, i)) {
             c->alarms[i].turns_left -= 1;
             if (c->alarms[i].turns_left == 0) {
                 c->alarms[i].callback(c);

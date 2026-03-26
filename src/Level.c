@@ -9,6 +9,7 @@
 #include "LevelGenerator.h"
 #include "WeaponItem.h"
 #include "AttackAnimations.h"
+#include "PersistentEffects.h"
 
 // Returns true if a given tile is within range of the player's attack range
 static inline bool tile_in_range_of_player(Position target) {
@@ -307,7 +308,24 @@ void draw_ui() {
         oct_Draw(&cmd);
     }
 
-    // TODO: Draw status effect icons
+    // Draw status effect icons
+    const float start_y = 1;
+    float x = 1;
+    float y = 1;
+    int32_t rollover = 0;
+    for (int32_t i = 0; i < MAX_ALARMS; i++) {
+        if (alarm_is_active(&g_game.player, i)) {
+            oct_DrawTexture(g_game.player.alarms[i].icon, (Oct_Vec2){x, y});
+            if (rollover == 5) { // TODO: This block isnt working
+                y = start_y;
+                x += 10;
+                rollover = 0;
+            } else {
+                y += 10;
+            }
+            rollover += 1;
+        }
+    }
 
     // Draw controls -> 1, 135
     const float controls_opacity = 0.5f;
@@ -655,6 +673,13 @@ void level_begin() {
     TileContents *tile = level_get_tile(item_spawn);
     tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_ITEM;
     tile->item = &g_game.current_level.items[5];
+    apply_crushed_hand_status_effect(&g_game.player);
+    apply_crushed_hand_status_effect(&g_game.player);
+    apply_crushed_hand_status_effect(&g_game.player);
+    apply_crushed_hand_status_effect(&g_game.player);
+    apply_crushed_hand_status_effect(&g_game.player);
+    apply_crushed_hand_status_effect(&g_game.player);
+    apply_crushed_hand_status_effect(&g_game.player);
 
     Position item_spawn2 = {
             g_game.player.pos[0] - 1,
