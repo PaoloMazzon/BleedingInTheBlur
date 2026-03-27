@@ -98,15 +98,33 @@ Character *find_nearest_character_with_trait(Character *c, bool hostile, bool fr
         const int32_t distance = tile_distance(c->pos, current->pos);
         if (character_is_alive(current)
             && distance < max_distance
-            && !tiles_have_walls_between(c->pos, current->pos)
             && ((!hostile && !friendly) || (current->info.traits.Character.hostile && hostile) || (current->info.traits.Character.friendly && friendly))
             && ((non_player && current != &g_game.player) || !non_player)
-            && distance < aggro_range) {
+            && character_is_aware_of_other_character(c, current, true)) {
             max_distance = tile_distance(c->pos, current->pos);
             found = current;
         }
     }
     return found;
+}
+
+// For a sleeping character, check to see if any characters are within hearing range and if so make them roll deception
+static void handle_snoozer(Character *c) {
+    const int32_t sleeping_hearing_distance = c->info.traits.Character.sharp ? 5 : 2;
+    const bool my_opps_are_the_hostiles = c->info.traits.Character.friendly ||c->info.traits.Character.berserker;
+    const bool my_opps_are_the_friendlies = c->info.traits.Character.hostile ||c->info.traits.Character.berserker;
+    // Search only the nearby grid
+    for (int32_t i = 0; i < MAX_CHARACTERS; i++) {
+        const Character *current = &g_game.current_level.characters[i];
+        if (character_is_alive(current) && tile_distance(c->pos, current->pos) <= sleeping_hearing_distance) {
+            Statblock sb;
+            character_get_current_stats(current, &sb);
+            if (!roll_dice(sb.deception, statblock_get_dc(sb.wits), nullptr)) {
+                c->info.traits.Character.sleeping = false;
+                create_label("Leadfoot!", current->pos, (Oct_Colour){1, 0.2f, 0.2f, 1}, false);
+            }
+        }
+    }
 }
 
 void character_take_turn(Character *c) {
@@ -131,22 +149,21 @@ void character_take_turn(Character *c) {
     const Character *friendly_target = b_friendly ? find_nearest_character_with_trait(c, true, false, true, c->aggro_range) : nullptr;
     const Character *hostile_target = b_hostile ? find_nearest_character_with_trait(c, false, true, false, c->aggro_range) : nullptr;
 
-    // TODO: Process berserker trait (attack nearest character instead of player)
-    // TODO: Process friendly trait (attack aggro target first then non-player non-friendly characters)
-    // TODO: Process sleeping trait (if player is within a certain range roll player's deception)
-
     // Attack this character might choose to use
     const int32_t base_attack_damage = c->starting_weapon.damage;
     const int32_t attack_range = c->starting_weapon.range;
     const Traits *attack_traits = &c->starting_weapon.info.traits;
 
-    // This logic train is decently complicated:
-    //  1. If the character is currently aggrod by another character, attack the aggro target (ie, another character hit it so they should return the aggression)
-    //  2. Berserker enemies will just attack anything they can see.
-    //  3. Friendly characters will prioritize hostile characters
-    //  4. Hostile creatures will attack friendly creatures they can see
-    //  5. Walk around aimlessly otherwise (lazy characters walk around less often)
-    if (is_aggrod_by_character) {
+    /// This logic train is decently complicated:
+    ///  1. If the character is sleeping and there is an opp within hearing range, make them roll deception
+    ///  2. If the character is currently aggrod by another character, attack the aggro target (ie, another character hit it so they should return the aggression)
+    ///  3. Berserker enemies will just attack anything they can see.
+    ///  4. Friendly characters will prioritize hostile characters
+    ///  5. Hostile creatures will attack friendly creatures they can see
+    ///  6. Walk around aimlessly otherwise (lazy characters walk around less often)
+    if (is_sleeping) {
+        handle_snoozer(c);
+    } else if (is_aggrod_by_character) {
         if (b_scared) {
             move_away_from(c, c->aggrod_character->pos);
         } else {

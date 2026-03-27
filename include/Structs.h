@@ -212,8 +212,8 @@ struct Traits_s {
         bool berserker; // attacks whoever is nearest
         bool sleeping; // doing nothing until something happens
         bool blood_thirsty; // health on kills
+        bool sharp; // can "hear" (see) through walls up to 3 blocks away
         bool haunted; // passes through walls                             NOT IMPLEMENTED
-        bool sharp; // can "hear" (see) through walls up to 3 blocks away NOT IMPLEMENTED
     } Character; // traits for characters
 
     // Traits that can be either

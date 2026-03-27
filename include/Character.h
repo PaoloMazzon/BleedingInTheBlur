@@ -73,3 +73,6 @@ void character_take_turn(Character *c);
 
 // Process all alarms on a character -- call this once per turn
 void character_process_alarms(Character *c);
+
+// Takes into account line of sight and traits that might ignore it in some cases
+bool character_is_aware_of_other_character(Character *c, Character *other, bool consider_aggro_range);

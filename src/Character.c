@@ -464,3 +464,11 @@ void character_process_alarms(Character *c) {
         }
     }
 }
+
+bool character_is_aware_of_other_character(Character *c, Character *other, bool consider_aggro_range) {
+    const int32_t distance = tile_distance(c->pos, other->pos);
+    const bool heightened_senses = c->info.traits.Character.sharp;
+    const bool within_aggro_range = !consider_aggro_range || (distance <= c->aggro_range);
+    const bool line_of_sight = !tiles_have_walls_between(c->pos, other->pos) || !tiles_have_walls_between(other->pos, c->pos);
+    return (distance <= 3 && heightened_senses) || (within_aggro_range && line_of_sight);
+}
