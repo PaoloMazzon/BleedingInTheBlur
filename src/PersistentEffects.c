@@ -33,7 +33,7 @@ static bool undo_withered_status_effect(Character *c) {
 
 void apply_withered_status_effect(Character *c) {
     c->bonus_max_hp -= WITHERED_REDUCED_MAX_HP;
-    apply_alarm(c, undo_withered_status_effect, OCT_NO_ASSET, 10);
+    apply_alarm(c, undo_withered_status_effect, oct_GetAsset(g_game.assets, "icons/withering.png"), 10);
 }
 //////////////////////////////////////////////////////////////////////
 
