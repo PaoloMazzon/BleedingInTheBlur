@@ -195,6 +195,7 @@ struct Traits_s {
         bool blood; // attack involves blood magic
         bool blur; // attacks get +2D but deal 2 damage to wielder
         bool precise; // for ranged attacks, -1 if the target is only 1 away (+1 if 3 or more away), for melee +1 if the target is within 1
+        bool withering; // damage taken impacts max hp
     } Attack; // traits for attacks/weapons
 
     struct {
@@ -211,7 +212,6 @@ struct Traits_s {
         bool berserker; // attacks whoever is nearest
         bool sleeping; // doing nothing until something happens
         bool blood_thirsty; // health on kills
-        bool withering; // damage taken impacts max hp                    NOT IMPLEMENTED
         bool haunted; // passes through walls                             NOT IMPLEMENTED
         bool sharp; // can "hear" (see) through walls up to 3 blocks away NOT IMPLEMENTED
     } Character; // traits for characters

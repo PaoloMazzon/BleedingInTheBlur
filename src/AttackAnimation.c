@@ -14,6 +14,12 @@ const Oct_Colour WHITE = {
     .b = 1,
     .a = 1,
 };
+const Oct_Colour RED = {
+    .r = 1.0f,
+    .g = 0.2f,
+    .b = 0.2f,
+    .a = 1.0f,
+};
 
 static void rotate_by_theta(Oct_Vec2 base, float theta) {
     // [cos(theta) -sin(theta)] [x]
@@ -124,10 +130,14 @@ static void process_attack_traits() {
     }
     if (attack_traits->Attack.rusted && random_int(0, 4) == 0) {
         character_take_damage(attacker, 1, &RUST_SELF_DAMAGE_TRAITS, attacker);
-    } // TODO: Withering effect
+    }
+    if (attack_traits->Attack.withering) {
+        apply_withered_status_effect(attacker);
+        create_label("Withering!", defender->pos, RED, false);
+    }
     if (attack_traits->Attack.heavy && random_int(0, 4) == 0) {
         apply_crushed_hand_status_effect(defender);
-        create_label("Crushed hand!", defender->pos, WHITE, false);
+        create_label("Crushed hand!", defender->pos, RED, false);
     }
 }
 

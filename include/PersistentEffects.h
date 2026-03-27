@@ -4,8 +4,11 @@
 #pragma once
 #include "Structs.h"
 
+// Returns true if a given alarm is currently in use
+bool alarm_is_active(Character *c, int32_t index);
+
 // Temporary debuff to marksman from heavy weapons
 void apply_crushed_hand_status_effect(Character *c);
 
-// Returns true if a given alarm is currently in use
-bool alarm_is_active(Character *c, int32_t index);
+// Reduce max hp by 2 for a number of turns
+void apply_withered_status_effect(Character *c);

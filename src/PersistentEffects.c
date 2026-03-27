@@ -14,6 +14,7 @@ static void apply_alarm(Character *c, AlarmCallback callback, Oct_Texture icon, 
     c->alarms[alarm_slot].icon = icon;
 }
 
+//////////////////////////////////////////////////////////////////////
 static bool undo_crushed_hand_status_effect(Character *c) {
     c->bonus_statblock.marksman += 1;
     return true;
@@ -21,8 +22,20 @@ static bool undo_crushed_hand_status_effect(Character *c) {
 
 void apply_crushed_hand_status_effect(Character *c) {
     c->bonus_statblock.marksman -= 1;
-    apply_alarm(c, undo_crushed_hand_status_effect, oct_GetAsset(g_game.assets, "icons/crushedhand.png"), 2);
+    apply_alarm(c, undo_crushed_hand_status_effect, oct_GetAsset(g_game.assets, "icons/crushedhand.png"), 3);
 }
+//////////////////////////////////////////////////////////////////////
+const int32_t WITHERED_REDUCED_MAX_HP = 2;
+static bool undo_withered_status_effect(Character *c) {
+    c->bonus_max_hp += WITHERED_REDUCED_MAX_HP;
+
+}
+
+void apply_withered_status_effect(Character *c) {
+    c->bonus_max_hp -= WITHERED_REDUCED_MAX_HP;
+    apply_alarm(c, undo_withered_status_effect, OCT_NO_ASSET, 10);
+}
+//////////////////////////////////////////////////////////////////////
 
 bool alarm_is_active(Character *c, int32_t index) {
     assert(index >= 0 && index < MAX_ALARMS);
