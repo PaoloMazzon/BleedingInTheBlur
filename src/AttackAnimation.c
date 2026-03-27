@@ -37,7 +37,7 @@ static void draw_ranged_animation() {
             .r = 1.0f,
             .g = 1.0f,
             .b = 1.0f,
-            .a = is_it_fadeout_time ? (normalized_time - g_game.current_level.Attack.percent_time_before_fadeout) / (1 - g_game.current_level.Attack.percent_time_before_fadeout) : 1.0f
+            .a = is_it_fadeout_time ? 1 - ((normalized_time - g_game.current_level.Attack.percent_time_before_fadeout) / (1 - g_game.current_level.Attack.percent_time_before_fadeout)) : 1.0f
     };
 
     // If we have hit the other character in the case of a successful attack

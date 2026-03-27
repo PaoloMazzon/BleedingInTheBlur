@@ -316,7 +316,7 @@ void draw_ui() {
     for (int32_t i = 0; i < MAX_ALARMS; i++) {
         if (alarm_is_active(&g_game.player, i)) {
             oct_DrawTexture(g_game.player.alarms[i].icon, (Oct_Vec2){x, y});
-            if (rollover == 5) { // TODO: This block isnt working
+            if (rollover == 5) {
                 y = start_y;
                 x += 10;
                 rollover = 0;
