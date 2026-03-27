@@ -278,16 +278,40 @@ int32_t character_take_damage(Character *c, int32_t damage, Traits *source_trait
 
     c->current_hp = non_negative(c->current_hp - damage);
 
-    // check if they need to get deleted for dying
+    // check if they need to get deleted for dying and also trigger the blood_thirsty trait
     if (!character_is_alive(c)) {
         TileContents *t = level_get_tile(c->pos);
         if (t && t->type == TILE_CONTENTS_TYPE_CHARACTER && t->character == c) {
             t->type = TILE_CONTENTS_TYPE_NONE;
             t->character = nullptr;
         }
+        // Handle healing for attackers that have the blood_thirsty trait
+        if (attacker && attacker->info.traits.Character.blood_thirsty)
+            character_heal(attacker, 2);
     }
 
     return initial - c->current_hp;
+}
+
+// rolls healing (against grit) and on a pass there is bonus hp
+static int32_t get_bonus_hp(Character *c) {
+    Statblock sb;
+    character_get_current_stats(c, &sb);
+    int32_t result = 0;
+    int32_t dice_result = 0;
+    if (roll_dice(sb.healing, statblock_get_dc(sb.grit), &dice_result))
+        result = dice_result - statblock_get_dc(sb.grit) + 1;
+    return result;
+}
+
+int32_t character_heal(Character *c, int32_t healing) {
+    const int32_t bonus_healing = get_bonus_hp(c);
+    const int32_t max_hp = character_max_hp(c);
+    const int32_t starting_hp = c->current_hp;
+    c->current_hp += healing + bonus_healing;
+    if (c->current_hp > max_hp)
+        c->current_hp = max_hp;
+    return c->current_hp - starting_hp;
 }
 
 bool character_is_alive(Character *c) {

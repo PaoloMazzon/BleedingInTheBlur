@@ -124,7 +124,7 @@ static void process_attack_traits() {
     }
     if (attack_traits->Attack.rusted && random_int(0, 4) == 0) {
         character_take_damage(attacker, 1, &RUST_SELF_DAMAGE_TRAITS, attacker);
-    }
+    } // TODO: Withering effect
     if (attack_traits->Attack.heavy && random_int(0, 4) == 0) {
         apply_crushed_hand_status_effect(defender);
         create_label("Crushed hand!", defender->pos, WHITE, false);

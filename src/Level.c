@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <inttypes.h>
+
 #include "Game.h"
 #include "Util.h"
 #include "Character.h"
@@ -370,7 +372,7 @@ static TileVisibility tile_visible_to_player(Position tile, Statblock *player_cu
         if (e2 <  dx) { err += dx; y0 += sy; }
     }
 
-    level_set_tile_memory(tile, player_current_stats->learning + (player_current_stats->cartography * 3));
+    level_set_tile_memory(tile, player_current_stats->learning + (player_current_stats->cartography * 5));
     return TILE_VISIBILITY_FULLY_VISIBLE;
 }
 
@@ -673,13 +675,6 @@ void level_begin() {
     TileContents *tile = level_get_tile(item_spawn);
     tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_ITEM;
     tile->item = &g_game.current_level.items[5];
-    apply_crushed_hand_status_effect(&g_game.player);
-    apply_crushed_hand_status_effect(&g_game.player);
-    apply_crushed_hand_status_effect(&g_game.player);
-    apply_crushed_hand_status_effect(&g_game.player);
-    apply_crushed_hand_status_effect(&g_game.player);
-    apply_crushed_hand_status_effect(&g_game.player);
-    apply_crushed_hand_status_effect(&g_game.player);
 
     Position item_spawn2 = {
             g_game.player.pos[0] - 1,

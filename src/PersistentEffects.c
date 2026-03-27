@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "PersistentEffects.h"
+#include "Game.h"
 
 // Places the given parameters into an available alarm slot
 static void apply_alarm(Character *c, AlarmCallback callback, Oct_Texture icon, int32_t turns) {
@@ -20,7 +21,7 @@ static bool undo_crushed_hand_status_effect(Character *c) {
 
 void apply_crushed_hand_status_effect(Character *c) {
     c->bonus_statblock.marksman -= 1;
-    apply_alarm(c, undo_crushed_hand_status_effect, OCT_NO_ASSET /* TODO: This */, 2);
+    apply_alarm(c, undo_crushed_hand_status_effect, oct_GetAsset(g_game.assets, "icons/crushedhand.png"), 2);
 }
 
 bool alarm_is_active(Character *c, int32_t index) {

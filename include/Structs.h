@@ -207,13 +207,13 @@ struct Traits_s {
         bool abyssal; // -1D to hit an abyssal creature near death
         bool dumb; // -1D against blood magic, 25% change to get -1D
         bool wet; // -1D against lightning magic
-        bool blood_thirsty; // health on kills                            NOT IMPLEMENTED
+        bool friendly; // attacks non-player characters
+        bool berserker; // attacks whoever is nearest
+        bool sleeping; // doing nothing until something happens
+        bool blood_thirsty; // health on kills
         bool withering; // damage taken impacts max hp                    NOT IMPLEMENTED
         bool haunted; // passes through walls                             NOT IMPLEMENTED
         bool sharp; // can "hear" (see) through walls up to 3 blocks away NOT IMPLEMENTED
-        bool friendly; // attacks non-player characters                   NOT IMPLEMENTED
-        bool berserker; // attacks whoever is nearest                     NOT IMPLEMENTED
-        bool sleeping; // doing nothing until something happens           NOT IMPLEMENTED
     } Character; // traits for characters
 
     // Traits that can be either
