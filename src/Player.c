@@ -13,6 +13,7 @@ void player_init(Position start_pos) {
     g_game.player.info.drawn_type = DRAWN_TYPE_TEXTURE;
     g_game.player.info.texture = oct_GetAsset(g_game.assets, "characters/player.png");
     g_game.player.info.traits.Character.friendly = true;
+    g_game.player.info.traits.Character.sharp = true;
     get_starting_weapon(WEAPON_TYPE_SPEAR, &g_game.player.starting_weapon);
 }
 

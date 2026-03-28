@@ -258,13 +258,17 @@ int32_t character_take_damage(Character *c, int32_t damage, Traits *source_trait
     if (c->deaths_door_cooldown > 0) c->deaths_door_cooldown -= 1;
 
     // They can evade
-    if (!source_traits->Attack.intricate && roll_ups(current_statblock.evade, 2, nullptr) && attacker != c) {
+    if (!source_traits->Attack.intricate && !c->info.traits.Character.sleeping && roll_ups(current_statblock.evade, 2, nullptr) && attacker != c) {
         create_label("Evaded!", c->pos, (Oct_Colour){.r = 0.3f, .g = 1.0f, .b = 0.3f, .a = 1.0f}, false);
         return 0;
-    } else if (source_traits->Attack.intricate && roll_ups(current_statblock.escape, 2, nullptr) && attacker != c) {
+    } else if (source_traits->Attack.intricate && !c->info.traits.Character.sleeping && roll_ups(current_statblock.escape, 2, nullptr) && attacker != c) {
         create_label("Evaded!", c->pos, (Oct_Colour){.r = 0.3f, .g = 1.0f, .b = 0.3f, .a = 1.0f}, false);
         return 0;
     }
+
+    // Wake up eeby ahhs
+    c->info.traits.Character.sleeping = false;
+
     // They can roll death's door if they would die
     if (c->current_hp - damage <= 0
     && !c->info.traits.Character.undying
@@ -458,8 +462,10 @@ void character_process_alarms(Character *c) {
     for (int32_t i = 0; i < MAX_ALARMS; i++) {
         if (alarm_is_active(c, i)) {
             c->alarms[i].turns_left -= 1;
-            if (c->alarms[i].turns_left == 0) {
+            if (c->alarms[i].turns_left == 0 && c->alarms[i].callback) {
                 c->alarms[i].callback(c);
+            } else if (c->alarms[i].turns_left > 0 && c->alarms[i].turn_callback) {
+                c->alarms[i].turn_callback(c, c->alarms[i].turns_left);
             }
         }
     }
@@ -467,8 +473,9 @@ void character_process_alarms(Character *c) {
 
 bool character_is_aware_of_other_character(Character *c, Character *other, bool consider_aggro_range) {
     const int32_t distance = tile_distance(c->pos, other->pos);
+    const int32_t target_distance = c == &g_game.player ? 8 : 5;
     const bool heightened_senses = c->info.traits.Character.sharp;
     const bool within_aggro_range = !consider_aggro_range || (distance <= c->aggro_range);
     const bool line_of_sight = !tiles_have_walls_between(c->pos, other->pos) || !tiles_have_walls_between(other->pos, c->pos);
-    return (distance <= 3 && heightened_senses) || (within_aggro_range && line_of_sight);
+    return (distance <= target_distance && heightened_senses) || (within_aggro_range && line_of_sight);
 }

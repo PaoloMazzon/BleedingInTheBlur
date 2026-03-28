@@ -85,6 +85,7 @@ bool characters_update() {
 
 // This will also move characters to where they are supposed to be in the game world
 void draw_characters() {
+    g_game.current_level.known_character_location_count = 0;
     for (int i = 0; i < MAX_CHARACTERS + 1; i++) {
         // Accounts for player as the last character to draw
         Character *c = nullptr;
@@ -94,7 +95,12 @@ void draw_characters() {
 
         if (!character_is_alive(c)) continue;
         const float target_alpha = level_tile_seen_this_turn(c->pos) ? 1 : 0;
-        c_info->actual_alpha += (target_alpha - c_info->actual_alpha) * 0.4;
+        c_info->actual_alpha += (target_alpha - c_info->actual_alpha) * 0.4f;
+        // i dont know why clang thinks target_alpha is always false but testing proves this is incorrect
+        if (c != &g_game.player && target_alpha == 0 && character_is_aware_of_other_character(&g_game.player, c, false)) {
+            g_game.current_level.known_character_locations[g_game.current_level.known_character_location_count] = c;
+            g_game.current_level.known_character_location_count += 1;
+        }
 
         // Move character to where they should be
         const Oct_Vec2 velocity = {
@@ -126,6 +132,17 @@ void draw_characters() {
     // Draw the attack animation
     if (level_in_attack_animation()) {
         draw_attack_animation();
+    }
+}
+
+// If the player is aware of a character for some reason but can't see them
+void draw_character_outlines() {
+    for (int32_t i = 0; i < g_game.current_level.known_character_location_count; i++) {
+        Character *c = g_game.current_level.known_character_locations[i];
+        oct_DrawTextureInt(
+                OCT_INTERPOLATE_ALL, c->info.id * OBJECT_ID_RESERVED_MULTIPLIER,
+                oct_GetAsset(g_game.assets, "characters/sharpcharacter.png"),
+                (Oct_Vec2){c->info.actual_position[0], c->info.actual_position[1]});
     }
 }
 
@@ -716,6 +733,7 @@ LevelIndex level_update() {
     draw_tiles();
     draw_characters();
     draw_fog_of_war();
+    draw_character_outlines();
     draw_attack_view();
     draw_labels();
 

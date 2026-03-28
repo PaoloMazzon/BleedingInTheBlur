@@ -14,6 +14,7 @@
 typedef struct Character_s Character;
 typedef struct Traits_s Traits;
 typedef bool (*AlarmCallback)(Character *);
+typedef bool (*AlarmTurnCallback)(Character *, int32_t);
 typedef bool (*ItemEnterInventoryCallback)(Character *);
 typedef bool (*ItemExitInventoryCallback)(Character *);
 typedef bool (*ItemUseCallback)(Character *);
@@ -287,6 +288,7 @@ typedef struct Timer_s {
 typedef struct Alarm_s {
     int32_t turns_left;
     Oct_Texture icon; // icon for this particular status
+    AlarmTurnCallback turn_callback; // Called each turn
     AlarmCallback callback;
 } Alarm;
 
@@ -503,6 +505,10 @@ typedef struct Level_s {
     Item items[MAX_ITEMS];
     Weapon weapons[MAX_ITEMS];
     Label labels[MAX_LABELS];
+
+    // For the player to sense characters through walls
+    Character *known_character_locations[MAX_CHARACTERS];
+    int32_t known_character_location_count;
 
     // If the player does something, and it isn't an extra turn, the world gets a turn
     bool world_turn;
