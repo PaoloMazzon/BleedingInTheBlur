@@ -14,7 +14,7 @@
 typedef struct Character_s Character;
 typedef struct Traits_s Traits;
 typedef bool (*AlarmCallback)(Character *);
-typedef bool (*AlarmTurnCallback)(Character *, int32_t);
+typedef bool (*AlarmTurnCallback)(Character *, int32_t); // false means cancel the alarm
 typedef bool (*ItemEnterInventoryCallback)(Character *);
 typedef bool (*ItemExitInventoryCallback)(Character *);
 typedef bool (*ItemUseCallback)(Character *);

@@ -465,7 +465,11 @@ void character_process_alarms(Character *c) {
             if (c->alarms[i].turns_left == 0 && c->alarms[i].callback) {
                 c->alarms[i].callback(c);
             } else if (c->alarms[i].turns_left > 0 && c->alarms[i].turn_callback) {
-                c->alarms[i].turn_callback(c, c->alarms[i].turns_left);
+                if (!c->alarms[i].turn_callback(c, c->alarms[i].turns_left)) {
+                    c->alarms[i].turns_left = 0;
+                    if (c->alarms[i].callback)
+                        c->alarms[i].callback(c);
+                }
             }
         }
     }

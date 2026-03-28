@@ -13,7 +13,6 @@ void player_init(Position start_pos) {
     g_game.player.info.drawn_type = DRAWN_TYPE_TEXTURE;
     g_game.player.info.texture = oct_GetAsset(g_game.assets, "characters/player.png");
     g_game.player.info.traits.Character.friendly = true;
-    g_game.player.info.traits.Character.sharp = true;
     get_starting_weapon(WEAPON_TYPE_SPEAR, &g_game.player.starting_weapon);
 }
 
@@ -23,7 +22,11 @@ static void player_menu_state() {
         tab_mover += 1;
     if (oct_KeyPressed(BUTTON_PREVIOUS_TAB))
         tab_mover -= 1;
-    g_game.current_level.menu.tab = (g_game.current_level.menu.tab + tab_mover) % MENU_TAB_MAX;
+    g_game.current_level.menu.tab += tab_mover;
+    if (g_game.current_level.menu.tab == MENU_TAB_MAX)
+        g_game.current_level.menu.tab = 0;
+    if (g_game.current_level.menu.tab == -1)
+        g_game.current_level.menu.tab = MENU_TAB_MAX - 1;
 
     if (oct_KeyPressed(BUTTON_MENU_TOGGLE))
         g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;

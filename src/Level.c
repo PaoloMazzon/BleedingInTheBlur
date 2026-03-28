@@ -621,27 +621,47 @@ void draw_level_menu() {
 
     oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menubackground.png"), (Oct_Vec2){start_x, start_y});
 
-    if (g_game.current_level.menu.tab == MENU_TAB_STATS)
-        oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menustatspage.png"), (Oct_Vec2){start_x, start_y});
+    if (g_game.current_level.menu.tab == MENU_TAB_STATS) {
+        oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menustatspage.png"), (Oct_Vec2) {start_x, start_y});
 
-    // Draw the skill pips
-    Statblock sb;
-    character_get_current_stats(&g_game.player, &sb);
-    draw_skill_pips_for_group((Oct_Vec2){start_x +  76, start_y +  57}, +1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_WITS);
-    draw_skill_pips_for_group((Oct_Vec2){start_x +  76, start_y + 121}, +1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_MARTIAL);
-    draw_skill_pips_for_group((Oct_Vec2){start_x + 165, start_y +  57}, -1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_GRIT);
-    draw_skill_pips_for_group((Oct_Vec2){start_x + 165, start_y + 121}, -1, &g_game.player.initial_statblock, &sb, BASE_STAT_TYPE_LEARNING);
+        // Draw the skill pips
+        Statblock sb;
+        character_get_current_stats(&g_game.player, &sb);
+        draw_skill_pips_for_group((Oct_Vec2) {start_x + 76, start_y + 57}, +1, &g_game.player.initial_statblock, &sb,
+                                  BASE_STAT_TYPE_WITS);
+        draw_skill_pips_for_group((Oct_Vec2) {start_x + 76, start_y + 121}, +1, &g_game.player.initial_statblock, &sb,
+                                  BASE_STAT_TYPE_MARTIAL);
+        draw_skill_pips_for_group((Oct_Vec2) {start_x + 165, start_y + 57}, -1, &g_game.player.initial_statblock, &sb,
+                                  BASE_STAT_TYPE_GRIT);
+        draw_skill_pips_for_group((Oct_Vec2) {start_x + 165, start_y + 121}, -1, &g_game.player.initial_statblock, &sb,
+                                  BASE_STAT_TYPE_LEARNING);
 
-    // Draw the DCs for each skill
-    Oct_Vec2 text_size;
-    Oct_Asset font = oct_GetAsset(g_game.assets, "fnt_pixel");
-    const float vertical_offset = 16;
-    oct_DrawText(font, (Oct_Vec2){ start_x + 76 + 4, start_y +  57 - vertical_offset}, 1, "- %i", statblock_get_dc(sb.wits));
-    oct_DrawText(font, (Oct_Vec2){ start_x + 76 + 4, start_y + 121 - vertical_offset}, 1, "- %i", statblock_get_dc(sb.martial));
-    oct_GetTextSize(font, text_size, 1, "%i -", statblock_get_dc(sb.grit));
-    oct_DrawText(font, (Oct_Vec2){start_x + 165 - text_size[0], start_y +  57 - vertical_offset}, 1, "%i -", statblock_get_dc(sb.grit));
-    oct_GetTextSize(font, text_size, 1, "%i -", statblock_get_dc(sb.learning));
-    oct_DrawText(font, (Oct_Vec2){start_x + 165 - text_size[0], start_y + 121 - vertical_offset}, 1, "%i -", statblock_get_dc(sb.learning));
+        // Draw the DCs for each skill
+        Oct_Vec2 text_size;
+        Oct_Asset font = oct_GetAsset(g_game.assets, "fnt_pixel");
+        const float vertical_offset = 16;
+        oct_DrawText(font, (Oct_Vec2) {start_x + 76 + 4, start_y + 57 - vertical_offset}, 1, "- %i",
+                     statblock_get_dc(sb.wits));
+        oct_DrawText(font, (Oct_Vec2) {start_x + 76 + 4, start_y + 121 - vertical_offset}, 1, "- %i",
+                     statblock_get_dc(sb.martial));
+        oct_GetTextSize(font, text_size, 1, "%i -", statblock_get_dc(sb.grit));
+        oct_DrawText(font, (Oct_Vec2) {start_x + 165 - text_size[0], start_y + 57 - vertical_offset}, 1, "%i -",
+                     statblock_get_dc(sb.grit));
+        oct_GetTextSize(font, text_size, 1, "%i -", statblock_get_dc(sb.learning));
+        oct_DrawText(font, (Oct_Vec2) {start_x + 165 - text_size[0], start_y + 121 - vertical_offset}, 1, "%i -",
+                     statblock_get_dc(sb.learning));
+    } else if (g_game.current_level.menu.tab == MENU_TAB_ITEMS) {
+        oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuitemspage.png"), (Oct_Vec2) {start_x, start_y});
+        // TODO: This
+    } else if (g_game.current_level.menu.tab == MENU_TAB_WEAPONS) {
+        oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuweaponspage.png"), (Oct_Vec2) {start_x, start_y});
+        // TODO: This
+    } else if (g_game.current_level.menu.tab == MENU_TAB_OPTIONS) {
+        oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuoptionspage.png"), (Oct_Vec2) {start_x, start_y});
+        // TODO: This
+    } else {
+        oct_Raise(OCT_STATUS_ERROR, true, "Attempting to draw invalid menu tab %i", g_game.current_level.menu.tab);
+    }
 }
 
 void process_character_attack() {
