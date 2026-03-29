@@ -119,7 +119,7 @@ void draw_attack_animation() {
 }
 
 // Handles more general traits like blur that have effects on
-static void process_attack_traits() {
+static void process_attack_traits(bool successful_attack) {
     Character *attacker = g_game.current_level.Attack.attacker;
     Character *defender = g_game.current_level.Attack.receiver;
     Traits *attack_traits = &g_game.current_level.Attack.traits;
@@ -131,11 +131,11 @@ static void process_attack_traits() {
     if (attack_traits->Attack.rusted && random_int(0, 4) == 0) {
         character_take_damage(attacker, 1, &RUST_SELF_DAMAGE_TRAITS, attacker);
     }
-    if (attack_traits->Attack.withering) {
+    if (attack_traits->Attack.withering && successful_attack) {
         apply_withered_status_effect(attacker);
         create_label("Withering!", defender->pos, RED, false);
     }
-    if (attack_traits->Attack.heavy && random_int(0, 4) == 0) {
+    if (attack_traits->Attack.heavy && random_int(0, 4) == 0 && successful_attack) {
         apply_crushed_hand_status_effect(defender);
         create_label("Crushed hand!", defender->pos, RED, false);
     }
@@ -143,7 +143,7 @@ static void process_attack_traits() {
 
 static void complete_melee_or_ranged_attack() {
     // Some traits need to be applied regardless of attack success, but the rest doesn't need to happen
-    process_attack_traits();
+    process_attack_traits(g_game.current_level.Attack.successful);
     if (!g_game.current_level.Attack.successful) return;
 
     const bool crit = random_int(1, 101) <= character_crit_chance(g_game.current_level.Attack.attacker);

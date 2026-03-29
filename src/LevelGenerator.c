@@ -5,7 +5,14 @@
 #include "Util.h"
 #include "Game.h"
 
+static int32_t current_prop_index;
 
+typedef enum {
+    PROP_LOCATION_FLOOR = 0,
+    PROP_LOCATION_AGAINST_WALL = 1,
+    PROP_LOCATION_ON_WALL = 2,
+    PROP_LOCATION_MAX = 3,
+} PropLocation;
 
 // For keeping tracks of room in the dungeon while level generating
 typedef struct RoomSpace_s {
@@ -77,6 +84,18 @@ static bool find_space_for_room(RoomSpace *rooms, int32_t room_count, IntRange l
         return true;
     }
     return false;
+}
+
+// Picks a spot on the upper wall edge
+static void pick_spot_on_walls_of_room(RoomSpace *r, Position out_spot) {
+    out_spot[0] = random_int(r->top_left[0], r->top_left[0] + r->size[0]);
+    out_spot[1] = r->top_left[1];
+}
+
+// Picks a spot on the floors against the upper walls
+static void pick_spot_on_upper_edge_of_room(RoomSpace *r, Position out_spot) {
+    out_spot[0] = random_int(r->top_left[0], r->top_left[0] + r->size[0]);
+    out_spot[1] = r->top_left[1] + 1;
 }
 
 // Picks a spot in a room that isnt on the edge so you can safely place doors in and out
@@ -198,14 +217,102 @@ static void autotile(Oct_Tilemap tilemap, Oct_Tilemap decoration, int32_t x, int
     }
 }
 
-// Finds the center of a room and returns it (returns center_out)
-void center_of_room(RoomSpace *r, Position center_out) {
+// Finds the center of a room
+static void center_of_room(RoomSpace *r, Position center_out) {
     center_out[0] = r->top_left[0] + (r->size[0] / 2);
     center_out[1] = r->top_left[1] + (r->size[1] / 2);
 }
 
+// returns a spot for a new prop or null if its out
+static Prop *get_next_prop() {
+    if (current_prop_index == MAX_PROPS) {
+        oct_Raise(OCT_STATUS_ERROR, false, "Ran out of prop indices.");
+        return nullptr;
+    }
+    Prop *p = &g_game.current_level.props[current_prop_index];
+    p->active = true;
+    return p;
+}
+
+// places a random prop suitable for a wall (spot should be the bottom of the wall)
+static void place_prop_on_wall(Position spot) {
+    Prop *p = get_next_prop();
+    if (!p) return;
+    const int32_t possible_props[] = {0, 1, 2, 9};
+    const int32_t possible_prop_count = 4;
+    const int32_t prop_selected = random_int(0, possible_prop_count);
+    Position actual_spot = {
+            spot[0],
+            spot[1] - 1
+    };
+    p->prop_index = possible_props[prop_selected];
+    p->pos[0] = actual_spot[0];
+    p->pos[1] = actual_spot[1];
+}
+
+// places a random prop suitable for the floor (should not be against a wall)
+static void place_prop_on_floor(Position spot) {
+    Prop *p = get_next_prop();
+    if (!p) return;
+    const int32_t possible_props[] = {4, 5, 6, 7, 8};
+    const int32_t possible_prop_count = 5;
+    const int32_t prop_selected = random_int(0, possible_prop_count);
+    Position actual_spot = {
+            spot[0],
+            spot[1],
+    };
+    p->prop_index = possible_props[prop_selected];
+    p->pos[0] = actual_spot[0];
+    p->pos[1] = actual_spot[1];
+}
+
+// places a random prop suitable for something against the wall (spot should be on the floor)
+static void place_prop_against_wall(Position spot) {
+    Prop *p = get_next_prop();
+    if (!p) return;
+    const int32_t possible_props[] = {3};
+    const int32_t possible_prop_count = 1;
+    const int32_t prop_selected = random_int(0, possible_prop_count);
+    Position actual_spot = {
+            spot[0],
+            spot[1] - 1,
+    };
+    p->prop_index = possible_props[prop_selected];
+    p->pos[0] = actual_spot[0];
+    p->pos[1] = actual_spot[1];
+}
+
+// Places props in a room randomly (could be against wall, on floor, on wall)
+static void place_props_in_room(RoomSpace *room, int32_t prop_count) {
+    for (int32_t i = 0; i < prop_count; i++) {
+        PropLocation prop_location = random_int(0, PROP_LOCATION_MAX);
+        Position out_spot;
+        if (prop_location == PROP_LOCATION_AGAINST_WALL) {
+            pick_spot_on_upper_edge_of_room(room, out_spot);
+            place_prop_against_wall(out_spot);
+        } else if (prop_location == PROP_LOCATION_ON_WALL) {
+            pick_spot_on_walls_of_room(room, out_spot);
+            place_prop_on_wall(out_spot);
+        } else if (prop_location == PROP_LOCATION_FLOOR) {
+            pick_spot_in_room(room, out_spot);
+            place_prop_on_floor(out_spot);
+        } else {
+            assert(false); // ts shit shouldnt happen
+        }
+    }
+}
+
+// puts props in each room according to the range specified
+static void prop_pass(RoomSpace *rooms, int32_t room_count, IntRange props_per_room) {
+    for (int32_t i = 0; i < room_count; i++) {
+        const int32_t props = random_int(props_per_room[0], props_per_room[1] + 1);
+        place_props_in_room(&rooms[i], props);
+    }
+}
+
 void generate_level(Level *level, LevelGenerationParameters *params, Position out_player_pos) {
     const int32_t spawns_per_room = 5;
+    current_prop_index = 0;
 
     // Level generation needs at least 3 rooms
     assert(params->room_count[0] > 2 && params->room_count[0] > 2);
@@ -310,6 +417,10 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
             }
         }
     }
+
+    // TODO: Make this modifiable maybe idc
+    IntRange prop_count = {3, 6};
+    prop_pass(rooms, room_count, prop_count);
 
     // Choose a bunch of potential spawn points in every room except for the starting room
     level->spawn_points = oct_Zalloc(g_game.allocator, spawns_per_room * sizeof(Position) * (room_count - 1));

@@ -93,8 +93,12 @@ static void general_aggression(Character *c, Character *other, int32_t range, Tr
 Character *find_nearest_character_with_trait(Character *c, bool hostile, bool friendly, bool non_player, int32_t aggro_range) {
     Character *found = nullptr;
     int32_t max_distance = INT32_MAX;
-    for (int32_t i = 0; i < MAX_CHARACTERS; i++) {
-        Character *current = &g_game.current_level.characters[i];
+    for (int32_t i = 0; i < MAX_CHARACTERS + 1; i++) {
+        Character *current = nullptr;
+        if (i == MAX_CHARACTERS)
+            current = &g_game.player;
+        else
+            current = &g_game.current_level.characters[i];
         const int32_t distance = tile_distance(c->pos, current->pos);
         if (character_is_alive(current)
             && distance < max_distance

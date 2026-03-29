@@ -72,3 +72,5 @@ void draw_object_raw(ObjectInfo *info, Oct_Vec2 position, float scale, float alp
 void draw_object_raw_no_int(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha);
 
 void create_slime(Character *slot, Position pos);
+void create_zombie(Character *slot, Position pos);
+void create_skeleton(Character *slot, Position pos);

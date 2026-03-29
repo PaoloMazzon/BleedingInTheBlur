@@ -699,10 +699,16 @@ void level_begin() {
     g_game.current_level.menu.real_y = -200;
 
     // Debug
-    for (int32_t i = 0; i < 2; i++) {
+    for (int32_t i = 0; i < 5; i++) {
         Position slime_spawn;
+        const int32_t choice = random_int(0, 3);
         level_get_spawn_point(slime_spawn);
-        create_slime(level_get_character_slot(), slime_spawn);
+        if (choice == 0)
+            create_slime(level_get_character_slot(), slime_spawn);
+        else if (choice == 1)
+            create_zombie(level_get_character_slot(), slime_spawn);
+        else if (choice == 2)
+            create_skeleton(level_get_character_slot(), slime_spawn);
     }
 
     for (int i = 0; i < 5; i++) {
