@@ -229,7 +229,7 @@ static Prop *get_next_prop() {
         oct_Raise(OCT_STATUS_ERROR, false, "Ran out of prop indices.");
         return nullptr;
     }
-    Prop *p = &g_game.current_level.props[current_prop_index];
+    Prop *p = &g_game.current_level.props[current_prop_index++];
     p->active = true;
     return p;
 }
@@ -307,6 +307,7 @@ static void prop_pass(RoomSpace *rooms, int32_t room_count, IntRange props_per_r
     for (int32_t i = 0; i < room_count; i++) {
         const int32_t props = random_int(props_per_room[0], props_per_room[1] + 1);
         place_props_in_room(&rooms[i], props);
+        // TODO: Don't place props on doors or other important places
     }
 }
 
@@ -419,7 +420,7 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     }
 
     // TODO: Make this modifiable maybe idc
-    IntRange prop_count = {3, 6};
+    IntRange prop_count = {0, 2};
     prop_pass(rooms, room_count, prop_count);
 
     // Choose a bunch of potential spawn points in every room except for the starting room
