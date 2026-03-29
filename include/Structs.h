@@ -134,6 +134,7 @@ typedef enum {
     TILE_CONTENTS_TYPE_NONE      = 0,
     TILE_CONTENTS_TYPE_CHARACTER = 1,
     TILE_CONTENTS_TYPE_WALL      = 2,
+    TILE_CONTENTS_TYPE_LOW_WALL  = 3, // something that arrows and the like can go over
 } TileContentsType;
 typedef enum {
     TILE_EXTRA_CONTENTS_TYPE_NONE      = 0,
@@ -214,7 +215,7 @@ struct Traits_s {
         bool sleeping; // doing nothing until something happens
         bool blood_thirsty; // health on kills
         bool sharp; // can "hear" (see) through walls up to 3 blocks away
-        bool haunted; // passes through walls                             NOT IMPLEMENTED
+        bool haunted; // passes through walls
     } Character; // traits for characters
 
     // Traits that can be either
@@ -278,6 +279,13 @@ typedef struct Item_s {
     ItemGetTraitsCallback get_traits_callback; // for spell attacks to determine their attack stats
 
 } Item;
+
+// Decoration in the level
+typedef struct Prop_s {
+    bool active;
+    Position pos; // top left, since props are 16x16
+    int32_t prop_index;
+} Prop;
 
 // For keeping track of time (in terms of frames)
 typedef struct Timer_s {
@@ -505,6 +513,7 @@ typedef struct Level_s {
     Item items[MAX_ITEMS];
     Weapon weapons[MAX_ITEMS];
     Label labels[MAX_LABELS];
+    Prop props[MAX_PROPS];
 
     // For the player to sense characters through walls
     Character *known_character_locations[MAX_CHARACTERS];

@@ -99,6 +99,8 @@ const int32_t TILE_WALL_SHADOW_ABOVE_BELOW_LEFT  = 39 + 8;
 const int32_t TILE_WALL_SHADOW_LEFT_RIGHT        = 38 + 8;
 const int32_t TILE_WALL_SHADOW_LEFT_RIGHT_TOP    = 41 + 8;
 const int32_t TILE_WALL_SHADOW_LEFT_RIGHT_BOTTOM = 42 + 8;
+const int32_t TILE_STAIRS_UP = 53;
+const int32_t TILE_STAIRS_DOWN = 52;
 
 const Oct_Key BUTTON_ATTACK_VIEW   = OCT_KEY_X;
 const Oct_Key BUTTON_ITEM_SWAP     = OCT_KEY_C;

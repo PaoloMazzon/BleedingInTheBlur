@@ -337,9 +337,9 @@ bool character_move(Character *c, const Position new_position) {
 
     // Make sure we aren't walking into a wall or character
     TileContents *next_tile = level_get_tile(new_position);
-    if (next_tile && ((next_tile->type == TILE_CONTENTS_TYPE_WALL && !next_tile->tile.door) || next_tile->type == TILE_CONTENTS_TYPE_CHARACTER)) {
+    if (!next_tile || (((next_tile->type == TILE_CONTENTS_TYPE_WALL && !next_tile->tile.door) || next_tile->type == TILE_CONTENTS_TYPE_CHARACTER || next_tile->type == TILE_CONTENTS_TYPE_LOW_WALL)) && !c->info.traits.Character.haunted) {
         return false;
-    } else if (next_tile && (next_tile->type == TILE_CONTENTS_TYPE_WALL && next_tile->tile.door && !next_tile->tile.door_open)) {
+    } else if (next_tile->type == TILE_CONTENTS_TYPE_WALL && next_tile->tile.door && !next_tile->tile.door_open) {
         next_tile->type = TILE_CONTENTS_TYPE_NONE;
         oct_SetTilemap(g_game.current_level.decorations, new_position[0], new_position[1], TILE_DOOR_OPEN);
         return true;

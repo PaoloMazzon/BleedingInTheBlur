@@ -198,6 +198,12 @@ static void autotile(Oct_Tilemap tilemap, Oct_Tilemap decoration, int32_t x, int
     }
 }
 
+// Finds the center of a room and returns it (returns center_out)
+void center_of_room(RoomSpace *r, Position center_out) {
+    center_out[0] = r->top_left[0] + (r->size[0] / 2);
+    center_out[1] = r->top_left[1] + (r->size[1] / 2);
+}
+
 void generate_level(Level *level, LevelGenerationParameters *params, Position out_player_pos) {
     const int32_t spawns_per_room = 5;
 
@@ -343,12 +349,20 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
         }
     }
 
+    // Place stairs up and down
+    Position stairs_down, stairs_up;
+    center_of_room(&rooms[start_room], stairs_down);
+    center_of_room(&rooms[end_room], stairs_up);
+    oct_SetTilemap(tilemap, stairs_up[0], stairs_up[1], TILE_STAIRS_UP);
+    oct_SetTilemap(tilemap, stairs_down[0], stairs_down[1], TILE_STAIRS_DOWN);
+
     // Draw the entire level to a texture
     level->level_tex = oct_CreateSurface((Oct_Vec2){(float)level->level_width * CELL_WIDTH, (float)level->level_height * CELL_HEIGHT});
     assert(level->level_tex);
 
     // Place the player
-    pick_spot_in_room(&rooms[start_room], out_player_pos);
+    out_player_pos[0] = stairs_down[0];
+    out_player_pos[1] = stairs_down[1];
     oct_Free(g_game.allocator, rooms);
 }
 

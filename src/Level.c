@@ -421,6 +421,16 @@ static void draw_tiles() {
     }
 }
 
+void draw_props() {
+    const Oct_Sprite sprite = oct_GetAsset(g_game.assets, "props.json");
+    for (int32_t i = 0; i < MAX_PROPS; i++) {
+        if (!g_game.current_level.props[i].active) continue;
+        oct_DrawSpriteFrame(
+                sprite, g_game.current_level.props[i].prop_index,
+                (Oct_Vec2){g_game.current_level.props[i].pos[0] * CELL_WIDTH, g_game.current_level.props[i].pos[1] * CELL_HEIGHT});
+    }
+}
+
 static void draw_fog_of_war() {
     // oct_DrawTexture(g_game.current_level.level_tex, (Oct_Vec2){0, 0});
     float camera_x, camera_y;
@@ -751,6 +761,7 @@ LevelIndex level_update() {
     // Drawing the world
     oct_LockCameras(g_game.world_camera);
     draw_tiles();
+    draw_props();
     draw_characters();
     draw_fog_of_war();
     draw_character_outlines();

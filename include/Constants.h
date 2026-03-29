@@ -59,6 +59,9 @@ extern const int32_t TILE_WALL_SHADOW_ABOVE_BELOW_LEFT;
 extern const int32_t TILE_WALL_SHADOW_LEFT_RIGHT;
 extern const int32_t TILE_WALL_SHADOW_LEFT_RIGHT_TOP;
 extern const int32_t TILE_WALL_SHADOW_LEFT_RIGHT_BOTTOM;
+extern const int32_t TILE_STAIRS_UP;
+extern const int32_t TILE_STAIRS_DOWN;
+
 // Controls
 extern const Oct_Key BUTTON_ATTACK_VIEW;
 extern const Oct_Key BUTTON_ITEM_SWAP;
@@ -91,6 +94,7 @@ extern const struct Traits_s RUST_SELF_DAMAGE_TRAITS;
 #define MAX_CHARACTERS 100
 #define MAX_ITEMS 100
 #define MAX_LABELS 100
+#define MAX_PROPS 100
 #define MAX_USER_INPUT_SIZE 32
 #define MAX_POPUP_STACK 10
 #define MAX_BUFFER_LENGTH 50
