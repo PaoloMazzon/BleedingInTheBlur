@@ -124,6 +124,7 @@ static void process_attack_traits(bool successful_attack) {
     Character *defender = g_game.current_level.Attack.receiver;
     Traits *attack_traits = &g_game.current_level.Attack.traits;
     Traits *defender_traits = &defender->info.traits;
+    Position text_pos = { defender->pos[0], defender->pos[1] - 1 };
 
     if (attack_traits->Attack.blur) {
         character_take_damage(attacker, 2, &BLUR_SELF_DAMAGE_TRAITS, attacker);
@@ -133,11 +134,11 @@ static void process_attack_traits(bool successful_attack) {
     }
     if (attack_traits->Attack.withering && successful_attack) {
         apply_withered_status_effect(attacker);
-        create_label("Withering!", defender->pos, RED, false);
+        create_label("Withering!", text_pos, RED, false);
     }
     if (attack_traits->Attack.heavy && random_int(0, 4) == 0 && successful_attack) {
         apply_crushed_hand_status_effect(defender);
-        create_label("Crushed hand!", defender->pos, RED, false);
+        create_label("Crushed hand!", text_pos, RED, false);
     }
 }
 

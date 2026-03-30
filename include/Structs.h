@@ -198,6 +198,7 @@ struct Traits_s {
         bool blur; // attacks get +2D but deal 2 damage to wielder
         bool precise; // for ranged attacks, -1 if the target is only 1 away (+1 if 3 or more away), for melee +1 if the target is within 1
         bool withering; // damage taken impacts max hp
+        bool exploit; // all attacks get -1 but all bonuses (good and bad) are 2x
     } Attack; // traits for attacks/weapons
 
     struct {

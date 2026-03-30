@@ -408,6 +408,11 @@ AttackFavour character_get_attack_stats(Character *c, const Traits *attack_trait
     if (attack_traits->Attack.precise && attack_traits->Attack.melee && distance == 1) pip_count += 1;
     if (attack_traits->Attack.precise && attack_traits->Attack.ranged && distance == 1) pip_count -= 1;
     if (attack_traits->Attack.precise && attack_traits->Attack.ranged && distance >= 3) pip_count += 1;
+    if (attack_traits->Attack.exploit) pip_count -= 1;
+
+    // Account for exploit trait
+    if (attack_traits->Attack.exploit)
+        pip_count *= 2;
 
     // Calculate if this roll is favoured, ill favoured, or neutral
     if (out_dc) *out_dc = dc;
