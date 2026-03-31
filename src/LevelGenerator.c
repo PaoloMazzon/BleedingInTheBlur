@@ -153,7 +153,11 @@ static bool is_door_location(Oct_Tilemap tilemap, Oct_Tilemap decorations, RoomS
             const bool DOOR_ANYWHERE_FFS = oct_GetTilemap(decorations, x + 1, y) == TILE_DOOR_CLOSED ||
                                            oct_GetTilemap(decorations, x - 1, y) == TILE_DOOR_CLOSED ||
                                            oct_GetTilemap(decorations, x, y + 1) == TILE_DOOR_CLOSED ||
-                                           oct_GetTilemap(decorations, x, y - 1) == TILE_DOOR_CLOSED;
+                                           oct_GetTilemap(decorations, x, y - 1) == TILE_DOOR_CLOSED ||
+                                           oct_GetTilemap(decorations, x + 2, y) == TILE_DOOR_CLOSED ||
+                                           oct_GetTilemap(decorations, x - 2, y) == TILE_DOOR_CLOSED ||
+                                           oct_GetTilemap(decorations, x, y + 2) == TILE_DOOR_CLOSED ||
+                                           oct_GetTilemap(decorations, x, y - 2) == TILE_DOOR_CLOSED;
             if (DOOR_ANYWHERE_FFS || !is_floor_tile(oct_GetTilemap(tilemap, x, y))) return false;
             if ((above && below && !left && !right) || (!above && !below && left && right))
                 return true;
@@ -234,10 +238,35 @@ static Prop *get_next_prop() {
     return p;
 }
 
-// places a random prop suitable for a wall (spot should be the bottom of the wall)
-static void place_prop_on_wall(Position spot) {
+// If a tile should be a wall this returns false if it isnt, if a tile should not be a wall it returns true if it is
+static bool is_valid_tile(Position spot, bool should_be_wall) {
+    TileContents *t = level_get_tile(spot);
+    if (!t) return false;
+    return ((t->type == TILE_CONTENTS_TYPE_WALL && !should_be_wall) ||
+        (should_be_wall && (t->type != TILE_CONTENTS_TYPE_WALL || (t->type == TILE_CONTENTS_TYPE_WALL && t->tile.door))));
+}
+
+// Actually places the prop (checks if there is a door/hallway in the way), returns false if it fails (ran out of prop indices or invalid spot)
+static bool place_prop(Position spot, int32_t index, bool should_be_wall) {
+    Position spots[] = {
+            {spot[0]    , spot[1]    },
+            {spot[0]    , spot[1] + 1},
+            {spot[0] + 1, spot[1]    },
+            {spot[0] + 1, spot[1] + 1},
+    };
+    for (int32_t i = 0; i < 4; i++)
+        if (!is_valid_tile(spots[i], should_be_wall))
+            return false;
     Prop *p = get_next_prop();
-    if (!p) return;
+    if (!p) return false;
+    p->prop_index = index;
+    p->pos[0] = spot[0];
+    p->pos[1] = spot[1];
+    return true;
+}
+
+// places a random prop suitable for a wall (spot should be the bottom of the wall)
+static bool place_prop_on_wall(Position spot) {
     const int32_t possible_props[] = {0, 1, 2, 9};
     const int32_t possible_prop_count = 4;
     const int32_t prop_selected = random_int(0, possible_prop_count);
@@ -245,15 +274,11 @@ static void place_prop_on_wall(Position spot) {
             spot[0],
             spot[1] - 1
     };
-    p->prop_index = possible_props[prop_selected];
-    p->pos[0] = actual_spot[0];
-    p->pos[1] = actual_spot[1];
+    return place_prop(actual_spot, prop_selected, true);
 }
 
 // places a random prop suitable for the floor (should not be against a wall)
-static void place_prop_on_floor(Position spot) {
-    Prop *p = get_next_prop();
-    if (!p) return;
+static bool place_prop_on_floor(Position spot) {
     const int32_t possible_props[] = {4, 5, 6, 7, 8};
     const int32_t possible_prop_count = 5;
     const int32_t prop_selected = random_int(0, possible_prop_count);
@@ -261,15 +286,11 @@ static void place_prop_on_floor(Position spot) {
             spot[0],
             spot[1],
     };
-    p->prop_index = possible_props[prop_selected];
-    p->pos[0] = actual_spot[0];
-    p->pos[1] = actual_spot[1];
+    return place_prop(actual_spot, prop_selected, false);
 }
 
 // places a random prop suitable for something against the wall (spot should be on the floor)
-static void place_prop_against_wall(Position spot) {
-    Prop *p = get_next_prop();
-    if (!p) return;
+static bool place_prop_against_wall(Position spot) {
     const int32_t possible_props[] = {3};
     const int32_t possible_prop_count = 1;
     const int32_t prop_selected = random_int(0, possible_prop_count);
@@ -277,9 +298,7 @@ static void place_prop_against_wall(Position spot) {
             spot[0],
             spot[1] - 1,
     };
-    p->prop_index = possible_props[prop_selected];
-    p->pos[0] = actual_spot[0];
-    p->pos[1] = actual_spot[1];
+    return place_prop(actual_spot, prop_selected, false);
 }
 
 // Places props in a room randomly (could be against wall, on floor, on wall)
@@ -287,17 +306,29 @@ static void place_props_in_room(RoomSpace *room, int32_t prop_count) {
     for (int32_t i = 0; i < prop_count; i++) {
         PropLocation prop_location = random_int(0, PROP_LOCATION_MAX);
         Position out_spot;
+        const int32_t max_attempts = 5;
+        int32_t i = 0;
+        bool placed_prop = false;
         if (prop_location == PROP_LOCATION_AGAINST_WALL) {
-            pick_spot_on_upper_edge_of_room(room, out_spot);
-            place_prop_against_wall(out_spot);
+            while (i < max_attempts && !placed_prop) {
+                pick_spot_on_upper_edge_of_room(room, out_spot);
+                placed_prop = place_prop_against_wall(out_spot);
+                i++;
+            }
         } else if (prop_location == PROP_LOCATION_ON_WALL) {
-            pick_spot_on_walls_of_room(room, out_spot);
-            place_prop_on_wall(out_spot);
+            while (i < max_attempts && !placed_prop) {
+                pick_spot_on_walls_of_room(room, out_spot);
+                placed_prop = place_prop_on_wall(out_spot);
+                i++;
+            }
         } else if (prop_location == PROP_LOCATION_FLOOR) {
-            pick_spot_in_room(room, out_spot);
-            place_prop_on_floor(out_spot);
+            while (i < max_attempts && !placed_prop) {
+                pick_spot_in_room(room, out_spot);
+                placed_prop = place_prop_on_floor(out_spot);
+                i++;
+            }
         } else {
-            assert(false); // ts shit shouldnt happen
+            assert(false); // ts shit shouldn't happen
         }
     }
 }
@@ -419,10 +450,6 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
         }
     }
 
-    // TODO: Make this modifiable maybe idc
-    IntRange prop_count = {0, 2};
-    prop_pass(rooms, room_count, prop_count);
-
     // Choose a bunch of potential spawn points in every room except for the starting room
     level->spawn_points = oct_Zalloc(g_game.allocator, spawns_per_room * sizeof(Position) * (room_count - 1));
     level->spawn_points_count = (room_count - 1) * spawns_per_room;
@@ -460,6 +487,10 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
             }
         }
     }
+
+    // TODO: Make this modifiable maybe idc
+    IntRange prop_count = {0, 2};
+    prop_pass(rooms, room_count, prop_count);
 
     // Place stairs up and down
     Position stairs_down, stairs_up;

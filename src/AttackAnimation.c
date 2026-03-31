@@ -133,7 +133,7 @@ static void process_attack_traits(bool successful_attack) {
         character_take_damage(attacker, 1, &RUST_SELF_DAMAGE_TRAITS, attacker);
     }
     if (attack_traits->Attack.withering && successful_attack) {
-        apply_withered_status_effect(attacker);
+        apply_withered_status_effect(defender);
         create_label("Withering!", text_pos, RED, false);
     }
     if (attack_traits->Attack.heavy && random_int(0, 4) == 0 && successful_attack) {
