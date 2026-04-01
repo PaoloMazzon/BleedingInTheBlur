@@ -59,6 +59,30 @@ void print_statblock(Statblock *s) {
     debug("----------");
 }
 
+void info_set_texture(ObjectInfo *info, Oct_Texture tex) {
+    assert(info);
+    assert(tex != OCT_NO_ASSET);
+    info->sprite.drawn_type = DRAWN_TYPE_TEXTURE;
+    info->sprite.texture = tex;
+}
+
+void info_set_sprite(ObjectInfo *info, Oct_Sprite sprite) {
+    assert(info);
+    assert(sprite != OCT_NO_ASSET);
+    info->sprite.drawn_type = DRAWN_TYPE_SPRITE;
+    info->sprite.sprite = sprite;
+    oct_InitSpriteInstance(&info->sprite.sprite_instance, sprite, true);
+}
+
+void info_set_sprite_layers(ObjectInfo *info, Oct_Sprite sprites[MAX_SPRITE_LAYERS]) {
+    assert(info);
+    info->sprite.drawn_type = DRAWN_TYPE_CHARACTER;
+    for (int i = 0; i < MAX_SPRITE_LAYERS; i++) {
+        info->sprite.layers[i] = sprites[i];
+    }
+    oct_InitSpriteInstance(&info->sprite.layers_instance, sprites[0], true);
+}
+
 int32_t *get_skill_pip(Statblock *s, int32_t base_stat_index, int32_t skill_index) {
     if (base_stat_index == BASE_STAT_TYPE_GRIT) {
         return &s->grit_stats[skill_index];
@@ -86,22 +110,38 @@ void character_draw(Character *c, Oct_Vec2 position, float alpha) {
 }
 
 void draw_object(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) {
-    if (info->drawn_type == DRAWN_TYPE_SPRITE) {
+    assert(info);
+    Sprite *s = &info->sprite;
+    if (s->drawn_type == DRAWN_TYPE_SPRITE) {
         oct_DrawSpriteIntColourExt(
                 OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, info->id,
-                info->sprite, &info->sprite_instance,
+                s->sprite, &s->sprite_instance,
                 &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
                 (Oct_Vec2){position[0] + 4, position[1] + 4},
                 (Oct_Vec2){info->scale_x * scale, scale},
                 info->rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
-    } else if (info->drawn_type == DRAWN_TYPE_TEXTURE) {
+    } else if (s->drawn_type == DRAWN_TYPE_TEXTURE) {
         oct_DrawTextureIntColourExt(
                 OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, info->id,
-                info->texture,
+                s->texture,
                 &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
                 (Oct_Vec2){position[0] + 4, position[1] + 4},
                 (Oct_Vec2){info->scale_x * scale, scale},
                 info->rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
+    } else if (s->drawn_type == DRAWN_TYPE_CHARACTER) {
+        for (int i = 0; i < MAX_SPRITE_LAYERS; i++) {
+            // This is what we call the "pray method," since 0 is not guaranteed to be an invalid sprite :fire:
+            if (s->layers[i] == 0 || s->layers[i] == OCT_NO_ASSET) continue;
+            oct_DrawSpriteIntColourExt(
+                OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, info->id,
+                s->layers[i], &s->layers_instance,
+                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
+                (Oct_Vec2){position[0] + 4, position[1] + 4},
+                (Oct_Vec2){info->scale_x * scale, scale},
+                info->rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
+        }
+    } else {
+        oct_Raise(OCT_STATUS_ERROR, true, "Invalid drawn type %i", s->drawn_type);
     }
 }
 
@@ -129,40 +169,71 @@ void draw_item_no_int(Item *item, Oct_Vec2 position, float alpha) {
 }
 
 void draw_object_raw(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) {
-    if (info->drawn_type == DRAWN_TYPE_SPRITE) {
+    assert(info);
+    Sprite *s = &info->sprite;
+    if (s->drawn_type == DRAWN_TYPE_SPRITE) {
         oct_DrawSpriteIntColourExt(
                 OCT_INTERPOLATE_ALL, info->id,
-                info->sprite, &info->sprite_instance,
+                s->sprite, &s->sprite_instance,
                 &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
                 (Oct_Vec2){position[0], position[1]},
                 (Oct_Vec2){scale, scale},
                 0, (Oct_Vec2){0, 0});
-    } else if (info->drawn_type == DRAWN_TYPE_TEXTURE) {
+    } else if (s->drawn_type == DRAWN_TYPE_TEXTURE) {
         oct_DrawTextureIntColourExt(
                 OCT_INTERPOLATE_ALL, info->id,
-                info->texture,
+                s->texture,
                 &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
                 (Oct_Vec2){position[0], position[1]},
                 (Oct_Vec2){scale, scale},
                 0, (Oct_Vec2){0, 0});
+    } else if (s->drawn_type == DRAWN_TYPE_CHARACTER) {
+        for (int i = 0; i < MAX_SPRITE_LAYERS; i++) {
+            // This is what we call the "pray method," since 0 is not guaranteed to be an invalid sprite :fire:
+            if (s->layers[i] == 0 || s->layers[i] == OCT_NO_ASSET) continue;
+            oct_DrawSpriteIntColourExt(
+                OCT_INTERPOLATE_ALL, info->id,
+                s->layers[i], &s->layers_instance,
+                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
+                (Oct_Vec2){position[0], position[1]},
+                (Oct_Vec2){scale, scale},
+                0, (Oct_Vec2){0, 0});
+        }
+    } else {
+        oct_Raise(OCT_STATUS_ERROR, true, "Invalid drawn type %i", s->drawn_type);
     }
 }
 
 void draw_object_raw_no_int(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) {
-    if (info->drawn_type == DRAWN_TYPE_SPRITE) {
+    assert(info);
+    Sprite *s = &info->sprite;
+    if (s->drawn_type == DRAWN_TYPE_SPRITE) {
         oct_DrawSpriteColourExt(
-                info->sprite, &info->sprite_instance,
+                s->sprite, &s->sprite_instance,
                 &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
                 (Oct_Vec2){position[0], position[1]},
                 (Oct_Vec2){scale, scale},
                 0, (Oct_Vec2){0, 0});
-    } else if (info->drawn_type == DRAWN_TYPE_TEXTURE) {
+    } else if (s->drawn_type == DRAWN_TYPE_TEXTURE) {
         oct_DrawTextureColourExt(
-                info->texture,
+                s->texture,
                 &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
                 (Oct_Vec2){position[0], position[1]},
                 (Oct_Vec2){scale, scale},
                 0, (Oct_Vec2){0, 0});
+    } else if (s->drawn_type == DRAWN_TYPE_CHARACTER) {
+        for (int i = 0; i < MAX_SPRITE_LAYERS; i++) {
+            // This is what we call the "pray method," since 0 is not guaranteed to be an invalid sprite :fire:
+            if (s->layers[i] == 0 || s->layers[i] == OCT_NO_ASSET) continue;
+                oct_DrawSpriteColourExt(
+                    s->layers[i], &s->layers_instance,
+                    &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
+                    (Oct_Vec2){position[0], position[1]},
+                    (Oct_Vec2){scale, scale},
+                    0, (Oct_Vec2){0, 0});
+        }
+    } else {
+        oct_Raise(OCT_STATUS_ERROR, true, "Invalid drawn type %i", s->drawn_type);
     }
 }
 

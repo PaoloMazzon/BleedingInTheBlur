@@ -16,9 +16,8 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
     // TODO: Do something with rarity
     if (weapon_type == WEAPON_TYPE_SWORD) {
         out->type = WEAPON_TYPE_SWORD;
-        out->info.texture = oct_GetAsset(g_game.assets, "attacks/sword.png");
         out->icon = oct_GetAsset(g_game.assets, "attacks/sword_icon.png");
-        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
+        info_set_texture(&out->info, oct_GetAsset(g_game.assets, "attacks/sword.png"));
         out->info.name = "Sword";
         out->damage = 5;
         out->range = 1;
@@ -27,9 +26,8 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->info.traits.Attack.blade = true;
     } else if (weapon_type == WEAPON_TYPE_SPEAR) {
         out->type = WEAPON_TYPE_SPEAR;
-        out->info.texture = oct_GetAsset(g_game.assets, "attacks/spear.png");
         out->icon = oct_GetAsset(g_game.assets, "attacks/spear_icon.png");
-        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
+        info_set_texture(&out->info, oct_GetAsset(g_game.assets, "attacks/spear.png"));
         out->info.name = "Spear";
         out->damage = 4;
         out->range = 2;
@@ -38,18 +36,14 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->info.traits.Attack.heavy = true;
     } else if (weapon_type == WEAPON_TYPE_BOW) {
         out->type = WEAPON_TYPE_BOW;
-        out->info.texture = oct_GetAsset(g_game.assets, "");
         out->icon = oct_GetAsset(g_game.assets, "attacks/bow_icon.png");
-        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
         out->info.name = "Bow";
         out->damage = 2;
         out->range = 4;
         out->info.traits.Attack.ranged = true;
     } else if (weapon_type == WEAPON_TYPE_CROSSBOW) {
         out->type = WEAPON_TYPE_CROSSBOW;
-        out->info.texture = oct_GetAsset(g_game.assets, "");
         out->icon = oct_GetAsset(g_game.assets, "attacks/crossbow_icon.png");
-        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
         out->info.name = "Crossbow";
         out->damage = 3;
         out->range = 4;
@@ -59,9 +53,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->info.traits.Attack.heavy = true;
     } else if (weapon_type == WEAPON_TYPE_DAGGER) {
         out->type = WEAPON_TYPE_DAGGER;
-        out->info.texture = oct_GetAsset(g_game.assets, "");
         out->icon = oct_GetAsset(g_game.assets, "attacks/dagger.png");
-        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
         out->info.name = "Dagger";
         out->damage = 2;
         out->range = 1;
@@ -72,9 +64,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->info.traits.Attack.melee = true;
     } else if (weapon_type == WEAPON_TYPE_OTHER) {
         out->type = WEAPON_TYPE_OTHER;
-        out->info.texture = oct_GetAsset(g_game.assets, "");
         out->icon = oct_GetAsset(g_game.assets, "");
-        out->info.drawn_type = DRAWN_TYPE_TEXTURE;
         out->info.name = "Claw";
         out->damage = 2;
         out->range = 1;
@@ -100,8 +90,7 @@ static void prep_item(Item *out, const char *name, int32_t charges, Oct_Texture 
     out->info.name = name;
     out->charges_remaining = charges;
     out->charges = charges;
-    out->info.texture = tex;
-    out->info.drawn_type = DRAWN_TYPE_TEXTURE;
+    info_set_texture(&out->info, tex);
     out->info.id = new_oct_id();
 }
 

@@ -127,8 +127,9 @@ typedef enum {
     LEVEL_INDEX_QUIT        = 7, // quit the game
 } LevelIndex;
 typedef enum {
-    DRAWN_TYPE_TEXTURE = 0,
-    DRAWN_TYPE_SPRITE  = 1,
+    DRAWN_TYPE_TEXTURE   = 0,
+    DRAWN_TYPE_SPRITE    = 1,
+    DRAWN_TYPE_CHARACTER = 2, // mix and match character
 } DrawnType;
 typedef enum {
     TILE_CONTENTS_TYPE_NONE      = 0,
@@ -230,6 +231,31 @@ typedef struct StatusEffects_s {
     int32_t poisoned; // damage each turn
 } StatusEffects;
 
+// For accessing sprite layers in a Sprite_s
+typedef enum {
+    SPRITE_LAYER_BODY  = 0,
+    SPRITE_LAYER_SHOES = 1,
+    SPRITE_LAYER_PANTS = 2,
+    SPRITE_LAYER_SHIRT = 3,
+    SPRITE_LAYER_HEAD  = 4,
+} SpriteLayer;
+
+// Anything drawn as an object, could be a texture sprite or some weird shit
+typedef struct Sprite_s {
+    DrawnType drawn_type;
+    union {
+        struct {
+            Oct_Sprite sprite;
+            Oct_SpriteInstance sprite_instance;
+        };
+        struct {
+            Oct_Sprite layers[MAX_SPRITE_LAYERS];
+            Oct_SpriteInstance layers_instance; // they should all have identical frame counts and sizes and all that
+        };
+        Oct_Texture texture;
+    };
+} Sprite;
+
 // Information about any in-game object, like sprite and name and traits
 typedef struct ObjectInfo_s {
     // Every object has a name
@@ -238,15 +264,7 @@ typedef struct ObjectInfo_s {
     // For Octarine interpolation
     uint64_t id;
 
-    // Objects are either sprites or textures
-    DrawnType drawn_type;
-    union {
-        struct {
-            Oct_Sprite sprite;
-            Oct_SpriteInstance sprite_instance;
-        };
-        Oct_Texture texture;
-    };
+    Sprite sprite;
 
     // To easily lerp characters/items to where they should be
     Oct_Vec2 target_position;

@@ -36,9 +36,7 @@ void create_slime(Character *slot, Position pos) {
     character_create(&sb, pos, slot);
     slot->info.name = "Slime";
     slot->info.traits = traits;
-    slot->info.drawn_type = DRAWN_TYPE_SPRITE;
-    slot->info.sprite = oct_GetAsset(g_game.assets, "characters/slime.json");
-    oct_InitSpriteInstance(&slot->info.sprite_instance, slot->info.sprite, true);
+    info_set_sprite(&slot->info, oct_GetAsset(g_game.assets, "characters/slime.json"));
     slot->aggro_range = 4;
     get_starting_weapon(WEAPON_TYPE_OTHER, &slot->starting_weapon);
 }
@@ -80,10 +78,8 @@ void create_zombie(Character *slot, Position pos) {
     character_create(&sb, pos, slot);
     slot->info.name = "Zombie";
     slot->info.traits = traits;
-    slot->info.drawn_type = DRAWN_TYPE_SPRITE;
-    slot->info.sprite = oct_GetAsset(g_game.assets, "characters/zombie.json");
-    oct_InitSpriteInstance(&slot->info.sprite_instance, slot->info.sprite, true);
     slot->aggro_range = 6;
+    info_set_sprite(&slot->info, oct_GetAsset(g_game.assets, "characters/zombie.json"));
 
     // Weapon
     get_starting_weapon(WEAPON_TYPE_OTHER, &slot->starting_weapon);
@@ -128,10 +124,8 @@ void create_skeleton(Character *slot, Position pos) {
     character_create(&sb, pos, slot);
     slot->info.name = "Skeleton";
     slot->info.traits = traits;
-    slot->info.drawn_type = DRAWN_TYPE_SPRITE;
-    slot->info.sprite = oct_GetAsset(g_game.assets, "characters/skeleton.json");
-    oct_InitSpriteInstance(&slot->info.sprite_instance, slot->info.sprite, true);
     slot->aggro_range = 6;
+    info_set_sprite(&slot->info, oct_GetAsset(g_game.assets, "characters/skeleton.json"));
 
     // Weapon
     get_starting_weapon(WEAPON_TYPE_SWORD, &slot->starting_weapon);

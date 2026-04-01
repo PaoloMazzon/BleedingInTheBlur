@@ -11,6 +11,15 @@ void random_statblock(Statblock *sb);
 // Prints a statblock to the console
 void print_statblock(Statblock *s);
 
+// Does the boilerplatey stuff setting up a texture
+void info_set_texture(ObjectInfo *info, Oct_Texture tex);
+
+// Does the boilerplatey stuff setting up a sprite
+void info_set_sprite(ObjectInfo *info, Oct_Sprite sprite);
+
+// Does the boilerplatey stuff setting up a layered sprite
+void info_set_sprite_layers(ObjectInfo *info, Oct_Sprite sprites[MAX_SPRITE_LAYERS]);
+
 // Returns a pointer to the skill pip in the stat block for the given base stat and skill index
 int32_t *get_skill_pip(Statblock *s, int32_t base_stat_index, int32_t skill_index);
 

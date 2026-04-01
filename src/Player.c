@@ -10,9 +10,7 @@ void player_init(Position start_pos) {
     random_statblock(&sb);
     print_statblock(&sb);
     character_create(&sb, (Position){start_pos[0], start_pos[1]}, &g_game.player);
-    g_game.player.info.drawn_type = DRAWN_TYPE_SPRITE;
-    g_game.player.info.sprite = oct_GetAsset(g_game.assets, "characters/player.json");
-    oct_InitSpriteInstance(&g_game.player.info.sprite_instance, g_game.player.info.sprite, true);
+    info_set_sprite(&g_game.player.info, oct_GetAsset(g_game.assets, "characters/player.json"));
     g_game.player.info.traits.Character.friendly = true;
     get_starting_weapon(WEAPON_TYPE_SPEAR, &g_game.player.starting_weapon);
 }

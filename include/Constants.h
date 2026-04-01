@@ -11,6 +11,7 @@ extern const int32_t STARTING_WEAPON_SLOT;
 extern const char *WEAPON_TYPE_NAMES[6];
 extern const char *RARITY_NAMES[4];
 extern const char *GAME_STATES[7];
+extern const char *SPRITE_LAYER_NAMES[5];
 
 // How many base stat points you have, no stat can have more than BASE_STAT_MAX
 extern const int32_t STARTING_BASE_STAT_POINTS;
@@ -98,6 +99,7 @@ extern const struct Traits_s RUST_SELF_DAMAGE_TRAITS;
 #define MAX_USER_INPUT_SIZE 32
 #define MAX_POPUP_STACK 10
 #define MAX_BUFFER_LENGTH 50
+#define MAX_SPRITE_LAYERS 5
 
 // These are compiler preprocessors for easy access
 #define LABELS_ID_START 100 // needs at least MAX_LABELS
