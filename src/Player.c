@@ -10,7 +10,7 @@ void player_init(Position start_pos) {
     random_statblock(&sb);
     print_statblock(&sb);
     character_create(&sb, (Position){start_pos[0], start_pos[1]}, &g_game.player);
-    info_set_sprite(&g_game.player.info, oct_GetAsset(g_game.assets, "characters/player.json"));
+    info_set_random_sprite_layers(&g_game.player.info);
     g_game.player.info.traits.Character.friendly = true;
     get_starting_weapon(WEAPON_TYPE_SPEAR, &g_game.player.starting_weapon);
 }
@@ -224,6 +224,11 @@ void player_update() {
     // Player can toggle the stat view anytime
     if (oct_KeyPressed(BUTTON_MENU_TOGGLE)) {
         g_game.current_level.stats_toggle = !g_game.current_level.stats_toggle;
+    }
+
+    // DEBUG
+    if (oct_KeyPressed(OCT_KEY_P)) {
+        info_set_random_sprite_layers(&g_game.player.info);
     }
 
     // State machine type stuff. The actual actions are taken above but this is to maintain proper

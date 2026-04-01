@@ -60,12 +60,13 @@ const char *GAME_STATES[7] = {
         "Player Death",
 };
 
-extern const char *SPRITE_LAYER_NAMES[5] = {
+extern const char *SPRITE_LAYER_NAMES[6] = {
         "Sprite Layer Body",
         "Sprite Layer Shoes",
         "Sprite Layer Pants",
         "Sprite Layer Shirt",
         "Sprite Layer Head",
+        "Sprite Layer Accessories"
 };
 
 const int32_t SOUL_BOUND_WEAPON_SLOT    = 1;

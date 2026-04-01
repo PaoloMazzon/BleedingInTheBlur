@@ -233,11 +233,12 @@ typedef struct StatusEffects_s {
 
 // For accessing sprite layers in a Sprite_s
 typedef enum {
-    SPRITE_LAYER_BODY  = 0,
-    SPRITE_LAYER_SHOES = 1,
-    SPRITE_LAYER_PANTS = 2,
-    SPRITE_LAYER_SHIRT = 3,
-    SPRITE_LAYER_HEAD  = 4,
+    SPRITE_LAYER_BODY      = 0,
+    SPRITE_LAYER_SHOES     = 1,
+    SPRITE_LAYER_PANTS     = 2,
+    SPRITE_LAYER_SHIRT     = 3,
+    SPRITE_LAYER_HEAD      = 4,
+    SPRITE_LAYER_ACCESSORY = 5,
 } SpriteLayer;
 
 // Anything drawn as an object, could be a texture sprite or some weird shit
@@ -249,7 +250,8 @@ typedef struct Sprite_s {
             Oct_SpriteInstance sprite_instance;
         };
         struct {
-            Oct_Sprite layers[MAX_SPRITE_LAYERS];
+            int32_t layers[MAX_SPRITE_LAYERS]; // indexes into g_game.layers
+            int32_t layer_colours[MAX_SPRITE_LAYERS]; // indexes into g_game.layer_colours
             Oct_SpriteInstance layers_instance; // they should all have identical frame counts and sizes and all that
         };
         Oct_Texture texture;
@@ -598,6 +600,11 @@ typedef struct Game_s {
 
     // Single source of truth for the player, everything else is a reference to this
     Character player;
+
+    // For customizable characters
+    Oct_Colour layer_colours[MAX_COLOURS];
+    Oct_Sprite *layers_sprites[MAX_SPRITE_LAYERS];
+    int32_t layer_sprite_counts[MAX_SPRITE_LAYERS];
 
     int32_t frame; // increments 1x per frame
 } Game;

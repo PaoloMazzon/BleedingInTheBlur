@@ -2,10 +2,70 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
+#include <string.h>
 #include "Game.h"
 #include "Structs.h"
 
 Game g_game;
+
+// Loads all the sprites in a given path using evil string manipulation
+// Always allocates 1 extra spot for a blank sprite
+void load_sprite_options(const char *path, int32_t count, Oct_Sprite **dest_array) {
+    *dest_array = oct_Malloc(g_game.allocator, sizeof(Oct_Sprite) * (count + 1));
+    Oct_Sprite *array = *dest_array;
+    array[0] = OCT_NO_ASSET;
+    char temp_path[256];
+    strncpy(temp_path, path, 255);
+    const int32_t evil_index = strlen(temp_path) - 6;
+    for (int32_t i = 0; i < count; i++) {
+        temp_path[evil_index] = (char)(i + 48);
+        array[i + 1] = oct_GetAsset(g_game.assets, temp_path);
+        debug("Looking for asset %s: %s", temp_path, array[i + 1] != OCT_NO_ASSET ? "FOUND" : "NOT FOUND");
+    }
+}
+
+// Loads the customizable character options -- this is a pile of shit
+void load_sprite_layers() {
+    Oct_Colour c0 = {.r = 0.94f, .g = 0.94f, .b = 0.94f, .a = 1.0f};
+    g_game.layer_colours[0] = c0;
+    Oct_Colour c1 = {.r = 0.27f, .g = 0.27f, .b = 0.27f, .a = 1.0f};
+    g_game.layer_colours[1] = c1;
+    Oct_Colour c2 = {.r = 0.04f, .g = 0.15f, .b = 0.32f, .a = 1.0f};
+    g_game.layer_colours[2] = c2;
+    Oct_Colour c3 = {.r = 0.07f, .g = 0.04f, .b = 0.32f, .a = 1.0f};
+    g_game.layer_colours[3] = c3;
+    Oct_Colour c4 = {.r = 0.32f, .g = 0.04f, .b = 0.30f, .a = 1.0f};
+    g_game.layer_colours[4] = c4;
+    Oct_Colour c5 = {.r = 0.32f, .g = 0.04f, .b = 0.09f, .a = 1.0f};
+    g_game.layer_colours[5] = c5;
+    Oct_Colour c6 = {.r = 0.04f, .g = 0.32f, .b = 0.15f, .a = 1.0f};
+    g_game.layer_colours[6] = c6;
+    Oct_Colour c7 = {.r = 0.15f, .g = 0.32f, .b = 0.04f, .a = 1.0f};
+    g_game.layer_colours[7] = c7;
+    Oct_Colour c8 = {.r = 0.32f, .g = 0.31f, .b = 0.04f, .a = 1.0f};
+    g_game.layer_colours[8] = c8;
+    Oct_Colour c9 = {.r = 0.32f, .g = 0.15f, .b = 0.04f, .a = 1.0f};
+    g_game.layer_colours[9] = c9;
+
+    g_game.layer_sprite_counts[0] = 10;
+    load_sprite_options("characterbodylayer/option_0.json", g_game.layer_sprite_counts[0], &g_game.layers_sprites[0]);
+    g_game.layer_sprite_counts[0]++;
+    g_game.layer_sprite_counts[1] = 2;
+    load_sprite_options("characterpantslayer/option_0.json", g_game.layer_sprite_counts[1], &g_game.layers_sprites[1]);
+    g_game.layer_sprite_counts[1]++;
+    g_game.layer_sprite_counts[2] = 1;
+    load_sprite_options("charactershoelayer/option_0.json", g_game.layer_sprite_counts[2], &g_game.layers_sprites[2]);
+    g_game.layer_sprite_counts[2]++;
+    g_game.layer_sprite_counts[3] = 4;
+    load_sprite_options("charactershirtlayer/option_0.json", g_game.layer_sprite_counts[3], &g_game.layers_sprites[3]);
+    g_game.layer_sprite_counts[3]++;
+    g_game.layer_sprite_counts[4] = 8;
+    load_sprite_options("charactertoplayer/option_0.json", g_game.layer_sprite_counts[4], &g_game.layers_sprites[4]);
+    g_game.layer_sprite_counts[4]++;
+    g_game.layer_sprite_counts[5] = 10;
+    load_sprite_options("characteraccessorylayer/option_0.json", g_game.layer_sprite_counts[5], &g_game.layers_sprites[5]);
+    g_game.layer_sprite_counts[5]++;
+}
 
 void *startup() {
     debug("Starting the game.");
@@ -33,6 +93,7 @@ void *startup() {
     oct_UpdateCamera(g_game.ui_camera, &ui_camera_update);
     g_game.frame = 1;
 
+    load_sprite_layers();
     menu_begin();
     return nullptr;
 }

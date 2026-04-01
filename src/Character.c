@@ -74,13 +74,14 @@ void info_set_sprite(ObjectInfo *info, Oct_Sprite sprite) {
     oct_InitSpriteInstance(&info->sprite.sprite_instance, sprite, true);
 }
 
-void info_set_sprite_layers(ObjectInfo *info, Oct_Sprite sprites[MAX_SPRITE_LAYERS]) {
-    assert(info);
+void info_set_random_sprite_layers(ObjectInfo *info) {
     info->sprite.drawn_type = DRAWN_TYPE_CHARACTER;
-    for (int i = 0; i < MAX_SPRITE_LAYERS; i++) {
-        info->sprite.layers[i] = sprites[i];
+    for (int32_t i = 0; i < MAX_SPRITE_LAYERS; i++) {
+        const int32_t lower_bound = i == SPRITE_LAYER_BODY ? 1 : 0;
+        info->sprite.layers[i] = random_int(lower_bound, g_game.layer_sprite_counts[i]);
+        info->sprite.layer_colours[i] = random_int(0, MAX_COLOURS);
     }
-    oct_InitSpriteInstance(&info->sprite.layers_instance, sprites[0], true);
+    oct_InitSpriteInstance(&info->sprite.layers_instance, oct_GetAsset(g_game.assets, "characterpantslayer/option_0.json"), true);
 }
 
 int32_t *get_skill_pip(Statblock *s, int32_t base_stat_index, int32_t skill_index) {
@@ -132,10 +133,16 @@ void draw_object(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) 
         for (int i = 0; i < MAX_SPRITE_LAYERS; i++) {
             // This is what we call the "pray method," since 0 is not guaranteed to be an invalid sprite :fire:
             if (s->layers[i] == 0 || s->layers[i] == OCT_NO_ASSET) continue;
+            Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha};
+            if (i != SPRITE_LAYER_BODY) {
+                c.r = g_game.layer_colours[s->layer_colours[i]].r;
+                c.g = g_game.layer_colours[s->layer_colours[i]].g;
+                c.b = g_game.layer_colours[s->layer_colours[i]].b;
+            }
             oct_DrawSpriteIntColourExt(
                 OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, info->id,
-                s->layers[i], &s->layers_instance,
-                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
+                g_game.layers_sprites[i][s->layers[i]], &s->layers_instance,
+                &c,
                 (Oct_Vec2){position[0] + 4, position[1] + 4},
                 (Oct_Vec2){info->scale_x * scale, scale},
                 info->rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
@@ -191,10 +198,16 @@ void draw_object_raw(ObjectInfo *info, Oct_Vec2 position, float scale, float alp
         for (int i = 0; i < MAX_SPRITE_LAYERS; i++) {
             // This is what we call the "pray method," since 0 is not guaranteed to be an invalid sprite :fire:
             if (s->layers[i] == 0 || s->layers[i] == OCT_NO_ASSET) continue;
+            Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha};
+            if (i != SPRITE_LAYER_BODY) {
+                c.r = g_game.layer_colours[s->layer_colours[i]].r;
+                c.g = g_game.layer_colours[s->layer_colours[i]].g;
+                c.b = g_game.layer_colours[s->layer_colours[i]].b;
+            }
             oct_DrawSpriteIntColourExt(
                 OCT_INTERPOLATE_ALL, info->id,
                 s->layers[i], &s->layers_instance,
-                &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
+                &c,
                 (Oct_Vec2){position[0], position[1]},
                 (Oct_Vec2){scale, scale},
                 0, (Oct_Vec2){0, 0});
@@ -225,9 +238,15 @@ void draw_object_raw_no_int(ObjectInfo *info, Oct_Vec2 position, float scale, fl
         for (int i = 0; i < MAX_SPRITE_LAYERS; i++) {
             // This is what we call the "pray method," since 0 is not guaranteed to be an invalid sprite :fire:
             if (s->layers[i] == 0 || s->layers[i] == OCT_NO_ASSET) continue;
+            Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha};
+            if (i != SPRITE_LAYER_BODY) {
+                c.r = g_game.layer_colours[s->layer_colours[i]].r;
+                c.g = g_game.layer_colours[s->layer_colours[i]].g;
+                c.b = g_game.layer_colours[s->layer_colours[i]].b;
+            }
                 oct_DrawSpriteColourExt(
                     s->layers[i], &s->layers_instance,
-                    &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha},
+                    &c,
                     (Oct_Vec2){position[0], position[1]},
                     (Oct_Vec2){scale, scale},
                     0, (Oct_Vec2){0, 0});
