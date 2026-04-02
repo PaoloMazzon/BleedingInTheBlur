@@ -412,6 +412,7 @@ typedef enum {
     POPUP_TYPE_ITEM_SELECT   = 1,
     POPUP_TYPE_MESSAGE       = 2,
     POPUP_TYPE_TEXT_INPUT    = 3,
+    POPUP_TYPE_TEXT_CONFIRM  = 4,
 } PopupType;
 
 // Pop-up like an input dialogue or dice rolling
@@ -445,6 +446,13 @@ typedef struct Popup_s {
             const char *message;
             bool needs_to_be_freed;
         } Message;
+        struct {
+            const char *message;
+            Oct_Colour c;
+            Oct_Vec2 cursor_position;
+            bool yes;
+            bool needs_to_be_freed;
+        } Confirm;
         struct {
             const char *message;
             bool needs_to_be_freed;

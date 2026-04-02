@@ -14,6 +14,44 @@ bool popups_are_active() {
     return g_game.current_level.popup_stack_pointer > 0;
 }
 
+bool draw_and_update_confirm_popup(Popup *confirm_popup) {
+    // Determine where things should be on the screen
+    const Oct_Colour red = {70 / 255.0f, 12 / 255.0f, 12 / 255.0f, 1};
+    const Oct_Colour green = {18 / 255.0f, 70 / 255.0f, 12 / 255.0f, 1};
+    const Oct_Vec2 yes_pos = {22, 61};
+    const Oct_Vec2 no_pos = {103, 61};
+    const float start_x = 68;
+    const float start_y = 79;
+
+    Oct_Vec2 target_position = {0};
+    const Oct_Colour target_colour = confirm_popup->Confirm.yes ? green : red;
+    float target_alpha = confirm_popup->value_available ? 0 : 1;
+    Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = weapon_popup->alpha};
+    if (confirm_popup->Confirm.yes) {
+        target_position[0] = start_x + yes_pos[0];
+        target_position[1] = start_y + yes_pos[1];
+    } else {
+        target_position[0] = start_x + no_pos[0];
+        target_position[1] = start_y + no_pos[1];
+    }
+
+    // Tween towards that position
+    confirm_popup->alpha += (target_alpha - confirm_popup->alpha) * 0.4f;
+    confirm_popup->Confirm.c.r += (target_colour.r - confirm_popup->Confirm.c.r) * 0.4f;
+    confirm_popup->Confirm.c.g += (target_colour.r - confirm_popup->Confirm.c.g) * 0.4f;
+    confirm_popup->Confirm.c.b += (target_colour.r - confirm_popup->Confirm.c.b) * 0.4f;
+    confirm_popup->Confirm.c.a = c.a;
+    confirm_popup->Confirm.cursor_position[0] += (target_position[0] - confirm_popup->Confirm.cursor_position[0]) * 0.4f;
+    confirm_popup->Confirm.cursor_position[1] += (target_position[0] - confirm_popup->Confirm.cursor_position[1]) * 0.4f;
+
+    // Draw the popup
+    // oct_DrawTextureColour(oct_GetAsset(g_game.assets, "hud/confirmpopup.png"), &c, (Oct_Vec2){start_x, start_y});
+    // TODO: This
+
+    // Popup logic
+    // TODO: This
+}
+
 bool draw_and_update_weapon_popup(Popup *weapon_popup) {
     static const int32_t buffer_size = 50;
     static char new_weapon_buffer[51];
