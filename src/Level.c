@@ -662,7 +662,32 @@ void draw_level_menu() {
                      statblock_get_dc(sb.learning));
     } else if (g_game.current_level.menu.tab == MENU_TAB_ITEMS) {
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuitemspage.png"), (Oct_Vec2) {start_x, start_y});
-        // TODO: This
+        Oct_Asset font = oct_GetAsset(g_game.assets, "fnt_pixel");
+        for (int32_t i = 0; i < INVENTORY_SIZE; i++) {
+            if (g_game.player.items[i].type == ITEM_TYPE_NONE) continue;
+            // Draw the item
+            draw_item(
+                    &g_game.player.items[i],
+                    (Oct_Vec2){start_x + 16, start_y + 48 + (32 * (float)i)}, 1);
+
+            // Draw its name and get the size of it
+            Oct_Vec2 text_size;
+            oct_GetTextSize(font, text_size, 1, "%s", g_game.player.items[i].info.name);
+            oct_DrawTextColour(
+                    font,
+                    (Oct_Vec2) {start_x + 48, start_y + 48 + (32 * (float)i)},
+                    &(Oct_Colour) {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f},
+                    1, "%s", g_game.player.items[i].info.name);
+
+            // Draw the extended description if it was successfully identified
+            if (g_game.player.items[i].identified) {
+                oct_DrawTextColour(
+                        font,
+                        (Oct_Vec2) {start_x + 48 + text_size[0] + 4, start_y + 48 + (32 * (float)i)},
+                        &(Oct_Colour) {.r = 9.0f / 255.0f, .g = 79.0f / 255.0f, .b = 19.0f / 255.0f, .a = 1.0f},
+                        1, "~ %s", g_game.player.items[i].real_name);
+            }
+        }
     } else if (g_game.current_level.menu.tab == MENU_TAB_WEAPONS) {
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuweaponspage.png"), (Oct_Vec2) {start_x, start_y});
         // TODO: This

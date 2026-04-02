@@ -6,6 +6,13 @@
 // is this bad practice? maybe idk
 #include "ItemCallbacks.c"
 
+// What kinda item is this for the purposes of identification, doesn't need to be precise
+typedef enum {
+    IDENTIFICATION_BITMASK_SPELL  = 1 << 0,
+    IDENTIFICATION_BITMASK_OCCULT = 1 << 1,
+    IDENTIFICATION_BITMASK_POTION = 1 << 2,
+} IdentificationBitmask;
+
 void get_starting_weapon(WeaponType weapon_type, Weapon *out) {
     memset(out, 0, sizeof(Weapon));
     get_weapon(weapon_type, RARITY_COMMON, out);
@@ -85,24 +92,54 @@ bool use_item(Item *item, Character *c) {
 }
 
 // Sets an item to reasonable defaults
-static void prep_item(Item *out, const char *name, int32_t charges, Oct_Texture tex) {
+static void prep_item(Item *out, const char *name, const char *extended_name, int32_t charges, Oct_Texture tex) {
     memset(out, 0, sizeof(Item));
     out->info.name = name;
+    out->real_name = extended_name;
     out->charges_remaining = charges;
     out->charges = charges;
     info_set_texture(&out->info, tex);
     out->info.id = new_oct_id();
 }
 
+// Attempts to identify an item based on a few factors
+static void attempt_identification(Item *item, IdentificationBitmask type) {
+    Statblock sb;
+    character_get_current_stats(&g_game.player, &sb);
+    int32_t pips = 0;
+    const int32_t dc = statblock_get_dc(sb.learning);
+    if (type & IDENTIFICATION_BITMASK_OCCULT || type & IDENTIFICATION_BITMASK_SPELL)
+        pips += sb.occult;
+    if (type & IDENTIFICATION_BITMASK_POTION)
+        pips += sb.herbalism;
+    item->identified = roll_dice(pips, dc, nullptr);
+}
+
 void get_small_health_potion(Item *out) {
-    prep_item(out, "Potion", 1, oct_GetAsset(g_game.assets, "items/healthpotion.png"));
+    prep_item(
+            out,
+            "Potion",
+            "Small heal",
+            1,
+            oct_GetAsset(g_game.assets, "items/healthpotion.png"));
+
     out->type = ITEM_TYPE_POTION;
     out->use_callback = small_potion_use_callback;
+
+    attempt_identification(out, IDENTIFICATION_BITMASK_POTION);
 }
 
 void get_evil_rock(Item *out) {
-    prep_item(out, "Evil Rock", 5, oct_GetAsset(g_game.assets, "items/rock.png"));
+    prep_item(
+            out,
+            "Evil Rock",
+            "Occult weapon",
+            5,
+            oct_GetAsset(g_game.assets, "items/rock.png"));
+
     out->type = ITEM_TYPE_ATTACK_SPELL;
     out->use_callback = evil_rock_use_callback;
     out->get_traits_callback = evil_rock_get_traits_callback;
+
+    attempt_identification(out, IDENTIFICATION_BITMASK_SPELL | IDENTIFICATION_BITMASK_OCCULT);
 }
