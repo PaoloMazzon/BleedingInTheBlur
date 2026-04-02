@@ -16,40 +16,53 @@ bool popups_are_active() {
 
 bool draw_and_update_confirm_popup(Popup *confirm_popup) {
     // Determine where things should be on the screen
-    const Oct_Colour red = {70 / 255.0f, 12 / 255.0f, 12 / 255.0f, 1};
-    const Oct_Colour green = {18 / 255.0f, 70 / 255.0f, 12 / 255.0f, 1};
-    const Oct_Vec2 yes_pos = {22, 61};
-    const Oct_Vec2 no_pos = {103, 61};
+    const Oct_Colour red = {70.0f / 255.0f, 12.0f / 255.0f, 12.0f / 255.0f, 1};
+    const Oct_Colour green = {18.0f / 255.0f, 70.0f / 255.0f, 12.0f / 255.0f, 1};
     const float start_x = 68;
     const float start_y = 79;
+    const Oct_Vec2 yes_pos = {start_x + 22, start_y + 61};
+    const Oct_Vec2 no_pos = {start_x + 103, start_y + 61};
 
     Oct_Vec2 target_position = {0};
     const Oct_Colour target_colour = confirm_popup->Confirm.yes ? green : red;
     float target_alpha = confirm_popup->value_available ? 0 : 1;
-    Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = weapon_popup->alpha};
+    Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = confirm_popup->alpha};
     if (confirm_popup->Confirm.yes) {
-        target_position[0] = start_x + yes_pos[0];
-        target_position[1] = start_y + yes_pos[1];
+        target_position[0] = yes_pos[0];
+        target_position[1] = yes_pos[1];
     } else {
-        target_position[0] = start_x + no_pos[0];
-        target_position[1] = start_y + no_pos[1];
+        target_position[0] = no_pos[0];
+        target_position[1] = no_pos[1];
     }
 
     // Tween towards that position
     confirm_popup->alpha += (target_alpha - confirm_popup->alpha) * 0.4f;
     confirm_popup->Confirm.c.r += (target_colour.r - confirm_popup->Confirm.c.r) * 0.4f;
-    confirm_popup->Confirm.c.g += (target_colour.r - confirm_popup->Confirm.c.g) * 0.4f;
-    confirm_popup->Confirm.c.b += (target_colour.r - confirm_popup->Confirm.c.b) * 0.4f;
+    confirm_popup->Confirm.c.g += (target_colour.g - confirm_popup->Confirm.c.g) * 0.4f;
+    confirm_popup->Confirm.c.b += (target_colour.b - confirm_popup->Confirm.c.b) * 0.4f;
     confirm_popup->Confirm.c.a = c.a;
     confirm_popup->Confirm.cursor_position[0] += (target_position[0] - confirm_popup->Confirm.cursor_position[0]) * 0.4f;
-    confirm_popup->Confirm.cursor_position[1] += (target_position[0] - confirm_popup->Confirm.cursor_position[1]) * 0.4f;
+    confirm_popup->Confirm.cursor_position[1] += (target_position[1] - confirm_popup->Confirm.cursor_position[1]) * 0.4f;
 
     // Draw the popup
-    // oct_DrawTextureColour(oct_GetAsset(g_game.assets, "hud/confirmpopup.png"), &c, (Oct_Vec2){start_x, start_y});
-    // TODO: This
+    const Oct_FontAtlas pretty_font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    oct_DrawTextureColour(oct_GetAsset(g_game.assets, "hud/confirmpopup.png"), &c, (Oct_Vec2){start_x, start_y});
+    oct_DrawTextureIntColour(
+            OCT_INTERPOLATE_ALL, CONFIRM_POPUP_SELECT_ID,
+            oct_GetAsset(g_game.assets, "hud/confirmselect.png"),
+            &confirm_popup->Confirm.c,
+            confirm_popup->Confirm.cursor_position);
+    Oct_Vec2 text_size;
+    oct_GetTextSize(pretty_font, text_size, 1, "%s", confirm_popup->Confirm.message);
+    oct_DrawTextColour(pretty_font, (Oct_Vec2){start_x + 87 - (text_size[0] / 2), start_y + 15}, &c, 1, "%s", confirm_popup->Confirm.message);
 
     // Popup logic
-    // TODO: This
+    if (oct_KeyPressed(BUTTON_LEFT) || oct_KeyPressed(BUTTON_RIGHT))
+        confirm_popup->Confirm.yes = !confirm_popup->Confirm.yes;
+    if (oct_KeyPressed(BUTTON_CONFIRM)) {
+        confirm_popup->value_available = true;
+    }
+    return confirm_popup->value_available && confirm_popup->alpha < 0.05;
 }
 
 bool draw_and_update_weapon_popup(Popup *weapon_popup) {
@@ -228,6 +241,8 @@ void draw_and_update_popups() {
             pop_stack = draw_and_update_weapon_popup(&g_game.current_level.popup_stack[top_of_stack]);
         } else if (g_game.current_level.popup_stack[top_of_stack].type == POPUP_TYPE_ITEM_SELECT) {
             pop_stack = draw_and_update_item_popup(&g_game.current_level.popup_stack[top_of_stack]);
+        } else if (g_game.current_level.popup_stack[top_of_stack].type == POPUP_TYPE_TEXT_CONFIRM) {
+            pop_stack = draw_and_update_confirm_popup(&g_game.current_level.popup_stack[top_of_stack]);
         } else {
             oct_Raise(OCT_STATUS_ERROR, true, "Unimplemented popup type %i.", g_game.current_level.popup_stack[top_of_stack].type);
         }
@@ -259,17 +274,33 @@ PopupInputPointer popup_input(const char *text, bool needs_to_be_freed) {
     return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
 }
 
-
 PopupWeaponSelectPointer popup_weapon_select(Weapon *weapon) {
     if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
-            oct_Raise(OCT_STATUS_ERROR, true, "Input popup was created on a full stack.");
+        oct_Raise(OCT_STATUS_ERROR, true, "Input popup was created on a full stack.");
     Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
+    const uint32_t gen = pop->generation;
     memset(pop, 0, sizeof(Popup));
+    pop->generation = gen + 1;
     pop->type = POPUP_TYPE_WEAPON_SELECT;
     pop->Weapon.weapon = weapon;
     pop->Weapon.actual_pointer_pos[0] = 69 + 68;
     pop->Weapon.actual_pointer_pos[1] = 49 + 79;
-    pop->generation += 1;
+
+    return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
+}
+
+PopupConfirmPointer popup_confirm(const char *text) {
+    if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
+        oct_Raise(OCT_STATUS_ERROR, true, "Input popup was created on a full stack.");
+    Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
+    const uint32_t gen = pop->generation;
+    memset(pop, 0, sizeof(Popup));
+    pop->generation = gen + 1;
+    pop->type = POPUP_TYPE_TEXT_CONFIRM;
+    pop->Confirm.yes = false;
+    pop->Confirm.message = text;
+    pop->Confirm.cursor_position[0] = 69 + 68;
+    pop->Confirm.cursor_position[1] = 49 + 79;
 
     return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
 }
@@ -278,10 +309,11 @@ PopupItemSelectPointer popup_item_select(Item *item) {
     if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
             oct_Raise(OCT_STATUS_ERROR, true, "Input popup was created on a full stack.");
     Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
+    const uint32_t gen = pop->generation;
     memset(pop, 0, sizeof(Popup));
+    pop->generation = gen + 1;
     pop->type = POPUP_TYPE_ITEM_SELECT;
     pop->Item.item = item;
-    pop->generation += 1;
 
     return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
 }
@@ -313,6 +345,20 @@ bool popup_get_item(PopupItemSelectPointer item_pointer, int32_t *index) {
         g_game.current_level.popup_stack[popup_index].generation++;
         g_game.current_level.popup_stack[popup_index].value_available = false;
         *index = g_game.current_level.popup_stack[popup_index].Item.index;
+        return true;
+    }
+    return false;
+}
+
+bool popup_get_confirm(PopupConfirmPointer confirm_pointer, bool *selected) {
+    const uint64_t index = UNPACK_INDEX(confirm_pointer);
+    const uint64_t generation = UNPACK_GENERATION(confirm_pointer);
+    assert(index >= 0);
+    assert(index < MAX_POPUP_STACK);
+    if (generation == g_game.current_level.popup_stack[index].generation && g_game.current_level.popup_stack[index].value_available) {
+        g_game.current_level.popup_stack[index].generation++;
+        g_game.current_level.popup_stack[index].value_available = false;
+        *selected = g_game.current_level.popup_stack[index].Confirm.yes;
         return true;
     }
     return false;

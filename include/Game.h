@@ -44,6 +44,7 @@ void draw_and_update_popups();
 void popup_message(const char *text, bool needs_to_be_freed);
 PopupInputPointer popup_input(const char *text, bool needs_to_be_freed);
 PopupWeaponSelectPointer popup_weapon_select(Weapon *weapon);
+PopupConfirmPointer popup_confirm(const char *text);
 PopupItemSelectPointer popup_item_select(Item *item);
 
 // Returns false if the popup is not yet resolved, true otherwise

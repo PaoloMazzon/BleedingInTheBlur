@@ -230,6 +230,9 @@ void player_update() {
     if (oct_KeyPressed(OCT_KEY_P)) {
         info_set_random_sprite_layers(&g_game.player.info);
     }
+    if (oct_KeyPressed(OCT_KEY_O)) {
+        popup_confirm("sixty seven?");
+    }
 
     // State machine type stuff. The actual actions are taken above but this is to maintain proper
     // usage of the state machine and also extra turns.

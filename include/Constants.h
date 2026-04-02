@@ -119,3 +119,4 @@ extern const struct Traits_s RUST_SELF_DAMAGE_TRAITS;
 #define                  POPUP_POINTER_ID 9
 #define                      ITEM_NAME_ID 10
 #define                     PROJECTILE_ID 11
+#define           CONFIRM_POPUP_SELECT_ID 12

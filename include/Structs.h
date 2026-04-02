@@ -24,6 +24,7 @@ typedef int32_t IntRange[2];
 
 // These are a combination of an index into the popup stack and the generation of the popup
 typedef uint64_t PopupWeaponSelectPointer;
+typedef uint64_t PopupConfirmPointer;
 typedef uint64_t PopupItemSelectPointer;
 typedef uint64_t PopupInputPointer;
 
