@@ -199,13 +199,14 @@ void *update(void *ptr) {
         // Draw debug info
         oct_DrawText(oct_GetAsset(g_game.assets, "fnt_small"),
                      (Oct_Vec2) {1, 0}, 1,
-                     "Player: %i, %i\nState: %s\nAttack animation: %s\nLogic: %.2fHz Refresh: %.2ffps\nPopup stack pointer: %i",
+                     "Player: %i, %i\nState: %s\nAttack animation: %s\nLogic: %.2fHz Refresh: %.2ffps\nPopup stack pointer: %i\nTurn: %i",
                      g_game.player.pos[0], g_game.player.pos[1],
                      GAME_STATES[g_game.current_level.state],
                      level_in_attack_animation() ? "yes" : "no",
                      oct_GetLogicHz(),
                      oct_GetRenderFPS(),
-                     g_game.current_level.popup_stack_pointer);
+                     g_game.current_level.popup_stack_pointer,
+                     g_game.current_level.turn);
     }
 
     g_game.frame++;

@@ -662,7 +662,7 @@ void draw_level_menu() {
         for (int32_t i = 0; i < INVENTORY_SIZE; i++) {
             if (g_game.player.items[i].type == ITEM_TYPE_NONE) continue;
             // Draw the item
-            draw_item(
+            draw_item_no_int(
                     &g_game.player.items[i],
                     (Oct_Vec2){start_x + 16, start_y + 48 + (32 * (float)i)}, 1);
 
@@ -840,7 +840,10 @@ LevelIndex level_update() {
     process_character_attack();
 
     timer_tick(&g_game.current_level.Attack.animation_timer);
-    if (world_turn_occurred) g_game.current_level.turn++;
+    if (g_game.current_level.enemy_turn_can_uptick_turn) {
+        g_game.current_level.enemy_turn_can_uptick_turn = false;
+        g_game.current_level.turn++;
+    }
     return g_game.level_index;
 }
 
@@ -963,6 +966,7 @@ void level_transition_to_enemy_turns() {
     g_game.current_level.state = LEVEL_STATE_ENEMY_TURN;
     g_game.current_level.world_turn = true;
     g_game.current_level.enemy_turn = -1;
+    g_game.current_level.enemy_turn_can_uptick_turn = true;
     level_next_enemy_turn();
 }
 
