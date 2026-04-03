@@ -485,6 +485,8 @@ typedef struct LevelMenu_s {
     PopupConfirmPointer confirm_pointer;
     int32_t cursor_x;
     int32_t cursor_y;
+    float cursor_real_x;
+    float cursor_real_y;
 } LevelMenu;
 
 typedef enum {

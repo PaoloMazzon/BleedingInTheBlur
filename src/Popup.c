@@ -59,7 +59,7 @@ bool draw_and_update_confirm_popup(Popup *confirm_popup) {
     // Popup logic
     if ((oct_KeyPressed(BUTTON_LEFT) || oct_KeyPressed(BUTTON_RIGHT)) && confirm_popup->alpha > 0.05)
         confirm_popup->Confirm.yes = !confirm_popup->Confirm.yes;
-    if (oct_KeyPressed(BUTTON_CONFIRM)) {
+    if (oct_KeyPressed(BUTTON_CONFIRM) && confirm_popup->alpha > 0.5) {
         confirm_popup->value_available = true;
     }
     return confirm_popup->value_available && confirm_popup->alpha < 0.05;

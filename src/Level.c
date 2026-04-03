@@ -685,11 +685,17 @@ void draw_level_menu() {
             }
         }
 
+        // Interpolate item cursor
+        const float cursor_target_y = start_y + 43 + (g_game.current_level.menu.cursor_y * 32);
+        g_game.current_level.menu.cursor_real_y += (cursor_target_y - g_game.current_level.menu.cursor_real_y) * 0.4f;
+
         // Draw the item cursor
         oct_DrawTextureInt(
             OCT_INTERPOLATE_ALL, MENU_ITEM_SELECTOR_ID,
             oct_GetAsset(g_game.assets, "hud/weaponselect.png"),
-            (Oct_Vec2){start_x + 11, start_y + 43 + (g_game.current_level.menu.cursor_y * 32)});
+            (Oct_Vec2){start_x + 11, g_game.current_level.menu.cursor_real_y});
+
+        if (popups_are_active()) return;
 
         // Handle cursor and dropping items
         if (oct_KeyPressed(BUTTON_UP) && !popups_are_active()) {
@@ -701,7 +707,7 @@ void draw_level_menu() {
             g_game.current_level.menu.cursor_y = INVENTORY_SIZE - 1;
         if (g_game.current_level.menu.cursor_y > INVENTORY_SIZE - 1)
             g_game.current_level.menu.cursor_y = 0;
-        if (!popups_are_active() && oct_KeyPressed(BUTTON_CONFIRM) && g_game.player.items[g_game.current_level.menu.cursor_y].type != ITEM_TYPE_NONE) {
+        if (oct_KeyPressed(BUTTON_CONFIRM) && g_game.player.items[g_game.current_level.menu.cursor_y].type != ITEM_TYPE_NONE) {
             g_game.current_level.menu.confirm_pointer = popup_confirm("Drop item?");
         }
         bool player_confirmed = false;
