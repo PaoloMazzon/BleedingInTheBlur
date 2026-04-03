@@ -342,6 +342,8 @@ static void prop_pass(RoomSpace *rooms, int32_t room_count, IntRange props_per_r
     }
 }
 
+// TODO: Make rooms have an extra layer 1 block outside that counts as empty space so there
+//       is no longer a need to have check if its a room or hallway
 void generate_level(Level *level, LevelGenerationParameters *params, Position out_player_pos) {
     const int32_t spawns_per_room = 5;
     current_prop_index = 0;

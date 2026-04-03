@@ -7,6 +7,56 @@
 #include "AttackAnimations.h"
 #include "PersistentEffects.h"
 
+// This is at the top cuz its a piece of shit
+void traits_draw(Traits *traits, const Oct_Vec2 position, bool attack_traits, bool character_traits) {
+    const int32_t max_traits = 50;
+    char trait_string[49] = {0};
+    int32_t trait_string_index = 0;
+
+    assert(attack_traits || character_traits);
+    if (traits->holy) trait_string[trait_string_index++] = 40;
+    if (traits->occult) trait_string[trait_string_index++] = 41;
+    // Indices 42-49 reserved for future global traits
+    if (attack_traits) {
+        if (traits->Attack.melee)      trait_string[trait_string_index++] = 50;
+        if (traits->Attack.ranged)     trait_string[trait_string_index++] = 51;
+        if (traits->Attack.blade)      trait_string[trait_string_index++] = 52;
+        if (traits->Attack.improvised) trait_string[trait_string_index++] = 53;
+        if (traits->Attack.heavy)      trait_string[trait_string_index++] = 54;
+        if (traits->Attack.intricate)  trait_string[trait_string_index++] = 55;
+        if (traits->Attack.rusted)     trait_string[trait_string_index++] = 56;
+        if (traits->Attack.vengeful)   trait_string[trait_string_index++] = 57;
+        if (traits->Attack.lightning)  trait_string[trait_string_index++] = 58;
+        if (traits->Attack.fire)       trait_string[trait_string_index++] = 59;
+        if (traits->Attack.blood)      trait_string[trait_string_index++] = 60;
+        if (traits->Attack.blur)       trait_string[trait_string_index++] = 61;
+        if (traits->Attack.precise)    trait_string[trait_string_index++] = 62;
+        if (traits->Attack.withering)  trait_string[trait_string_index++] = 63;
+        if (traits->Attack.exploit)    trait_string[trait_string_index++] = 64;
+        // Indices 65-79 reserved for future attack traits
+    }
+    if (character_traits) {
+        if (traits->Character.human)         trait_string[trait_string_index++] = 80;
+        if (traits->Character.undying)       trait_string[trait_string_index++] = 81;
+        if (traits->Character.hostile)       trait_string[trait_string_index++] = 82;
+        if (traits->Character.lazy)          trait_string[trait_string_index++] = 83;
+        if (traits->Character.nimble)        trait_string[trait_string_index++] = 84;
+        if (traits->Character.scared)        trait_string[trait_string_index++] = 85;
+        if (traits->Character.abyssal)       trait_string[trait_string_index++] = 86;
+        if (traits->Character.dumb)          trait_string[trait_string_index++] = 87;
+        if (traits->Character.wet)           trait_string[trait_string_index++] = 88;
+        if (traits->Character.friendly)      trait_string[trait_string_index++] = 89;
+        if (traits->Character.berserker)     trait_string[trait_string_index++] = 90;
+        if (traits->Character.sleeping)      trait_string[trait_string_index++] = 91;
+        if (traits->Character.blood_thirsty) trait_string[trait_string_index++] = 92;
+        if (traits->Character.sharp)         trait_string[trait_string_index++] = 93;
+        if (traits->Character.haunted)       trait_string[trait_string_index++] = 94;
+        if (traits->Character.soul_bind)     trait_string[trait_string_index++] = 95;
+    }
+
+    // TODO: Draw the trait string
+}
+
 void base_statblock(Statblock *sb) {
     memset(sb, 0, sizeof(Statblock));
 
