@@ -51,6 +51,7 @@ PopupItemSelectPointer popup_item_select(Item *item);
 bool popup_get_input(PopupInputPointer input_pointer, const char *out);
 bool popup_get_weapon(PopupWeaponSelectPointer weapon_pointer, bool *selected);
 bool popup_get_item(PopupItemSelectPointer item_pointer, int32_t *index); // -1 means no new item
+bool popup_get_confirm(PopupConfirmPointer confirm_pointer, bool *selected);
 
 void player_init(Position start_pos);
 void player_update();

@@ -688,6 +688,34 @@ void draw_level_menu() {
                         1, "~ %s", g_game.player.items[i].real_name);
             }
         }
+
+        // Draw the item cursor
+        oct_DrawTextureInt(
+            OCT_INTERPOLATE_ALL, MENU_ITEM_SELECTOR_ID,
+            oct_GetAsset(g_game.assets, "hud/weaponselect.png"),
+            (Oct_Vec2){start_x + 11, start_y + 43 + (g_game.current_level.menu.cursor_y * 32)});
+
+        // Handle cursor and dropping items
+        if (oct_KeyPressed(BUTTON_UP) && !popups_are_active()) {
+            g_game.current_level.menu.cursor_y -= 1;
+        } else if (oct_KeyPressed(BUTTON_DOWN) && !popups_are_active()) {
+            g_game.current_level.menu.cursor_y += 1;
+        }
+        if (g_game.current_level.menu.cursor_y < 0)
+            g_game.current_level.menu.cursor_y = INVENTORY_SIZE - 1;
+        if (g_game.current_level.menu.cursor_y > INVENTORY_SIZE - 1)
+            g_game.current_level.menu.cursor_y = 0;
+        if (oct_KeyPressed(BUTTON_CONFIRM) && g_game.player.items[g_game.current_level.menu.cursor_y].type != ITEM_TYPE_NONE) {
+            g_game.current_level.menu.confirm_pointer = popup_confirm("Drop item?");
+        }
+        bool player_confirmed = false;
+        bool popup_done = popup_get_confirm(g_game.current_level.menu.confirm_pointer, &player_confirmed);
+        if (popup_done && player_confirmed) {
+            assert(g_game.player.items[g_game.current_level.menu.cursor_y].type != ITEM_TYPE_NONE);
+            if (g_game.player.items[g_game.current_level.menu.cursor_y].exit_inventory_callback)
+                g_game.player.items[g_game.current_level.menu.cursor_y].exit_inventory_callback(&g_game.player);
+            g_game.player.items[g_game.current_level.menu.cursor_y].type = ITEM_TYPE_NONE;
+        }
     } else if (g_game.current_level.menu.tab == MENU_TAB_WEAPONS) {
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuweaponspage.png"), (Oct_Vec2) {start_x, start_y});
         // TODO: This

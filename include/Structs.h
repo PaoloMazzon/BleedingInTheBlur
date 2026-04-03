@@ -482,6 +482,9 @@ typedef enum {
 typedef struct LevelMenu_s {
     MenuTab tab;
     float real_y; // for tweening
+    PopupConfirmPointer confirm_pointer;
+    int32_t cursor_x;
+    int32_t cursor_y;
 } LevelMenu;
 
 typedef enum {

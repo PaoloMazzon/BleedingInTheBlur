@@ -120,3 +120,4 @@ extern const struct Traits_s RUST_SELF_DAMAGE_TRAITS;
 #define                      ITEM_NAME_ID 10
 #define                     PROJECTILE_ID 11
 #define           CONFIRM_POPUP_SELECT_ID 12
+#define             MENU_ITEM_SELECTOR_ID 13
