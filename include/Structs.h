@@ -218,7 +218,8 @@ struct Traits_s {
         bool sleeping; // doing nothing until something happens
         bool blood_thirsty; // health on kills
         bool sharp; // can "hear" (see) through walls up to 3 blocks away
-        bool haunted; // passes through walls
+        bool haunted; // passes through walls                                        NOT IMPLEMENTED
+        bool soul_bind; // always knows where the player is (usually for friendlies) NOT IMPLEMENTED
     } Character; // traits for characters
 
     // Traits that can be either
@@ -442,6 +443,7 @@ typedef struct Popup_s {
             Item *item;
             int32_t index;
             float actual_pointer_x;
+            PopupConfirmPointer confirm_pointer; // for dropping old items
         } Item;
         struct {
             const char *message;

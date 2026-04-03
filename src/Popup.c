@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <math.h>
 #include "Structs.h"
 #include "Character.h"
 #include "Game.h"
@@ -18,8 +19,8 @@ bool draw_and_update_confirm_popup(Popup *confirm_popup) {
     // Determine where things should be on the screen
     const Oct_Colour red = {70.0f / 255.0f, 12.0f / 255.0f, 12.0f / 255.0f, 1};
     const Oct_Colour green = {18.0f / 255.0f, 70.0f / 255.0f, 12.0f / 255.0f, 1};
-    const float start_x = 68;
-    const float start_y = 79;
+    const float start_x = 72;
+    const float start_y = 64;
     const Oct_Vec2 yes_pos = {start_x + 22, start_y + 61};
     const Oct_Vec2 no_pos = {start_x + 103, start_y + 61};
 
@@ -54,7 +55,7 @@ bool draw_and_update_confirm_popup(Popup *confirm_popup) {
             confirm_popup->Confirm.cursor_position);
     Oct_Vec2 text_size;
     oct_GetTextSize(pretty_font, text_size, 1, "%s", confirm_popup->Confirm.message);
-    oct_DrawTextColour(pretty_font, (Oct_Vec2){start_x + 87 - (text_size[0] / 2), start_y + 15}, &c, 1, "%s", confirm_popup->Confirm.message);
+    oct_DrawTextColour(pretty_font, (Oct_Vec2){start_x + 87 - roundf(text_size[0] / 2), start_y + 15}, &c, 1, "%s", confirm_popup->Confirm.message);
 
     // Popup logic
     if ((oct_KeyPressed(BUTTON_LEFT) || oct_KeyPressed(BUTTON_RIGHT)) && confirm_popup->alpha > 0.05)
@@ -161,6 +162,13 @@ bool draw_and_update_weapon_popup(Popup *weapon_popup) {
 }
 
 bool draw_and_update_item_popup(Popup *item_popup) {
+    // Handle popup logic first so we don't draw this popup if the user confirmed
+    bool swap_item = false;
+    if (popup_get_confirm(item_popup->Item.confirm_pointer, &swap_item) && swap_item) {
+        item_popup->value_available = true;
+        return true;
+    }
+
     static const int32_t buffer_size = 50;
     static char new_weapon_buffer[51];
     static char old_weapon_buffer[51];
@@ -228,8 +236,13 @@ bool draw_and_update_item_popup(Popup *item_popup) {
     if (oct_KeyPressed(BUTTON_RIGHT) && item_popup->alpha >= 0.5)
         item_popup->Item.index = item_popup->Item.index == 3 ? -1 : item_popup->Item.index + 1;
     if (oct_KeyPressed(BUTTON_CONFIRM) && item_popup->alpha >= 0.5) {
-        item_popup->value_available = true;
+        if (g_game.player.items[item_popup->Item.index].type != ITEM_TYPE_NONE) {
+            item_popup->Item.confirm_pointer = popup_confirm("Drop previously\n    held item?");
+        } else {
+            item_popup->value_available = true;
+        }
     }
+
     return item_popup->value_available && item_popup->alpha < 0.05;
 }
 
