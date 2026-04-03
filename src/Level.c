@@ -352,10 +352,6 @@ void draw_ui() {
             oct_GetAsset(g_game.assets, "hud/controls.png"),
             &(Oct_Colour){.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = controls_opacity},
             (Oct_Vec2){1, 133});
-
-    if (popups_are_active())
-        draw_and_update_popups();
-
 }
 
 static TileVisibility tile_visible_to_player(Position tile, Statblock *player_current_stats) {
@@ -705,7 +701,7 @@ void draw_level_menu() {
             g_game.current_level.menu.cursor_y = INVENTORY_SIZE - 1;
         if (g_game.current_level.menu.cursor_y > INVENTORY_SIZE - 1)
             g_game.current_level.menu.cursor_y = 0;
-        if (oct_KeyPressed(BUTTON_CONFIRM) && g_game.player.items[g_game.current_level.menu.cursor_y].type != ITEM_TYPE_NONE) {
+        if (!popups_are_active() && oct_KeyPressed(BUTTON_CONFIRM) && g_game.player.items[g_game.current_level.menu.cursor_y].type != ITEM_TYPE_NONE) {
             g_game.current_level.menu.confirm_pointer = popup_confirm("Drop item?");
         }
         bool player_confirmed = false;
@@ -832,6 +828,8 @@ LevelIndex level_update() {
     draw_attack_view_ui();
     draw_ui();
     draw_level_menu();
+    if (popups_are_active())
+        draw_and_update_popups();
 
     process_character_attack();
 

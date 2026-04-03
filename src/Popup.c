@@ -57,7 +57,7 @@ bool draw_and_update_confirm_popup(Popup *confirm_popup) {
     oct_DrawTextColour(pretty_font, (Oct_Vec2){start_x + 87 - (text_size[0] / 2), start_y + 15}, &c, 1, "%s", confirm_popup->Confirm.message);
 
     // Popup logic
-    if (oct_KeyPressed(BUTTON_LEFT) || oct_KeyPressed(BUTTON_RIGHT))
+    if ((oct_KeyPressed(BUTTON_LEFT) || oct_KeyPressed(BUTTON_RIGHT)) && confirm_popup->alpha > 0.05)
         confirm_popup->Confirm.yes = !confirm_popup->Confirm.yes;
     if (oct_KeyPressed(BUTTON_CONFIRM)) {
         confirm_popup->value_available = true;
