@@ -28,15 +28,28 @@ typedef struct LevelGeneratingState_s {
     LevelGenerationParameters params;
 } LevelGeneratingState;
 
-// From the tileset
+static void debug_print_level(LevelGeneratingState *state) {
+    for (int32_t y = 0; y < state->params.level_size[1]; y++) {
+        for (int32_t x = 0; x < state->params.level_size[0]; x++) {
+            TileContents *t = level_get_tile((Position){x, y});
+            if (t->type == TILE_CONTENTS_TYPE_WALL && t->tile.room_edge)
+                printf("~");
+            else if (t->type == TILE_CONTENTS_TYPE_WALL && !t->tile.room_edge)
+                printf("#");
+            else if (t->type == TILE_CONTENTS_TYPE_NONE)
+                printf(".");
+        }
+        printf("\n");
+    }
+    fflush(stdout);
+}
+
+// Returns a random floor tile from the tileset
 static int32_t get_floor_tile() {
     return random_int(17 + 8, 22 + 8);
 }
 
-// These only apply to the base tileset
-static bool is_floor_tile(int32_t tile) { return tile >= (17 + 8) && tile <= (21 + 8); }
-static bool is_wall_tile(int32_t tile) { return !is_floor_tile(tile); }
-
+// Returns a random wall tile from the tileset
 static int32_t get_wall_tile() {
     return random_int(1, 17);
 }
@@ -45,19 +58,78 @@ static int32_t sign(int32_t x) {
     return x > 0 ? 1 : (x < 0 ? -1 : 0);
 }
 
+// Returns true if its a wall on the perimeter of a room or hallway
+static bool is_edge_tile(Position pos) {
+    TileContents *t = level_get_tile(pos);
+    return t && t->type == TILE_CONTENTS_TYPE_WALL && t->tile.room_edge;
+}
+
+// Returns true if the tile is a wall, doesn't care if its an edge or not
+static bool is_wall_tile(Position pos) {
+    TileContents *t = level_get_tile(pos);
+    return t && t->type == TILE_CONTENTS_TYPE_WALL;
+}
+
+// Does the work involved in setting a tile to a wall, if its on the perimeter of a hallway or room set edge_tile to true
+static void set_wall_tile(LevelGeneratingState *state, Position pos, bool edge_tile) {
+    TileContents *t = level_get_tile(pos);
+    if (t) {
+        t->type = TILE_CONTENTS_TYPE_WALL;
+        t->tile.room_edge = edge_tile;
+        oct_SetTilemap(state->base_tilemap, pos[0], pos[1], get_wall_tile());
+    }
+}
+
+// Same as set_wall_tile but for floors
+static void set_floor_tile(LevelGeneratingState *state, Position pos) {
+    TileContents *t = level_get_tile(pos);
+    if (t) {
+        t->type = TILE_CONTENTS_TYPE_NONE;
+        oct_SetTilemap(state->base_tilemap, pos[0], pos[1], get_floor_tile());
+    }
+}
+
+static bool is_floor_tile(Position pos) {
+    return !is_wall_tile(pos);
+}
+
+// Returns true if any part of the potential room location is occupied by wall perimeters
+static bool is_space_occupied(RoomSpace *potential_room_location) {
+    for (int32_t y = potential_room_location->top_left[1]; y < potential_room_location->top_left[1] + potential_room_location->size[1]; y++) {
+        for (int32_t x = potential_room_location->top_left[0]; x < potential_room_location->top_left[0] + potential_room_location->size[0]; x++) {
+            if (is_edge_tile((Position){x, y}) || is_floor_tile((Position){x, y}))
+                return true;
+        }
+    }
+    return false;
+}
+
+// The outer perimeter will be made edge tiles
+static void carve_out_space_for_room(LevelGeneratingState *state, RoomSpace *room) {
+    for (int32_t y = room->top_left[1]; y < room->top_left[1] + room->size[1]; y++) {
+        for (int32_t x = room->top_left[0]; x < room->top_left[0] + room->size[0]; x++) {
+            if (y == room->top_left[1] || y == (room->top_left[1] + room->size[1] - 1) ||
+                x == room->top_left[0] || x == (room->top_left[0] + room->size[0] - 1))
+                set_wall_tile(state, (Position){x, y}, true);
+            else
+                set_floor_tile(state, (Position){x, y});
+        }
+    }
+}
+
 // Applies shadows to decorations
 static void autotile(Oct_Tilemap tilemap, Oct_Tilemap decoration, int32_t x, int32_t y) {
     // These are true if there is empty space in that location
-    const bool above        = is_floor_tile(oct_GetTilemap(tilemap, x, y - 1));
-    const bool below        = is_floor_tile(oct_GetTilemap(tilemap, x, y + 1));
-    const bool left         = is_floor_tile(oct_GetTilemap(tilemap, x - 1, y));
-    const bool right        = is_floor_tile(oct_GetTilemap(tilemap, x + 1, y));
-    const bool top_left     = is_floor_tile(oct_GetTilemap(tilemap, x - 1, y - 1));
-    const bool top_right    = is_floor_tile(oct_GetTilemap(tilemap, x + 1, y - 1));
-    const bool bottom_left  = is_floor_tile(oct_GetTilemap(tilemap, x - 1, y + 1));
-    const bool bottom_right = is_floor_tile(oct_GetTilemap(tilemap, x + 1, y + 1));
+    const bool above        = is_floor_tile((Position){x, y - 1});
+    const bool below        = is_floor_tile((Position){x, y + 1});
+    const bool left         = is_floor_tile((Position){x - 1, y});
+    const bool right        = is_floor_tile((Position){x + 1, y});
+    const bool top_left     = is_floor_tile((Position){x - 1, y - 1});
+    const bool top_right    = is_floor_tile((Position){x + 1, y - 1});
+    const bool bottom_left  = is_floor_tile((Position){x - 1, y + 1});
+    const bool bottom_right = is_floor_tile((Position){x + 1, y + 1});
 
-    const bool is_wall = !is_floor_tile(oct_GetTilemap(tilemap, x, y));
+    const bool is_wall = !is_wall_tile((Position) {x, y});
 
     if (is_wall) {
         const int open = (above ? 1 : 0) + (below ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
@@ -100,12 +172,77 @@ static void autotile(Oct_Tilemap tilemap, Oct_Tilemap decoration, int32_t x, int
     }
 }
 
+// Fills the entire room with walls
+static void fill_pass(LevelGeneratingState *state) {
+    for (int32_t y = 0; y < state->params.level_size[1]; y++) {
+        for (int32_t x = 0; x < state->params.level_size[0]; x++) {
+            TileContents *t = level_get_tile((Position){x, y});
+            assert(t);
+            t->type = TILE_CONTENTS_TYPE_WALL;
+            oct_SetTilemap(state->base_tilemap, x, y, get_wall_tile());
+        }
+    }
+}
+
 // Find spots for each room and carve them out
 // TODO - All empty spaces should be surrounded by special walls that tell the pathfinding
 //        algorithm that those spots aren't allowed to be carved out as to prevent hallways
 //        from overlapping/running side by side/carving chunks out of rooms
 void room_placement_pass(LevelGeneratingState *state) {
-    // TODO: This
+    /// 1. Pick a number of rooms in the specified range
+    /// 2. For each room,
+    ///   a) Pick a random room size within the specified range
+    ///   b) Pick a random location in the level to place it
+    ///   c) If that location is already occupied, try again up to a total of 10 times
+    ///   d) If there is no location found on the 10th try, pick the smallest possible room size and try another 10 times
+    ///   e) If that still doesn't work, stop placing rooms
+    /// 3. Done
+    int32_t room_count = random_int(state->params.room_count[0], state->params.room_count[1] + 1);
+
+    const IntRange min_room_size = {
+            state->params.room_min_size[0],
+            state->params.room_min_size[1]
+    };
+    bool revert_to_lowest_size = false;
+    for (int32_t i = 0; i < room_count; i++) {
+        IntRange room_size = {
+                random_int(state->params.room_min_size[0], state->params.room_max_size[0] + 1),
+                random_int(state->params.room_min_size[1], state->params.room_max_size[1] + 1),
+        };
+        if (revert_to_lowest_size) {
+            room_size[0] = min_room_size[0];
+            room_size[1] = min_room_size[1];
+        }
+        int32_t attempts_left = 10;
+        bool found_spot_for_a_room = false;
+        while (attempts_left > 0) {
+            IntRange top_left = {
+                    random_int(2, state->params.level_size[0] - room_size[0] - 4),
+                    random_int(2, state->params.level_size[1] - room_size[1] - 4),
+            };
+            RoomSpace room = {
+                    .top_left = {top_left[0] - 1, top_left[1] - 1},
+                    .size = {room_size[0] + 2, room_size[1] + 2}
+            };
+            if (!is_space_occupied(&room)) {
+                found_spot_for_a_room = true;
+                carve_out_space_for_room(state, &room);
+                attempts_left = 0;
+            } else {
+                attempts_left -= 1;
+            }
+        }
+
+        if (!found_spot_for_a_room && !revert_to_lowest_size) {
+            revert_to_lowest_size = true;
+            room_count += 1;
+            debug("Ran out of space for room size [%i,%i] at room %i. Reverting to smallest room.", room_size[0], room_size[1], i);
+        } else if (!found_spot_for_a_room /* && revert_to_lowest_size */) {
+            debug("Ran out of space for more rooms at room %i", i);
+            break;
+        }
+    }
+    debug_print_level(state);
 }
 
 // Uses A* to carve paths between some rooms
@@ -174,11 +311,13 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
 
     // Do each pass required to generate the level
     Position stairs_down, stairs_up;
+    fill_pass(&state);
     room_placement_pass(&state);
     hallway_placement_pass(&state);
     spawn_locating_pass(&state);
     aesthetics_pass(&state);
     place_stairs_pass(&state);
+    debug_print_level(&state);
 
     // Draw the entire level to a texture
     level->level_tex = oct_CreateSurface((Oct_Vec2){(float)level->level_width * CELL_WIDTH, (float)level->level_height * CELL_HEIGHT});
