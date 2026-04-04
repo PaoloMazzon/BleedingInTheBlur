@@ -69,6 +69,16 @@ extern const char *SPRITE_LAYER_NAMES[6] = {
         "Sprite Layer Accessories"
 };
 
+extern const char *LOADING_STAGE_NAMES[7] = {
+        "Allocating level",
+        "Placing rooms",
+        "Carving hallways",
+        "Finding spawn locations",
+        "Prettifying level",
+        "Placing stairs",
+        "Done",
+};
+
 const int32_t SOUL_BOUND_WEAPON_SLOT    = 1;
 const int32_t STARTING_WEAPON_SLOT      = 0;
 const int32_t STARTING_BASE_STAT_POINTS = 15;

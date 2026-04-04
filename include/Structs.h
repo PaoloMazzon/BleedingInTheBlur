@@ -182,6 +182,15 @@ typedef enum {
     ITEM_TYPE_UTILITY_SPELL = 3, // spell that doesn't require a target, basically
     ITEM_TYPE_USABLE        = 4, // usable item with x charges
 } ItemType;
+typedef enum {
+    LOADING_STAGE_ALLOCATING        = 0, // level generation just began
+    LOADING_STAGE_ROOM_PLACEMENT    = 1, // placing rooms in the level
+    LOADING_STAGE_HALLWAY_PLACEMENT = 2, // placing the hallways
+    LOADING_STAGE_SPAWN_LOCATING    = 3, // finding a bunch of possible spawn points
+    LOADING_STAGE_AESTHETICS        = 4, // doing things like the props and shadow autotiling
+    LOADING_STAGE_PLACE_STAIRS      = 5, // placing the up/down stairs
+    LOADING_STAGE_DONE              = 6, // level generation complete
+} LoadingStage;
 
 // These should all be bools
 struct Traits_s {
@@ -624,4 +633,7 @@ typedef struct Game_s {
     int32_t layer_sprite_counts[MAX_SPRITE_LAYERS];
 
     int32_t frame; // increments 1x per frame
+
+    // For cross-thread loading communication
+    LoadingStage loading_stage;
 } Game;
