@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 #include "LevelGenerator.h"
 #include "Util.h"
 #include "Game.h"
@@ -185,9 +186,6 @@ static void fill_pass(LevelGeneratingState *state) {
 }
 
 // Find spots for each room and carve them out
-// TODO - All empty spaces should be surrounded by special walls that tell the pathfinding
-//        algorithm that those spots aren't allowed to be carved out as to prevent hallways
-//        from overlapping/running side by side/carving chunks out of rooms
 void room_placement_pass(LevelGeneratingState *state) {
     /// 1. Pick a number of rooms in the specified range
     /// 2. For each room,
@@ -198,6 +196,7 @@ void room_placement_pass(LevelGeneratingState *state) {
     ///   e) If that still doesn't work, stop placing rooms
     /// 3. Done
     int32_t room_count = random_int(state->params.room_count[0], state->params.room_count[1] + 1);
+    int32_t room_pointer = 0;
 
     const IntRange min_room_size = {
             state->params.room_min_size[0],
@@ -227,6 +226,7 @@ void room_placement_pass(LevelGeneratingState *state) {
             if (!is_space_occupied(&room)) {
                 found_spot_for_a_room = true;
                 carve_out_space_for_room(state, &room);
+                memcpy(&state->rooms[room_pointer++], &room, sizeof(RoomSpace));
                 attempts_left = 0;
             } else {
                 attempts_left -= 1;
@@ -242,13 +242,11 @@ void room_placement_pass(LevelGeneratingState *state) {
             break;
         }
     }
+    state->room_count = room_pointer;
     debug_print_level(state);
 }
 
 // Uses A* to carve paths between some rooms
-// TODO - All empty spaces should be surrounded by special walls that tell the pathfinding
-//        algorithm that those spots aren't allowed to be carved out as to prevent hallways
-//        from overlapping/running side by side/carving chunks out of rooms
 void hallway_placement_pass(LevelGeneratingState *state) {
     // TODO: This
 }
