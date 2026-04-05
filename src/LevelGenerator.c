@@ -24,6 +24,7 @@ typedef struct RoomSpace_s {
 typedef struct LevelGeneratingState_s {
     RoomSpace *rooms;
     int32_t room_count;
+    int32_t last_room;
     Oct_Tilemap base_tilemap;
     Oct_Tilemap shading_tilemap;
     LevelGenerationParameters params;
@@ -404,9 +405,81 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
     return true;
 }
 
-// Uses A* to carve paths between some rooms
-void hallway_placement_pass(LevelGeneratingState *state) {
+// Given a room it will pick a random position in the room that is a valid door spot
+static void get_random_door_position(RoomSpace *room, Position out_pos) {
+    const int32_t edge = random_int(0, 4);
+    if (edge == 0) {
+        out_pos[0] = room->top_left[0];
+        out_pos[1] = random_int(room->top_left[1], room->top_left[1] + room->size[1] + 1);
+    } else if (edge == 1) {
+        out_pos[0] = room->top_left[0] + room->size[0] + 1;
+        out_pos[1] = random_int(room->top_left[1], room->top_left[1] + room->size[1] + 1);
+    } else if (edge == 2) {
+        out_pos[0] = random_int(room->top_left[0], room->top_left[0] + room->size[0] + 1);
+        out_pos[1] = room->top_left[1];
+    } else if (edge == 3) {
+        out_pos[0] = random_int(room->top_left[0], room->top_left[0] + room->size[0] + 1);
+        out_pos[1] = room->top_left[1] + room->size[1] + 1;
+    }
+}
 
+// Uses A* to carve paths between some rooms
+//  1. Starting from the first room in the room list as "current room"
+//    a) Pick a random tile on the outer edge of the room to be the door tile
+//    b) Pick a random tile on the outer edge of the next room in the list to be that room's door tile
+//    c) Attempt to connect the two with place_hallway
+//    d) If it fails, attempt a few more times with new random door locations
+//  2. If the two rooms failed to connect, set the last room to this room as to guarantee that its possible
+//     to get from the first room to the last. If it didn't fail, set current room to the next room.
+//  3. Repeat step 1-2 until there are no more rooms to connect except don't set the start and end room on
+//     future iterations, this may result in multiple closed loops of rooms, which is fine as long as the
+//     start and end room are connected.
+//  4. Pick a few rooms at random to try and connect for extra variety
+//  5. If the start room is the same as the end room, the entire process has failed for some reason
+void hallway_placement_pass(LevelGeneratingState *state) {
+    assert(state->room_count > 1);
+    int32_t room_index = 0;
+    RoomSpace *current_room = &state->rooms[room_index];
+    RoomSpace *next_room = &state->rooms[room_index + 1];
+    const int32_t max_hallway_placement_attempts = 4;
+
+    // Connect each room end-to-end
+    while (room_index < state->room_count - 2) {
+        int32_t hallway_placement_attempts = 0;
+        while (hallway_placement_attempts < max_hallway_placement_attempts) {
+            Position start_pos, end_pos;
+            get_random_door_position(current_room, start_pos);
+            get_random_door_position(next_room, end_pos);
+            if (place_hallway(state, start_pos, end_pos))
+                break;
+            hallway_placement_attempts += 1;
+        }
+
+        // If we fail to connect the rooms we may need to move the last room to the current room (or crash)
+        if (hallway_placement_attempts == max_hallway_placement_attempts) {
+            oct_Raise(OCT_STATUS_ERROR, room_index == 0, "Failed to connect two hallways from room %i to %i", room_index, room_index + 1);
+            if (state->last_room == state->room_count - 1)
+                state->last_room = room_index;
+        }
+
+        room_index += 1;
+        current_room = &state->rooms[room_index];
+        next_room = &state->rooms[room_index + 1];
+    }
+
+    // Make a number of random connections between rooms
+    const int32_t extra_hallway_count = random_int(state->params.extra_hallways[0], state->params.extra_hallways[1] + 1);
+    for (int32_t i = 0; i < extra_hallway_count; i++) {
+        int32_t hallway_placement_attempts = 0;
+        while (hallway_placement_attempts < max_hallway_placement_attempts) {
+            Position start_pos, end_pos;
+            get_random_door_position(current_room, start_pos);
+            get_random_door_position(next_room, end_pos);
+            if (place_hallway(state, start_pos, end_pos))
+                break;
+            hallway_placement_attempts += 1;
+        }
+    }
 }
 
 // Finds a large amount of possible spawn points for things like items and characters
@@ -463,6 +536,7 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     level->decorations = state.shading_tilemap;
     level->level_width = params->level_size[0];
     level->level_height = params->level_size[1];
+    state.last_room = state.room_count - 1;
     state.params = *params;
 
     // Do each pass required to generate the level
