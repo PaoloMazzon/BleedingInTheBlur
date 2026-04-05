@@ -30,15 +30,18 @@ typedef struct LevelGeneratingState_s {
 } LevelGeneratingState;
 
 static void debug_print_level(LevelGeneratingState *state) {
+#ifdef NDEBUG
+    return;
+#endif
     for (int32_t y = 0; y < state->params.level_size[1]; y++) {
         for (int32_t x = 0; x < state->params.level_size[0]; x++) {
             TileContents *t = level_get_tile((Position){x, y});
             if (t->type == TILE_CONTENTS_TYPE_WALL && t->tile.room_edge)
-                printf("~");
+                printf("~~");
             else if (t->type == TILE_CONTENTS_TYPE_WALL && !t->tile.room_edge)
-                printf("#");
+                printf("##");
             else if (t->type == TILE_CONTENTS_TYPE_NONE)
-                printf(".");
+                printf("..");
         }
         printf("\n");
     }
@@ -187,23 +190,22 @@ static void fill_pass(LevelGeneratingState *state) {
 
 // Find spots for each room and carve them out
 void room_placement_pass(LevelGeneratingState *state) {
-    /// 1. Pick a number of rooms in the specified range
-    /// 2. For each room,
+    /// 1. For each room,
     ///   a) Pick a random room size within the specified range
     ///   b) Pick a random location in the level to place it
     ///   c) If that location is already occupied, try again up to a total of 10 times
     ///   d) If there is no location found on the 10th try, pick the smallest possible room size and try another 10 times
     ///   e) If that still doesn't work, stop placing rooms
     /// 3. Done
-    int32_t room_count = random_int(state->params.room_count[0], state->params.room_count[1] + 1);
     int32_t room_pointer = 0;
+    debug("Starting room pass with count %i.", state->room_count);
 
     const IntRange min_room_size = {
             state->params.room_min_size[0],
             state->params.room_min_size[1]
     };
     bool revert_to_lowest_size = false;
-    for (int32_t i = 0; i < room_count; i++) {
+    for (int32_t i = 0; i < state->room_count; i++) {
         IntRange room_size = {
                 random_int(state->params.room_min_size[0], state->params.room_max_size[0] + 1),
                 random_int(state->params.room_min_size[1], state->params.room_max_size[1] + 1),
@@ -214,7 +216,7 @@ void room_placement_pass(LevelGeneratingState *state) {
         }
         int32_t attempts_left = 10;
         bool found_spot_for_a_room = false;
-        while (attempts_left > 0) {
+        while (attempts_left > 0 && !found_spot_for_a_room) {
             IntRange top_left = {
                     random_int(2, state->params.level_size[0] - room_size[0] - 4),
                     random_int(2, state->params.level_size[1] - room_size[1] - 4),
@@ -227,7 +229,7 @@ void room_placement_pass(LevelGeneratingState *state) {
                 found_spot_for_a_room = true;
                 carve_out_space_for_room(state, &room);
                 memcpy(&state->rooms[room_pointer++], &room, sizeof(RoomSpace));
-                attempts_left = 0;
+                debug("Found room location.");
             } else {
                 attempts_left -= 1;
             }
@@ -235,7 +237,7 @@ void room_placement_pass(LevelGeneratingState *state) {
 
         if (!found_spot_for_a_room && !revert_to_lowest_size) {
             revert_to_lowest_size = true;
-            room_count += 1;
+            state->room_count += 1;
             debug("Ran out of space for room size [%i,%i] at room %i. Reverting to smallest room.", room_size[0], room_size[1], i);
         } else if (!found_spot_for_a_room /* && revert_to_lowest_size */) {
             debug("Ran out of space for more rooms at room %i", i);
