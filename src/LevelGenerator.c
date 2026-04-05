@@ -29,6 +29,23 @@ typedef struct LevelGeneratingState_s {
     LevelGenerationParameters params;
 } LevelGeneratingState;
 
+typedef struct PathfindCell_s PathfindCell;
+
+struct PathfindCell_s {
+    Position p;
+    int32_t h_cost;
+    int32_t g_cost;
+    bool has_been_visited;
+    PathfindCell *parent_cell;
+};
+
+typedef struct PathfindingState_s {
+    PathfindCell *cells; // cell list size is level width * level height
+    int32_t cell_count; // number of cells actually being used
+    int32_t start_cell; // index in cells list
+    int32_t goal_cell; // index in the cells list
+} PathfindingState;
+
 static void debug_print_level(LevelGeneratingState *state) {
 #ifdef NDEBUG
     return;
@@ -248,9 +265,148 @@ void room_placement_pass(LevelGeneratingState *state) {
     debug_print_level(state);
 }
 
+static int32_t h(Position p, PathfindingState *state) {
+    return tile_distance(p, state->cells[state->goal_cell].p);
+}
+
+static int32_t g(Position p, PathfindingState *state) {
+    return tile_distance(p, state->cells[state->start_cell].p);
+}
+
+static int32_t f(PathfindCell *cell) {
+    return cell->g_cost + cell->h_cost;
+}
+
+// Adds a cell to the cell list and returns it or returns an already existing one.
+// This will set the h_cost, g_cost, and position but not the parent cell of the new cell
+static PathfindCell *get_or_add_cell(Position p, PathfindingState *state) {
+    for (int32_t i = 0; i < state->cell_count; i++)
+        if (state->cells[i].p[0] == p[0] && state->cells[i].p[1] == p[1])
+            return &state->cells[i];
+
+    PathfindCell *cell = &state->cells[state->cell_count++];
+    cell->p[0] = p[0];
+    cell->p[1] = p[1];
+    return cell;
+}
+
+// Finds the cell that should be explored next
+static PathfindCell *find_next_cell(PathfindingState *state) {
+    assert(state->cell_count != 0);
+    int32_t lowest_f = 0; // these are indices into the cells list
+    for (int32_t i = 0; i < state->cell_count; i++) {
+        if (!state->cells[i].has_been_visited && f(&state->cells[i]) < f(&state->cells[lowest_f])) {
+            lowest_f = i;
+        } else if (!state->cells[i].has_been_visited && f(&state->cells[i]) == f(&state->cells[lowest_f]) && state->cells[i].g_cost < state->cells[lowest_f].g_cost) {
+            lowest_f = i;
+        }
+    }
+
+    return &state->cells[lowest_f];
+}
+
+// Adds the cell to the cell list and sets the parent to explorer if explorer is closer to the
+// goal or the cell has no previous parent.
+static void visit_cell(PathfindCell *cell, Position p, PathfindingState *state) {
+    PathfindCell *exploring_cell = get_or_add_cell(p, state);
+    if (!exploring_cell->parent_cell || cell->g_cost < exploring_cell->parent_cell->g_cost)
+        exploring_cell->parent_cell = cell;
+}
+
+// Explores the 4 nearest cells (so long as they aren't walls), sets the parent cells
+// if current cell has a lower g_cost.
+static void explore_cell(PathfindCell *cell, PathfindingState *state, LevelGeneratingState *level_state) {
+    Position p1 = {cell->p[0] + 1, cell->p[1]};
+    Position p2 = {cell->p[0] - 1, cell->p[1]};
+    Position p3 = {cell->p[0], cell->p[1] + 1};
+    Position p4 = {cell->p[0], cell->p[1] - 1};
+    if (!is_edge_tile(p1))
+        visit_cell(cell, p1, state);
+    if (!is_edge_tile(p2))
+        visit_cell(cell, p2, state);
+    if (!is_edge_tile(p3))
+        visit_cell(cell, p3, state);
+    if (!is_edge_tile(p4))
+        visit_cell(cell, p4, state);
+    cell->has_been_visited = true;
+}
+
+// Called for each cell in the shortest walk back
+static void walk_cell_back(Position current, Position previous, LevelGeneratingState *level_state) {
+    Position p1 = {current[0] + 1, current[1]};
+    Position p2 = {current[0] - 1, current[1]};
+    Position p3 = {current[0], current[1] + 1};
+    Position p4 = {current[0], current[1] - 1};
+    if (!(p1[0] == previous[0] && p1[1] == previous[1]))
+        set_wall_tile(level_state, p1, true);
+    if (!(p2[0] == previous[0] && p2[1] == previous[1]))
+        set_wall_tile(level_state, p2, true);
+    if (!(p3[0] == previous[0] && p3[1] == previous[1]))
+        set_wall_tile(level_state, p3, true);
+    if (!(p4[0] == previous[0] && p4[1] == previous[1]))
+        set_wall_tile(level_state, p4, true);
+    set_floor_tile(level_state, current);
+}
+
+/// Make a grid that stores h(x,y) and g(x,y) for each cell in the grid where h(x)
+/// is the manhattan distance from the goal cell and g(x,y) is the manhattan distance
+/// from the starting cell. Each cell should also store a reference to a parent cell
+/// so we can eventually trace the path back to the start. Let f(x,y) = h(x,y) + g(x,y).
+/// In this context, "explore" means to calculate the h(x,y) and g(x,y) for all the
+/// four nearest cells, and then if that cell either has no parent cell or the current
+/// cell has a lower g(x,y), set the current cell to that cell's parent cell.
+///  1. Starting from the starting cell, explore.
+///  2. Until the current cell is the goal cell,
+///    a) Explore the cell with the lowest f(x,y).
+///    b) If there is a tie between lowest f(x,y), choose the lower h(x,y).
+///    c) If there is still a tie between lowest h(x,y), choose one at random.
+///  3. Once the current cell is the goal cell, the shortest path is to follow each
+///     cell's parent cell all the way back to the start.
+///
+/// Returns false if there is no valid path there or the path would take too long to get to
+static bool place_hallway(LevelGeneratingState *state, Position start, Position end) {
+    PathfindingState pathfinding_state = {
+            .cells = oct_Zalloc(g_game.allocator, sizeof(int32_t) * state->params.level_size[0] * state->params.level_size[1]),
+            0, 0, 1
+    };
+    PathfindCell *begin_cell = get_or_add_cell(start, &pathfinding_state);
+    PathfindCell *current_cell = begin_cell;
+    PathfindCell *end_cell = get_or_add_cell(end, &pathfinding_state);
+    int32_t iterations = 0;
+    const int32_t max_iterations = 100;
+
+    while (current_cell != end_cell && iterations < max_iterations) {
+        explore_cell(current_cell, &pathfinding_state, state);
+        PathfindCell *next_cell = find_next_cell(&pathfinding_state);
+        if (next_cell == end_cell)
+            end_cell->parent_cell = current_cell;
+        current_cell = next_cell;
+        iterations += 1;
+    }
+    if (iterations == max_iterations) {
+        oct_Raise(OCT_STATUS_ERROR, false, "Failed to find a path to the target after %i iterations.", max_iterations);
+        return false;
+    }
+
+    iterations = 0;
+    PathfindCell *previous_cell = current_cell;
+    while (current_cell != begin_cell && iterations < max_iterations) {
+        assert(current_cell);
+        walk_cell_back(current_cell->p, previous_cell->p, state);
+        previous_cell = current_cell;
+        current_cell = current_cell->parent_cell;
+        iterations += 1;
+    }
+    if (iterations == max_iterations) {
+        oct_Raise(OCT_STATUS_ERROR, false, "Failed to find a path to the target after %i iterations.", max_iterations);
+        return false;
+    }
+    return true;
+}
+
 // Uses A* to carve paths between some rooms
 void hallway_placement_pass(LevelGeneratingState *state) {
-    // TODO: This
+
 }
 
 // Finds a large amount of possible spawn points for things like items and characters
