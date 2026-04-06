@@ -278,16 +278,30 @@ static int32_t f(PathfindCell *cell) {
     return cell->g_cost + cell->h_cost;
 }
 
-// Adds a cell to the cell list and returns it or returns an already existing one.
-// This will set the h_cost, g_cost, and position but not the parent cell of the new cell
-static PathfindCell *get_or_add_cell(Position p, PathfindingState *state) {
-    for (int32_t i = 0; i < state->cell_count; i++)
-        if (state->cells[i].p[0] == p[0] && state->cells[i].p[1] == p[1])
-            return &state->cells[i];
+// Adds a cell to the cell list and returns it or returns an already existing one, sets
+// all the necessary fields as well
+static PathfindCell *get_or_add_cell(Position p, PathfindCell *discovering_cell, PathfindingState *state) {
+    PathfindCell *cell = nullptr;
+    for (int32_t i = 0; i < state->cell_count; i++) {
+        if (state->cells[i].p[0] == p[0] && state->cells[i].p[1] == p[1]) {
+            cell = &state->cells[i];
+            break;
+        }
+    }
 
-    PathfindCell *cell = &state->cells[state->cell_count++];
-    cell->p[0] = p[0];
-    cell->p[1] = p[1];
+    if (!cell) {
+        cell = &state->cells[state->cell_count++];
+        cell->p[0] = p[0];
+        cell->p[1] = p[1];
+        cell->h_cost = h(p, state);
+    }
+
+    if (discovering_cell && cell->g_cost > discovering_cell->g_cost + 1) {
+        cell->g_cost = discovering_cell->g_cost + 1;
+        cell->parent_cell = discovering_cell;
+    } else if (!discovering_cell) {
+        cell->g_cost = 0;
+    }
     return cell;
 }
 
@@ -306,14 +320,6 @@ static PathfindCell *find_next_cell(PathfindingState *state) {
     return &state->cells[lowest_f];
 }
 
-// Adds the cell to the cell list and sets the parent to explorer if explorer is closer to the
-// goal or the cell has no previous parent.
-static void visit_cell(PathfindCell *cell, Position p, PathfindingState *state) {
-    PathfindCell *exploring_cell = get_or_add_cell(p, state);
-    if (!exploring_cell->parent_cell || cell->g_cost < exploring_cell->parent_cell->g_cost)
-        exploring_cell->parent_cell = cell;
-}
-
 // Explores the 4 nearest cells (so long as they aren't walls), sets the parent cells
 // if current cell has a lower g_cost.
 static void explore_cell(PathfindCell *cell, PathfindingState *state, LevelGeneratingState *level_state) {
@@ -321,14 +327,16 @@ static void explore_cell(PathfindCell *cell, PathfindingState *state, LevelGener
     Position p2 = {cell->p[0] - 1, cell->p[1]};
     Position p3 = {cell->p[0], cell->p[1] + 1};
     Position p4 = {cell->p[0], cell->p[1] - 1};
-    if (!is_edge_tile(p1))
-        visit_cell(cell, p1, state);
-    if (!is_edge_tile(p2))
-        visit_cell(cell, p2, state);
-    if (!is_edge_tile(p3))
-        visit_cell(cell, p3, state);
-    if (!is_edge_tile(p4))
-        visit_cell(cell, p4, state);
+    Position goal_pos = {state->cells[state->goal_cell].p[0], state->cells[state->goal_cell].p[1]};
+    Position start_pos = {state->cells[state->start_cell].p[0], state->cells[state->start_cell].p[1]};
+    if ((!is_edge_tile(p1) && !is_floor_tile(p1)) || (p1[0] == goal_pos[0] && p1[1] == goal_pos[1]))
+        get_or_add_cell(p1, cell, state);
+    if ((!is_edge_tile(p2) && !is_floor_tile(p2)) || (p2[0] == goal_pos[0] && p2[1] == goal_pos[1]))
+        get_or_add_cell(p2, cell, state);
+    if ((!is_edge_tile(p3) && !is_floor_tile(p3)) || (p3[0] == goal_pos[0] && p3[1] == goal_pos[1]))
+        get_or_add_cell(p3, cell, state);
+    if ((!is_edge_tile(p4) && !is_floor_tile(p4)) || (p4[0] == goal_pos[0] && p4[1] == goal_pos[1]))
+        get_or_add_cell(p4, cell, state);
     cell->has_been_visited = true;
 }
 
@@ -370,9 +378,9 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
             .cells = oct_Zalloc(g_game.allocator, sizeof(int32_t) * state->params.level_size[0] * state->params.level_size[1]),
             0, 0, 1
     };
-    PathfindCell *begin_cell = get_or_add_cell(start, &pathfinding_state);
+    PathfindCell *begin_cell = get_or_add_cell(start, nullptr, &pathfinding_state);
     PathfindCell *current_cell = begin_cell;
-    PathfindCell *end_cell = get_or_add_cell(end, &pathfinding_state);
+    PathfindCell *end_cell = get_or_add_cell(end, nullptr, &pathfinding_state);
     int32_t iterations = 0;
     const int32_t max_iterations = 100;
 
