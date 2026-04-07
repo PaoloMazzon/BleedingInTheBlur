@@ -270,10 +270,6 @@ static int32_t h(Position p, PathfindingState *state) {
     return tile_distance(p, state->cells[state->goal_cell].p);
 }
 
-static int32_t g(Position p, PathfindingState *state) {
-    return tile_distance(p, state->cells[state->start_cell].p);
-}
-
 static int32_t f(PathfindCell *cell) {
     return cell->g_cost + cell->h_cost;
 }
@@ -296,11 +292,9 @@ static PathfindCell *get_or_add_cell(Position p, PathfindCell *discovering_cell,
         cell->h_cost = h(p, state);
     }
 
-    if (discovering_cell && cell->g_cost > discovering_cell->g_cost + 1) {
+    if (discovering_cell && (cell->g_cost > discovering_cell->g_cost || cell->g_cost == 0)) {
         cell->g_cost = discovering_cell->g_cost + 1;
         cell->parent_cell = discovering_cell;
-    } else if (!discovering_cell) {
-        cell->g_cost = 0;
     }
     return cell;
 }
@@ -308,16 +302,22 @@ static PathfindCell *get_or_add_cell(Position p, PathfindCell *discovering_cell,
 // Finds the cell that should be explored next
 static PathfindCell *find_next_cell(PathfindingState *state) {
     assert(state->cell_count != 0);
-    int32_t lowest_f = 0; // these are indices into the cells list
+    PathfindCell *lowest_f = nullptr;
     for (int32_t i = 0; i < state->cell_count; i++) {
-        if (!state->cells[i].has_been_visited && f(&state->cells[i]) < f(&state->cells[lowest_f])) {
-            lowest_f = i;
-        } else if (!state->cells[i].has_been_visited && f(&state->cells[i]) == f(&state->cells[lowest_f]) && state->cells[i].g_cost < state->cells[lowest_f].g_cost) {
-            lowest_f = i;
+        if (!state->cells[i].has_been_visited) {
+            lowest_f = &state->cells[i];
+            break;
+        }
+    }
+    for (int32_t i = 0; i < state->cell_count; i++) {
+        if (!state->cells[i].has_been_visited && f(&state->cells[i]) < f(lowest_f)) {
+            lowest_f = &state->cells[i];
+        } else if (!state->cells[i].has_been_visited && f(&state->cells[i]) == f(lowest_f) && state->cells[i].g_cost < lowest_f->g_cost) {
+            lowest_f = &state->cells[i];
         }
     }
 
-    return &state->cells[lowest_f];
+    return lowest_f;
 }
 
 // Explores the 4 nearest cells (so long as they aren't walls), sets the parent cells
@@ -346,15 +346,16 @@ static void walk_cell_back(Position current, Position previous, LevelGeneratingS
     Position p2 = {current[0] - 1, current[1]};
     Position p3 = {current[0], current[1] + 1};
     Position p4 = {current[0], current[1] - 1};
-    if (!(p1[0] == previous[0] && p1[1] == previous[1]))
+    /*if (!(p1[0] == previous[0] && p1[1] == previous[1]))
         set_wall_tile(level_state, p1, true);
     if (!(p2[0] == previous[0] && p2[1] == previous[1]))
         set_wall_tile(level_state, p2, true);
     if (!(p3[0] == previous[0] && p3[1] == previous[1]))
         set_wall_tile(level_state, p3, true);
     if (!(p4[0] == previous[0] && p4[1] == previous[1]))
-        set_wall_tile(level_state, p4, true);
+        set_wall_tile(level_state, p4, true);*/
     set_floor_tile(level_state, current);
+    debug("[%i,%i]", current[0], current[1]);
 }
 
 /// Make a grid that stores h(x,y) and g(x,y) for each cell in the grid where h(x)
@@ -379,17 +380,18 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
             0, 0, 1
     };
     PathfindCell *begin_cell = get_or_add_cell(start, nullptr, &pathfinding_state);
-    PathfindCell *current_cell = begin_cell;
-    PathfindCell *end_cell = get_or_add_cell(end, nullptr, &pathfinding_state);
+    explore_cell(begin_cell, &pathfinding_state, state);
+    PathfindCell *current_cell = find_next_cell(&pathfinding_state);
     int32_t iterations = 0;
-    const int32_t max_iterations = 100;
+    const int32_t max_iterations = 1000;
 
-    while (current_cell != end_cell && iterations < max_iterations) {
+    while (iterations < max_iterations) {
         explore_cell(current_cell, &pathfinding_state, state);
         PathfindCell *next_cell = find_next_cell(&pathfinding_state);
-        if (next_cell == end_cell)
-            end_cell->parent_cell = current_cell;
+        debug("Cell f(%i,%i)=%i", current_cell->p[0], current_cell->p[1], f(current_cell));
         current_cell = next_cell;
+        if (next_cell->p[0] == end[0] && next_cell->p[1] == end[1])
+            break;
         iterations += 1;
     }
     if (iterations == max_iterations) {
@@ -399,7 +401,7 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
 
     iterations = 0;
     PathfindCell *previous_cell = current_cell;
-    while (current_cell != begin_cell && iterations < max_iterations) {
+    while (current_cell != nullptr && iterations < max_iterations) {
         assert(current_cell);
         walk_cell_back(current_cell->p, previous_cell->p, state);
         previous_cell = current_cell;
@@ -418,16 +420,16 @@ static void get_random_door_position(RoomSpace *room, Position out_pos) {
     const int32_t edge = random_int(0, 4);
     if (edge == 0) {
         out_pos[0] = room->top_left[0];
-        out_pos[1] = random_int(room->top_left[1], room->top_left[1] + room->size[1] + 1);
+        out_pos[1] = random_int(room->top_left[1] + 1, room->top_left[1] + room->size[1] - 1);
     } else if (edge == 1) {
-        out_pos[0] = room->top_left[0] + room->size[0] + 1;
-        out_pos[1] = random_int(room->top_left[1], room->top_left[1] + room->size[1] + 1);
+        out_pos[0] = room->top_left[0] + room->size[0] - 1;
+        out_pos[1] = random_int(room->top_left[1] + 1, room->top_left[1] + room->size[1] - 1);
     } else if (edge == 2) {
-        out_pos[0] = random_int(room->top_left[0], room->top_left[0] + room->size[0] + 1);
+        out_pos[0] = random_int(room->top_left[0] + 1, room->top_left[0] + room->size[0] - 1);
         out_pos[1] = room->top_left[1];
     } else if (edge == 3) {
-        out_pos[0] = random_int(room->top_left[0], room->top_left[0] + room->size[0] + 1);
-        out_pos[1] = room->top_left[1] + room->size[1] + 1;
+        out_pos[0] = random_int(room->top_left[0] + 1, room->top_left[0] + room->size[0] - 1);
+        out_pos[1] = room->top_left[1] + room->size[1] - 1;
     }
 }
 
@@ -550,8 +552,9 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     // Do each pass required to generate the level
     Position stairs_down, stairs_up;
     fill_pass(&state);
-    room_placement_pass(&state);
-    hallway_placement_pass(&state);
+    //room_placement_pass(&state);
+    //hallway_placement_pass(&state);
+    place_hallway(&state, (Position){10, 10}, (Position){15, 15});
     spawn_locating_pass(&state);
     aesthetics_pass(&state);
     place_stairs_pass(&state);
