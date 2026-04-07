@@ -263,7 +263,6 @@ void room_placement_pass(LevelGeneratingState *state) {
         }
     }
     state->room_count = room_pointer;
-    debug_print_level(state);
 }
 
 static int32_t h(Position p, PathfindingState *state) {
@@ -344,16 +343,16 @@ static void walk_cell_back(Position current, Position previous, LevelGeneratingS
     Position p2 = {current[0] - 1, current[1]};
     Position p3 = {current[0], current[1] + 1};
     Position p4 = {current[0], current[1] - 1};
-    /*if (!(p1[0] == previous[0] && p1[1] == previous[1]))
+    if (!(p1[0] == previous[0] && p1[1] == previous[1]))
         set_wall_tile(level_state, p1, true);
     if (!(p2[0] == previous[0] && p2[1] == previous[1]))
         set_wall_tile(level_state, p2, true);
     if (!(p3[0] == previous[0] && p3[1] == previous[1]))
         set_wall_tile(level_state, p3, true);
     if (!(p4[0] == previous[0] && p4[1] == previous[1]))
-        set_wall_tile(level_state, p4, true);*/
+        set_wall_tile(level_state, p4, true);
     set_floor_tile(level_state, current);
-    debug("[%i,%i]", current[0], current[1]);
+    //debug("[%i,%i]", current[0], current[1]);
 }
 
 /// Make a grid that stores h(x,y) and g(x,y) for each cell in the grid where h(x)
@@ -382,13 +381,23 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
     PathfindCell *begin_cell = get_or_add_cell(start, nullptr, &pathfinding_state);
     explore_cell(begin_cell, &pathfinding_state, state);
     PathfindCell *current_cell = find_next_cell(&pathfinding_state);
+    if (!current_cell) {
+        oct_Raise(OCT_STATUS_ERROR, false, "Failed to start connecting a hallway from [%i,%i] to [%i,%i]", start[0], start[1], end[0], end[1]);
+        oct_Free(g_game.allocator, pathfinding_state.cells);
+        return false;
+    }
     int32_t iterations = 0;
-    const int32_t max_iterations = 200;
+    const int32_t max_iterations = 1000;
 
     while (iterations < max_iterations) {
         explore_cell(current_cell, &pathfinding_state, state);
         PathfindCell *next_cell = find_next_cell(&pathfinding_state);
-        debug("Cell f(%i,%i)=%i", current_cell->p[0], current_cell->p[1], f(current_cell));
+        if (!next_cell) {
+            oct_Raise(OCT_STATUS_ERROR, false, "Failed to connect a hallway from [%i,%i] to [%i,%i]", start[0], start[1], end[0], end[1]);
+            oct_Free(g_game.allocator, pathfinding_state.cells);
+            return false;
+        }
+        //debug("Cell f(%i,%i)=%i", current_cell->p[0], current_cell->p[1], f(current_cell));
         current_cell = next_cell;
         if (next_cell->p[0] == end[0] && next_cell->p[1] == end[1])
             break;
@@ -396,6 +405,7 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
     }
     if (iterations == max_iterations) {
         oct_Raise(OCT_STATUS_ERROR, false, "Failed to find a path to the target after %i iterations.", max_iterations);
+        oct_Free(g_game.allocator, pathfinding_state.cells);
         return false;
     }
 
@@ -412,8 +422,10 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
     }
     if (iterations == max_iterations) {
         oct_Raise(OCT_STATUS_ERROR, false, "Failed to find a path to the target after %i iterations.", max_iterations);
+        oct_Free(g_game.allocator, pathfinding_state.cells);
         return false;
     }
+    oct_Free(g_game.allocator, pathfinding_state.cells);
     return true;
 }
 
@@ -517,6 +529,12 @@ void place_stairs_pass(LevelGeneratingState *state) {
 void generate_level(Level *level, LevelGenerationParameters *params, Position out_player_pos) {
     const int32_t spawns_per_room = 5;
     current_prop_index = 0;
+    debug("Generating level with params: ");
+    debug("    level_size = {%i,%i}", params->level_size[0], params->level_size[1]);
+    debug("    room_min_size = {%i,%i}", params->room_min_size[0], params->room_min_size[1]);
+    debug("    room_max_size = {%i,%i}", params->room_max_size[0], params->room_max_size[1]);
+    debug("    room_count = {%i,%i}", params->room_count[0], params->room_count[1]);
+    debug("    extra_hallways = {%i,%i}", params->extra_hallways[0], params->extra_hallways[1]);
 
     // Level generation needs at least 3 rooms
     assert(params->room_count[0] > 2 && params->room_count[0] > 2);
@@ -556,6 +574,11 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     fill_pass(&state);
     //room_placement_pass(&state);
     //hallway_placement_pass(&state);
+    set_wall_tile(&state, (Position){0, 5}, true);
+    set_wall_tile(&state, (Position){1, 5}, true);
+    set_wall_tile(&state, (Position){2, 5}, true);
+    set_wall_tile(&state, (Position){3, 5}, true);
+    // TODO: Slowly make conditions closer to actual level layouts
     place_hallway(&state, (Position){2, 2}, (Position){10, 10});
     spawn_locating_pass(&state);
     aesthetics_pass(&state);
