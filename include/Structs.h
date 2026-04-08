@@ -287,6 +287,7 @@ typedef struct Tile_s {
     bool door;
     bool door_open; // only applies if its a door
     bool room_edge;
+    bool room_floor;
 } Tile;
 
 typedef struct Item_s {
@@ -392,6 +393,7 @@ typedef struct TileContents_s {
     TileExtraContentsType extra_contents_type;
     union {
         Character *character;
+        // this is considered the valid one if tile type is none
         Tile tile; // tiles are owned by the TileContents they reside in
     };
     union {

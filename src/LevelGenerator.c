@@ -55,11 +55,11 @@ static void debug_print_level(LevelGeneratingState *state) {
         for (int32_t x = 0; x < state->params.level_size[0]; x++) {
             TileContents *t = level_get_tile((Position){x, y});
             if (t->type == TILE_CONTENTS_TYPE_WALL && t->tile.room_edge)
-                printf("~");
+                printf("▒▒");
             else if (t->type == TILE_CONTENTS_TYPE_WALL && !t->tile.room_edge)
-                printf("#");
+                printf("▉▉");
             else if (t->type == TILE_CONTENTS_TYPE_NONE)
-                printf(".");
+                printf("  ");
         }
         printf("\n");
     }
@@ -103,16 +103,28 @@ static void set_wall_tile(LevelGeneratingState *state, Position pos, bool edge_t
 }
 
 // Same as set_wall_tile but for floors
-static void set_floor_tile(LevelGeneratingState *state, Position pos) {
+static void set_floor_tile(LevelGeneratingState *state, Position pos, bool in_room) {
     TileContents *t = level_get_tile(pos);
     if (t) {
         t->type = TILE_CONTENTS_TYPE_NONE;
+        if (in_room)
+            t->tile.room_floor = true;
         oct_SetTilemap(state->base_tilemap, pos[0], pos[1], get_floor_tile());
     }
 }
 
+// returns true if its a floor tile, regardless of location
 static bool is_floor_tile(Position pos) {
     return !is_wall_tile(pos);
+}
+
+// returns true if its a floor residing inside a room
+static bool is_room_floor_tile(Position pos) {
+    TileContents *t = level_get_tile(pos);
+    if (t) {
+        return t->type == TILE_CONTENTS_TYPE_NONE && t->tile.room_floor;
+    }
+    return false;
 }
 
 // Returns true if any part of the potential room location is occupied by wall perimeters
@@ -134,7 +146,7 @@ static void carve_out_space_for_room(LevelGeneratingState *state, RoomSpace *roo
                 x == room->top_left[0] || x == (room->top_left[0] + room->size[0] - 1))
                 set_wall_tile(state, (Position){x, y}, true);
             else
-                set_floor_tile(state, (Position){x, y});
+                set_floor_tile(state, (Position){x, y}, true);
         }
     }
 }
@@ -326,32 +338,33 @@ static void explore_cell(PathfindCell *cell, PathfindingState *state, LevelGener
     Position p2 = {cell->p[0] - 1, cell->p[1]};
     Position p3 = {cell->p[0], cell->p[1] + 1};
     Position p4 = {cell->p[0], cell->p[1] - 1};
-    if ((!is_edge_tile(p1) && !is_floor_tile(p1)) || (p1[0] == state->goal_cell[0] && p1[1] == state->goal_cell[1]))
+    if ((!is_edge_tile(p1) && !is_room_floor_tile(p1)) || (p1[0] == state->goal_cell[0] && p1[1] == state->goal_cell[1]))
         get_or_add_cell(p1, cell, state);
-    if ((!is_edge_tile(p2) && !is_floor_tile(p2)) || (p2[0] == state->goal_cell[0] && p2[1] == state->goal_cell[1]))
+    if ((!is_edge_tile(p2) && !is_room_floor_tile(p2)) || (p2[0] == state->goal_cell[0] && p2[1] == state->goal_cell[1]))
         get_or_add_cell(p2, cell, state);
-    if ((!is_edge_tile(p3) && !is_floor_tile(p3)) || (p3[0] == state->goal_cell[0] && p3[1] == state->goal_cell[1]))
+    if ((!is_edge_tile(p3) && !is_room_floor_tile(p3)) || (p3[0] == state->goal_cell[0] && p3[1] == state->goal_cell[1]))
         get_or_add_cell(p3, cell, state);
-    if ((!is_edge_tile(p4) && !is_floor_tile(p4)) || (p4[0] == state->goal_cell[0] && p4[1] == state->goal_cell[1]))
+    if ((!is_edge_tile(p4) && !is_room_floor_tile(p4)) || (p4[0] == state->goal_cell[0] && p4[1] == state->goal_cell[1]))
         get_or_add_cell(p4, cell, state);
     cell->has_been_visited = true;
 }
 
 // Called for each cell in the shortest walk back
-static void walk_cell_back(Position current, Position previous, LevelGeneratingState *level_state) {
+static void walk_cell_back(Position current, LevelGeneratingState *level_state) {
     Position p1 = {current[0] + 1, current[1]};
     Position p2 = {current[0] - 1, current[1]};
     Position p3 = {current[0], current[1] + 1};
     Position p4 = {current[0], current[1] - 1};
-    if (!(p1[0] == previous[0] && p1[1] == previous[1]))
-        set_wall_tile(level_state, p1, true);
-    if (!(p2[0] == previous[0] && p2[1] == previous[1]))
-        set_wall_tile(level_state, p2, true);
-    if (!(p3[0] == previous[0] && p3[1] == previous[1]))
-        set_wall_tile(level_state, p3, true);
-    if (!(p4[0] == previous[0] && p4[1] == previous[1]))
-        set_wall_tile(level_state, p4, true);
-    set_floor_tile(level_state, current);
+    const bool edge_tile = false;
+    if (!is_floor_tile(p1))
+        set_wall_tile(level_state, p1, edge_tile || is_edge_tile(p1));
+    if (!is_floor_tile(p2))
+        set_wall_tile(level_state, p2, edge_tile || is_edge_tile(p2));
+    if (!is_floor_tile(p3))
+        set_wall_tile(level_state, p3, edge_tile || is_edge_tile(p3));
+    if (!is_floor_tile(p4))
+        set_wall_tile(level_state, p4, edge_tile || is_edge_tile(p4));
+    set_floor_tile(level_state, current, false);
     //debug("[%i,%i]", current[0], current[1]);
 }
 
@@ -410,11 +423,9 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
     }
 
     iterations = 0;
-    PathfindCell *previous_cell = current_cell;
     while (iterations < max_iterations) {
         assert(current_cell);
-        walk_cell_back(current_cell->p, previous_cell->p, state);
-        previous_cell = current_cell;
+        walk_cell_back(current_cell->p, state);
         if (current_cell->p[0] == start[0] && current_cell->p[1] == start[1])
             break;
         current_cell = current_cell->parent_cell;
@@ -574,16 +585,24 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     fill_pass(&state);
     //room_placement_pass(&state);
     //hallway_placement_pass(&state);
-    set_wall_tile(&state, (Position){0, 5}, true);
-    set_wall_tile(&state, (Position){1, 5}, true);
-    set_wall_tile(&state, (Position){2, 5}, true);
-    set_wall_tile(&state, (Position){3, 5}, true);
-    // TODO: Slowly make conditions closer to actual level layouts
-    place_hallway(&state, (Position){2, 2}, (Position){10, 10});
+
+    state.room_count = 4;
+    room_placement_pass(&state);
+    Position start, end;
+    get_random_door_position(&state.rooms[0], start);
+    get_random_door_position(&state.rooms[1], end);
+    place_hallway(&state, start, end);
+    get_random_door_position(&state.rooms[1], start);
+    get_random_door_position(&state.rooms[2], end);
+    place_hallway(&state, start, end);
+    get_random_door_position(&state.rooms[2], start);
+    get_random_door_position(&state.rooms[3], end);
+    place_hallway(&state, start, end);
     spawn_locating_pass(&state);
     aesthetics_pass(&state);
     place_stairs_pass(&state);
     debug_print_level(&state);
+    exit(0);
 
     // Draw the entire level to a texture
     level->level_tex = oct_CreateSurface((Oct_Vec2){(float)level->level_width * CELL_WIDTH, (float)level->level_height * CELL_HEIGHT});
