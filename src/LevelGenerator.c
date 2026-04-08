@@ -55,9 +55,9 @@ static void debug_print_level(LevelGeneratingState *state) {
         for (int32_t x = 0; x < state->params.level_size[0]; x++) {
             TileContents *t = level_get_tile((Position){x, y});
             if (t->type == TILE_CONTENTS_TYPE_WALL && t->tile.room_edge)
-                printf("▒▒");
+                printf("░░");
             else if (t->type == TILE_CONTENTS_TYPE_WALL && !t->tile.room_edge)
-                printf("▉▉");
+                printf("▓▓");
             else if (t->type == TILE_CONTENTS_TYPE_NONE)
                 printf("  ");
         }
@@ -387,7 +387,7 @@ static void walk_cell_back(Position current, LevelGeneratingState *level_state) 
 /// Returns false if there is no valid path there or the path would take too long to get to
 static bool place_hallway(LevelGeneratingState *state, Position start, Position end) {
     PathfindingState pathfinding_state = {
-            .cells = oct_Zalloc(g_game.allocator, sizeof(int32_t) * state->params.level_size[0] * state->params.level_size[1]),
+            .cells = oct_Zalloc(g_game.allocator, sizeof(PathfindCell) * state->params.level_size[0] * state->params.level_size[1]),
             0,
             {start[0], start[1]},
             {end[0], end[1]}
@@ -427,6 +427,7 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
     while (iterations < max_iterations) {
         assert(current_cell);
         walk_cell_back(current_cell->p, state);
+        debug("Walking back, at [%i,%i] to [%i,%i]", current_cell->p[0], current_cell->p[1], start[0], start[1]);
         if (current_cell->p[0] == start[0] && current_cell->p[1] == start[1])
             break;
         current_cell = current_cell->parent_cell;
@@ -651,5 +652,5 @@ void cleanup_level(Level *level) {
     oct_DestroyTilemap(level->tilemap);
     level->tilemap = nullptr;
     oct_DestroyTilemap(level->decorations);
-    level->tilemap = nullptr;
+    level->decorations = nullptr;
 }
