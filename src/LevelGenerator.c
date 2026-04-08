@@ -206,11 +206,12 @@ static void autotile(Oct_Tilemap tilemap, Oct_Tilemap decoration, int32_t x, int
     }
 }
 
-// Fills the entire room with walls
+// Fills the entire room with walls, zeroes out every tile as well
 static void fill_pass(LevelGeneratingState *state) {
     for (int32_t y = 0; y < state->params.level_size[1]; y++) {
         for (int32_t x = 0; x < state->params.level_size[0]; x++) {
             TileContents *t = level_get_tile((Position){x, y});
+            memset(t, 0, sizeof(TileContents));
             assert(t);
             t->type = TILE_CONTENTS_TYPE_WALL;
             oct_SetTilemap(state->base_tilemap, x, y, get_wall_tile());
@@ -248,8 +249,8 @@ void room_placement_pass(LevelGeneratingState *state) {
         bool found_spot_for_a_room = false;
         while (attempts_left > 0 && !found_spot_for_a_room) {
             IntRange top_left = {
-                    random_int(2, state->params.level_size[0] - room_size[0] - 4),
-                    random_int(2, state->params.level_size[1] - room_size[1] - 4),
+                    random_int(3, state->params.level_size[0] - room_size[0] - 5),
+                    random_int(3, state->params.level_size[1] - room_size[1] - 5),
             };
             RoomSpace room = {
                     .top_left = {top_left[0] - 1, top_left[1] - 1},
@@ -400,7 +401,7 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
         return false;
     }
     int32_t iterations = 0;
-    const int32_t max_iterations = 1000;
+    const int32_t max_iterations = 2000;
 
     while (iterations < max_iterations) {
         explore_cell(current_cell, &pathfinding_state, state);
@@ -470,8 +471,8 @@ static void get_random_door_position(RoomSpace *room, Position out_pos) {
 //     future iterations, this may result in multiple closed loops of rooms, which is fine as long as the
 //     start and end room are connected.
 //  4. Pick a few rooms at random to try and connect for extra variety
-//  5. If the start room is the same as the end room, the entire process has failed for some reason
-void hallway_placement_pass(LevelGeneratingState *state) {
+//  5. If this function returns false, the start room failed to connect meaning we need to restart the whole process
+bool hallway_placement_pass(LevelGeneratingState *state) {
     assert(state->room_count > 1);
     int32_t room_index = 0;
     RoomSpace *current_room = &state->rooms[room_index];
@@ -492,7 +493,9 @@ void hallway_placement_pass(LevelGeneratingState *state) {
 
         // If we fail to connect the rooms we may need to move the last room to the current room (or crash)
         if (hallway_placement_attempts == max_hallway_placement_attempts) {
-            oct_Raise(OCT_STATUS_ERROR, room_index == 0, "Failed to connect two hallways from room %i to %i", room_index, room_index + 1);
+            oct_Raise(OCT_STATUS_ERROR, false, "Failed to connect two hallways from room %i to %i", room_index, room_index + 1);
+            if (room_index == 0)
+                return false;
             if (state->last_room == state->room_count - 1)
                 state->last_room = room_index;
         }
@@ -500,26 +503,46 @@ void hallway_placement_pass(LevelGeneratingState *state) {
         room_index += 1;
         current_room = &state->rooms[room_index];
         next_room = &state->rooms[room_index + 1];
+        return true;
     }
 
     // Make a number of random connections between rooms
     const int32_t extra_hallway_count = random_int(state->params.extra_hallways[0], state->params.extra_hallways[1] + 1);
+    debug("Placing %i extra hallways", extra_hallway_count);
     for (int32_t i = 0; i < extra_hallway_count; i++) {
         int32_t hallway_placement_attempts = 0;
         while (hallway_placement_attempts < max_hallway_placement_attempts) {
             Position start_pos, end_pos;
             get_random_door_position(current_room, start_pos);
             get_random_door_position(next_room, end_pos);
-            if (place_hallway(state, start_pos, end_pos))
+            if (place_hallway(state, start_pos, end_pos)) {
+                debug("Successfully placed additional hallway");
                 break;
+            }
             hallway_placement_attempts += 1;
+            debug("Failed to place additional hallway");
         }
     }
 }
 
+// Finds a place something can be spawned in a room
+void find_spawn_in_room(RoomSpace *r, Position out_pos) {
+    out_pos[0] = random_int(r->top_left[0] + 2, r->top_left[0] + r->size[0] - 3);
+    out_pos[1] = random_int(r->top_left[1] + 2, r->top_left[1] + r->size[1] - 3);
+}
+
 // Finds a large amount of possible spawn points for things like items and characters
 void spawn_locating_pass(LevelGeneratingState *state) {
-    // TODO: This
+    const int32_t spawns_per_room = 5;
+    Level *level = &g_game.current_level;
+    level->spawn_points = oct_Zalloc(g_game.allocator, spawns_per_room * sizeof(Position) * (state->room_count - 1));
+    level->spawn_points_count = (state->room_count - 1) * spawns_per_room;
+    int32_t spawn_point_counter = 0;
+    for (int32_t room_index = 1; room_index < state->room_count; room_index++) {
+        for (int32_t i = 0; i < spawns_per_room; i++) {
+            find_spawn_in_room(&state->rooms[room_index], level->spawn_points[spawn_point_counter++]);
+        }
+    }
 }
 
 // Does the shading auto-tiling, places doors, places props
@@ -532,9 +555,21 @@ void aesthetics_pass(LevelGeneratingState *state) {
     }
 }
 
+// Finds the center of a room
+static void center_of_room(RoomSpace *r, Position center_out) {
+    center_out[0] = r->top_left[0] + (r->size[0] / 2);
+    center_out[1] = r->top_left[1] + (r->size[1] / 2);
+}
+
 // Places the stairs up and down
-void place_stairs_pass(LevelGeneratingState *state) {
-    // TODO: This
+void place_stairs_pass(LevelGeneratingState *state, Position out_player_pos) {
+    Position stairs_down, stairs_up;
+    center_of_room(&state->rooms[0], stairs_down);
+    center_of_room(&state->rooms[state->last_room], stairs_up);
+    oct_SetTilemap(state->base_tilemap, stairs_up[0], stairs_up[1], TILE_STAIRS_UP);
+    oct_SetTilemap(state->base_tilemap, stairs_down[0], stairs_down[1], TILE_STAIRS_DOWN);
+    out_player_pos[0] = stairs_down[0];
+    out_player_pos[1] = stairs_down[1];
 }
 
 void generate_level(Level *level, LevelGenerationParameters *params, Position out_player_pos) {
@@ -580,37 +615,28 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     state.last_room = state.room_count - 1;
     state.params = *params;
 
-    // Do each pass required to generate the level
-    Position stairs_down, stairs_up;
-    fill_pass(&state);
-    //room_placement_pass(&state);
-    //hallway_placement_pass(&state);
+    // Its possible for the hallway step to fail so we will attempt it a few times before calling it quits
+    bool successfully_generated_level = false;
+    int32_t iterations = 0;
+    const int32_t max_iterations = 10;
+    while (!successfully_generated_level && iterations < max_iterations) {
+        fill_pass(&state);
+        room_placement_pass(&state);
+        successfully_generated_level = hallway_placement_pass(&state);
+        iterations += 1;
+        if (!successfully_generated_level)
+            oct_Raise(OCT_STATUS_ERROR, iterations == max_iterations, "Failed to create level on attempt #%i", iterations);
+    }
 
-    state.room_count = 4;
-    room_placement_pass(&state);
-    Position start, end;
-    get_random_door_position(&state.rooms[0], start);
-    get_random_door_position(&state.rooms[1], end);
-    place_hallway(&state, start, end);
-    get_random_door_position(&state.rooms[1], start);
-    get_random_door_position(&state.rooms[2], end);
-    place_hallway(&state, start, end);
-    get_random_door_position(&state.rooms[2], start);
-    get_random_door_position(&state.rooms[3], end);
-    place_hallway(&state, start, end);
+    // Once we have the hallway everything else is guaranteed to succeed
     spawn_locating_pass(&state);
     aesthetics_pass(&state);
-    place_stairs_pass(&state);
+    place_stairs_pass(&state, out_player_pos);
     debug_print_level(&state);
-    exit(0);
 
     // Draw the entire level to a texture
     level->level_tex = oct_CreateSurface((Oct_Vec2){(float)level->level_width * CELL_WIDTH, (float)level->level_height * CELL_HEIGHT});
     assert(level->level_tex);
-
-    // Place the player
-    out_player_pos[0] = stairs_down[0];
-    out_player_pos[1] = stairs_down[1];
     oct_Free(g_game.allocator, state.rooms);
 }
 
