@@ -163,7 +163,7 @@ static void autotile(Oct_Tilemap tilemap, Oct_Tilemap decoration, int32_t x, int
     const bool bottom_left  = is_floor_tile((Position){x - 1, y + 1});
     const bool bottom_right = is_floor_tile((Position){x + 1, y + 1});
 
-    const bool is_wall = !is_wall_tile((Position) {x, y});
+    const bool is_wall = is_wall_tile((Position) {x, y});
 
     if (is_wall) {
         const int open = (above ? 1 : 0) + (below ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
@@ -503,7 +503,6 @@ bool hallway_placement_pass(LevelGeneratingState *state) {
         room_index += 1;
         current_room = &state->rooms[room_index];
         next_room = &state->rooms[room_index + 1];
-        return true;
     }
 
     // Make a number of random connections between rooms
@@ -523,6 +522,8 @@ bool hallway_placement_pass(LevelGeneratingState *state) {
             debug("Failed to place additional hallway");
         }
     }
+
+    return true;
 }
 
 // Finds a place something can be spawned in a room
