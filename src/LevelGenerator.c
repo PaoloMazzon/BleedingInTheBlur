@@ -92,6 +92,11 @@ static bool is_wall_tile(Position pos) {
     return t && t->type == TILE_CONTENTS_TYPE_WALL;
 }
 
+static bool is_door_tile(Position pos) {
+    TileContents *t = level_get_tile(pos);
+    return t && t->type == TILE_CONTENTS_TYPE_WALL && t->tile.door;
+}
+
 // Does the work involved in setting a tile to a wall, if its on the perimeter of a hallway or room set edge_tile to true
 static void set_wall_tile(LevelGeneratingState *state, Position pos, bool edge_tile) {
     TileContents *t = level_get_tile(pos);
@@ -220,7 +225,7 @@ static void fill_pass(LevelGeneratingState *state) {
 }
 
 // Find spots for each room and carve them out
-void room_placement_pass(LevelGeneratingState *state) {
+static void room_placement_pass(LevelGeneratingState *state) {
     /// 1. For each room,
     ///   a) Pick a random room size within the specified range
     ///   b) Pick a random location in the level to place it
@@ -332,6 +337,13 @@ static PathfindCell *find_next_cell(PathfindingState *state) {
     return lowest_f;
 }
 
+// makes sure a cell is in bounds by generation standards
+static bool in_bounds(Position p, LevelGeneratingState *level_state) {
+    return p[0] >= 0 && p[1] >= 0
+           && p[0] < level_state->params.level_size[0]
+           && p[1] < level_state->params.level_size[1];
+}
+
 // Explores the 4 nearest cells (so long as they aren't walls), sets the parent cells
 // if current cell has a lower g_cost.
 static void explore_cell(PathfindCell *cell, PathfindingState *state, LevelGeneratingState *level_state) {
@@ -339,13 +351,13 @@ static void explore_cell(PathfindCell *cell, PathfindingState *state, LevelGener
     Position p2 = {cell->p[0] - 1, cell->p[1]};
     Position p3 = {cell->p[0], cell->p[1] + 1};
     Position p4 = {cell->p[0], cell->p[1] - 1};
-    if ((!is_edge_tile(p1) && !is_room_floor_tile(p1)) || (p1[0] == state->goal_cell[0] && p1[1] == state->goal_cell[1]))
+    if (in_bounds(p1, level_state) && !is_edge_tile(p1) && (!is_room_floor_tile(p1)) || (p1[0] == state->goal_cell[0] && p1[1] == state->goal_cell[1]))
         get_or_add_cell(p1, cell, state);
-    if ((!is_edge_tile(p2) && !is_room_floor_tile(p2)) || (p2[0] == state->goal_cell[0] && p2[1] == state->goal_cell[1]))
+    if (in_bounds(p2, level_state) && !is_edge_tile(p2) && (!is_room_floor_tile(p2)) || (p2[0] == state->goal_cell[0] && p2[1] == state->goal_cell[1]))
         get_or_add_cell(p2, cell, state);
-    if ((!is_edge_tile(p3) && !is_room_floor_tile(p3)) || (p3[0] == state->goal_cell[0] && p3[1] == state->goal_cell[1]))
+    if (in_bounds(p3, level_state) && !is_edge_tile(p3) && (!is_room_floor_tile(p3)) || (p3[0] == state->goal_cell[0] && p3[1] == state->goal_cell[1]))
         get_or_add_cell(p3, cell, state);
-    if ((!is_edge_tile(p4) && !is_room_floor_tile(p4)) || (p4[0] == state->goal_cell[0] && p4[1] == state->goal_cell[1]))
+    if (in_bounds(p4, level_state) && !is_edge_tile(p4) && (!is_room_floor_tile(p4)) || (p4[0] == state->goal_cell[0] && p4[1] == state->goal_cell[1]))
         get_or_add_cell(p4, cell, state);
     cell->has_been_visited = true;
 }
@@ -385,19 +397,19 @@ static void walk_cell_back(Position current, LevelGeneratingState *level_state) 
 ///     cell's parent cell all the way back to the start.
 ///
 /// Returns false if there is no valid path there or the path would take too long to get to
-static bool place_hallway(LevelGeneratingState *state, Position start, Position end) {
+static bool place_hallway(LevelGeneratingState *state, Position start, Position end, PathfindCell *cell_array) {
     PathfindingState pathfinding_state = {
-            .cells = oct_Zalloc(g_game.allocator, sizeof(PathfindCell) * state->params.level_size[0] * state->params.level_size[1]),
+            .cells = cell_array,
             0,
             {start[0], start[1]},
             {end[0], end[1]}
     };
+    memset(pathfinding_state.cells, 0, sizeof(PathfindCell) * state->params.level_size[0] * state->params.level_size[1]);
     PathfindCell *begin_cell = get_or_add_cell(start, nullptr, &pathfinding_state);
     explore_cell(begin_cell, &pathfinding_state, state);
     PathfindCell *current_cell = find_next_cell(&pathfinding_state);
     if (!current_cell) {
         oct_Raise(OCT_STATUS_ERROR, false, "Failed to start connecting a hallway from [%i,%i] to [%i,%i]", start[0], start[1], end[0], end[1]);
-        oct_Free(g_game.allocator, pathfinding_state.cells);
         return false;
     }
     int32_t iterations = 0;
@@ -408,7 +420,6 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
         PathfindCell *next_cell = find_next_cell(&pathfinding_state);
         if (!next_cell) {
             oct_Raise(OCT_STATUS_ERROR, false, "Failed to connect a hallway from [%i,%i] to [%i,%i]", start[0], start[1], end[0], end[1]);
-            oct_Free(g_game.allocator, pathfinding_state.cells);
             return false;
         }
         //debug("Cell f(%i,%i)=%i", current_cell->p[0], current_cell->p[1], f(current_cell));
@@ -419,7 +430,6 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
     }
     if (iterations == max_iterations) {
         oct_Raise(OCT_STATUS_ERROR, false, "Failed to find a path to the target after %i iterations.", max_iterations);
-        oct_Free(g_game.allocator, pathfinding_state.cells);
         return false;
     }
 
@@ -427,7 +437,6 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
     while (iterations < max_iterations) {
         assert(current_cell);
         walk_cell_back(current_cell->p, state);
-        debug("Walking back, at [%i,%i] to [%i,%i]", current_cell->p[0], current_cell->p[1], start[0], start[1]);
         if (current_cell->p[0] == start[0] && current_cell->p[1] == start[1])
             break;
         current_cell = current_cell->parent_cell;
@@ -435,10 +444,8 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
     }
     if (iterations == max_iterations) {
         oct_Raise(OCT_STATUS_ERROR, false, "Failed to find a path to the target after %i iterations.", max_iterations);
-        oct_Free(g_game.allocator, pathfinding_state.cells);
         return false;
     }
-    oct_Free(g_game.allocator, pathfinding_state.cells);
     return true;
 }
 
@@ -473,12 +480,13 @@ static void get_random_door_position(RoomSpace *room, Position out_pos) {
 //     start and end room are connected.
 //  4. Pick a few rooms at random to try and connect for extra variety
 //  5. If this function returns false, the start room failed to connect meaning we need to restart the whole process
-bool hallway_placement_pass(LevelGeneratingState *state) {
+static bool hallway_placement_pass(LevelGeneratingState *state) {
     assert(state->room_count > 1);
     int32_t room_index = 0;
     RoomSpace *current_room = &state->rooms[room_index];
     RoomSpace *next_room = &state->rooms[room_index + 1];
     const int32_t max_hallway_placement_attempts = 4;
+    PathfindCell *cells = oct_Zalloc(g_game.allocator, sizeof(PathfindCell) * state->params.level_size[0] * state->params.level_size[1]);
 
     // Connect each room end-to-end
     while (room_index < state->room_count - 2) {
@@ -487,7 +495,7 @@ bool hallway_placement_pass(LevelGeneratingState *state) {
             Position start_pos, end_pos;
             get_random_door_position(current_room, start_pos);
             get_random_door_position(next_room, end_pos);
-            if (place_hallway(state, start_pos, end_pos))
+            if (place_hallway(state, start_pos, end_pos, cells))
                 break;
             hallway_placement_attempts += 1;
         }
@@ -495,8 +503,10 @@ bool hallway_placement_pass(LevelGeneratingState *state) {
         // If we fail to connect the rooms we may need to move the last room to the current room (or crash)
         if (hallway_placement_attempts == max_hallway_placement_attempts) {
             oct_Raise(OCT_STATUS_ERROR, false, "Failed to connect two hallways from room %i to %i", room_index, room_index + 1);
-            if (room_index == 0)
+            if (room_index == 0) {
+                oct_Free(g_game.allocator, cells);
                 return false;
+            }
             if (state->last_room == state->room_count - 1)
                 state->last_room = room_index;
         }
@@ -515,7 +525,7 @@ bool hallway_placement_pass(LevelGeneratingState *state) {
             Position start_pos, end_pos;
             get_random_door_position(current_room, start_pos);
             get_random_door_position(next_room, end_pos);
-            if (place_hallway(state, start_pos, end_pos)) {
+            if (place_hallway(state, start_pos, end_pos, cells)) {
                 debug("Successfully placed additional hallway");
                 break;
             }
@@ -524,17 +534,27 @@ bool hallway_placement_pass(LevelGeneratingState *state) {
         }
     }
 
+    oct_Free(g_game.allocator, cells);
     return true;
 }
 
 // Finds a place something can be spawned in a room
-void find_spawn_in_room(RoomSpace *r, Position out_pos) {
-    out_pos[0] = random_int(r->top_left[0] + 2, r->top_left[0] + r->size[0] - 3);
-    out_pos[1] = random_int(r->top_left[1] + 2, r->top_left[1] + r->size[1] - 3);
+static void find_spawn_in_room(RoomSpace *r, Position out_pos) {
+    out_pos[0] = random_int(r->top_left[0] + 2, r->top_left[0] + r->size[0] - 4);
+    out_pos[1] = random_int(r->top_left[1] + 2, r->top_left[1] + r->size[1] - 4);
+}
+
+// checks if a spot found in find_spawn_in_room already exists in the spawn list
+static bool spot_exists_in_room(Position pos, Position *spots, int32_t count) {
+    for (int32_t i = 0; i < count; i++) {
+        if (pos[0] == spots[i][0] && pos[1] == spots[i][1])
+            return !is_wall_tile(pos);
+    }
+    return false;
 }
 
 // Finds a large amount of possible spawn points for things like items and characters
-void spawn_locating_pass(LevelGeneratingState *state) {
+static void spawn_locating_pass(LevelGeneratingState *state) {
     const int32_t spawns_per_room = 5;
     Level *level = &g_game.current_level;
     level->spawn_points = oct_Zalloc(g_game.allocator, spawns_per_room * sizeof(Position) * (state->room_count - 1));
@@ -542,19 +562,30 @@ void spawn_locating_pass(LevelGeneratingState *state) {
     int32_t spawn_point_counter = 0;
     for (int32_t room_index = 1; room_index < state->room_count; room_index++) {
         for (int32_t i = 0; i < spawns_per_room; i++) {
-            find_spawn_in_room(&state->rooms[room_index], level->spawn_points[spawn_point_counter++]);
+            Position pos;
+            find_spawn_in_room(&state->rooms[room_index], pos);
+            if (!spot_exists_in_room(pos, level->spawn_points, spawn_point_counter)) {
+                level->spawn_points[spawn_point_counter][0] = pos[0];
+                level->spawn_points[spawn_point_counter][1] = pos[1];
+                spawn_point_counter += 1;
+            }
         }
     }
+    level->spawn_points_count = spawn_point_counter;
 }
 
 // Checks if a given tile should have a door and places it if so
-void auto_place_door(LevelGeneratingState *state, Position pos) {
+static void auto_place_door(LevelGeneratingState *state, Position pos) {
     const bool above = is_edge_tile((Position){pos[0], pos[1] - 1});
     const bool below = is_edge_tile((Position){pos[0], pos[1] + 1});
     const bool right = is_edge_tile((Position){pos[0] + 1, pos[1]});
     const bool left = is_edge_tile((Position){pos[0] - 1, pos[1]});
+    const bool room_above = is_room_floor_tile((Position){pos[0], pos[1] - 1});
+    const bool room_below = is_room_floor_tile((Position){pos[0], pos[1] + 1});
+    const bool room_right = is_room_floor_tile((Position){pos[0] + 1, pos[1]});
+    const bool room_left = is_room_floor_tile((Position){pos[0] - 1, pos[1]});
     TileContents *tile = level_get_tile(pos);
-    if (tile && tile->type == TILE_CONTENTS_TYPE_NONE && ((above && below && !left && !right) || (!above && !below && left && right))) {
+    if (tile && tile->type == TILE_CONTENTS_TYPE_NONE && ((above && below && !left && !right && (room_left || room_right)) || (!above && !below && left && right && (room_above || room_below)))) {
         tile->type = TILE_CONTENTS_TYPE_WALL;
         tile->tile.door = true;
         oct_SetTilemap(state->shading_tilemap, pos[0], pos[1], TILE_DOOR_CLOSED);
@@ -562,7 +593,7 @@ void auto_place_door(LevelGeneratingState *state, Position pos) {
 }
 
 // Does the shading auto-tiling, places doors, places props
-void aesthetics_pass(LevelGeneratingState *state) {
+static void aesthetics_pass(LevelGeneratingState *state) {
     for (int32_t y = 0; y < state->params.level_size[1]; y++) {
         for (int32_t x = 0; x < state->params.level_size[0]; x++) {
             autotile(state->base_tilemap, state->shading_tilemap, x, y);
@@ -578,7 +609,7 @@ static void center_of_room(RoomSpace *r, Position center_out) {
 }
 
 // Places the stairs up and down
-void place_stairs_pass(LevelGeneratingState *state, Position out_player_pos) {
+static void place_stairs_pass(LevelGeneratingState *state, Position out_player_pos) {
     Position stairs_down, stairs_up;
     center_of_room(&state->rooms[0], stairs_down);
     center_of_room(&state->rooms[state->last_room], stairs_up);
@@ -588,13 +619,82 @@ void place_stairs_pass(LevelGeneratingState *state, Position out_player_pos) {
     out_player_pos[1] = stairs_down[1];
 }
 
+// Gets a random position in a room, will be floor
+static void get_random_position_in_room_on_floor(RoomSpace *r, Position out_pos) {
+    out_pos[0] = random_int(r->top_left[0] + 1, r->top_left[0] + r->size[0] - 3);
+    out_pos[1] = random_int(r->top_left[1] + 1, r->top_left[1] + r->size[1] - 3);
+}
+
+// gets a random position on the top wall of a room
+static void get_random_position_in_room_on_top_wall(RoomSpace *r, Position out_pos) {
+    out_pos[0] = random_int(r->top_left[0] + 1, r->top_left[0] + r->size[0] - 2);
+    out_pos[1] = r->top_left[1];
+}
+
+static bool prop_already_at_location(Position p) {
+    for (int32_t i = 0; i < MAX_PROPS; i++) {
+        if (g_game.current_level.props[i].pos[0] == p[0] && g_game.current_level.props[i].pos[1] == p[1])
+            return true;
+    }
+    return false;
+}
+
+// attempts to place a prop on the top edge of a wall, returns false if its a bad spot
+static bool attempt_place_edge_prop(Position p) {
+    if (current_prop_index >= MAX_PROPS) return false;
+    int32_t props[] = {0, 1, 2, 3, 9};
+    const int32_t prop_index = props[random_int(0, 5)];
+    Prop *prop = &g_game.current_level.props[current_prop_index++];
+    prop->pos[0] = p[0];
+    prop->pos[1] = p[1];
+    prop->active = true;
+    prop->prop_index = prop_index;
+    return true;
+}
+
+// attempts to place a prop on the floor of a room, returns false if its a bad spot
+static bool attempt_place_floor_prop(Position p) {
+    if (is_door_tile((Position){p[0] + 1, p[1] - 1}) || is_door_tile((Position){p[0] + 1, p[1] - 1})) return false;
+    if (current_prop_index >= MAX_PROPS) return false;
+    int32_t props[] = {4, 5, 6, 7, 8};
+    const int32_t prop_index = props[random_int(0, 5)];
+    Prop *prop = &g_game.current_level.props[current_prop_index++];
+    prop->pos[0] = p[0];
+    prop->pos[1] = p[1];
+    prop->active = true;
+    prop->prop_index = prop_index;
+    return true;
+}
+
 // places a number of props in a room
-void place_props_in_room(LevelGeneratingState *state, RoomSpace *room, int32_t prop_count) {
-    // TODO: This
+static void place_props_in_room(LevelGeneratingState *state, RoomSpace *room, int32_t prop_count) {
+    int32_t props_placed = 0;
+    int32_t iterations = 0;
+    const int32_t max_iterations = 30;
+
+    while (iterations < max_iterations && props_placed < prop_count) {
+        Position spot;
+        const int32_t type = random_int(0, 2);
+        if (type == 0) {
+            get_random_position_in_room_on_top_wall(room, spot);
+            if (!prop_already_at_location(spot))
+                props_placed += attempt_place_edge_prop(spot) ? 1 : 0;
+        } else if (type == 1) {
+            get_random_position_in_room_on_floor(room, spot);
+            if (!prop_already_at_location(spot))
+                props_placed += attempt_place_floor_prop(spot) ? 1 : 0;
+        } else {
+            oct_Raise(OCT_STATUS_ERROR, true, "Unhandled prop type");
+        }
+        iterations += 1;
+    }
+    if (iterations == max_iterations) {
+        oct_Raise(OCT_STATUS_ERROR, false, "Failed to place all props (placed %i/%i) in room [%i,%i,%i,%i]", props_placed, prop_count, room->top_left[0], room->top_left[1], room->size[0], room->size[1]);
+    }
 }
 
 // places props randomly in the level
-void place_props_pass(LevelGeneratingState *state) {
+static void place_props_pass(LevelGeneratingState *state) {
     const int32_t prop_count_per_room = 2;
     for (int32_t i = 0; i < state->room_count; i++)
         place_props_in_room(state, &state->rooms[i], prop_count_per_room);
@@ -659,6 +759,7 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     // Once we have the hallway everything else is guaranteed to succeed
     spawn_locating_pass(&state);
     aesthetics_pass(&state);
+    place_props_pass(&state);
     place_stairs_pass(&state, out_player_pos);
     debug_print_level(&state);
 
