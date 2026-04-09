@@ -588,6 +588,18 @@ void place_stairs_pass(LevelGeneratingState *state, Position out_player_pos) {
     out_player_pos[1] = stairs_down[1];
 }
 
+// places a number of props in a room
+void place_props_in_room(LevelGeneratingState *state, RoomSpace *room, int32_t prop_count) {
+    // TODO: This
+}
+
+// places props randomly in the level
+void place_props_pass(LevelGeneratingState *state) {
+    const int32_t prop_count_per_room = 2;
+    for (int32_t i = 0; i < state->room_count; i++)
+        place_props_in_room(state, &state->rooms[i], prop_count_per_room);
+}
+
 void generate_level(Level *level, LevelGenerationParameters *params, Position out_player_pos) {
     const int32_t spawns_per_room = 5;
     current_prop_index = 0;
