@@ -24,5 +24,4 @@ add_executable(${PROJECT_NAME}
         src/AttackAnimation.c
         src/PersistentEffects.c
 )
-target_compile_options(BleedingInTheBlur PRIVATE "/fsanitize=address")
 target_link_libraries(${PROJECT_NAME} OctarineEngine)

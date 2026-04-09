@@ -547,12 +547,26 @@ void spawn_locating_pass(LevelGeneratingState *state) {
     }
 }
 
+// Checks if a given tile should have a door and places it if so
+void auto_place_door(LevelGeneratingState *state, Position pos) {
+    const bool above = is_edge_tile((Position){pos[0], pos[1] - 1});
+    const bool below = is_edge_tile((Position){pos[0], pos[1] + 1});
+    const bool right = is_edge_tile((Position){pos[0] + 1, pos[1]});
+    const bool left = is_edge_tile((Position){pos[0] - 1, pos[1]});
+    TileContents *tile = level_get_tile(pos);
+    if (tile && tile->type == TILE_CONTENTS_TYPE_NONE && ((above && below && !left && !right) || (!above && !below && left && right))) {
+        tile->type = TILE_CONTENTS_TYPE_WALL;
+        tile->tile.door = true;
+        oct_SetTilemap(state->shading_tilemap, pos[0], pos[1], TILE_DOOR_CLOSED);
+    }
+}
+
 // Does the shading auto-tiling, places doors, places props
 void aesthetics_pass(LevelGeneratingState *state) {
     for (int32_t y = 0; y < state->params.level_size[1]; y++) {
         for (int32_t x = 0; x < state->params.level_size[0]; x++) {
             autotile(state->base_tilemap, state->shading_tilemap, x, y);
-            // TODO: Place doors
+            auto_place_door(state, (Position){x, y});
         }
     }
 }
