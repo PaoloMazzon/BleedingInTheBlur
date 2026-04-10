@@ -182,6 +182,12 @@ typedef enum {
     ITEM_TYPE_UTILITY_SPELL = 3, // spell that doesn't require a target, basically
     ITEM_TYPE_USABLE        = 4, // usable item with x charges
 } ItemType;
+typedef enum {
+    ANIMATION_SPEED_NONE   = 0, // (almost) no animations for combat
+    ANIMATION_SPEED_FULL   = 1, // intended animation speed
+    ANIMATION_SPEED_FAST   = 2, // faster than intended animation speed
+    ANIMATION_SPEED_FASTER = 3, // fastest without disappearing completely
+} AnimationSpeed;
 
 // These should all be bools
 struct Traits_s {
@@ -386,6 +392,14 @@ struct Character_s {
     int32_t selected_item;
     float actual_selected; // for tweening
 };
+
+// Configurable game options
+typedef struct Options_s {
+    float music_volume; // normalized 0-1
+    float sfx_volume; // normalized 0-1
+    AnimationSpeed animation_speed;
+    bool auto_pick_up_item; // pick up items without asking when there is free inventory space
+} Options;
 
 // Things that can be on a tile in the dungeon
 typedef struct TileContents_s {
@@ -609,6 +623,7 @@ typedef struct Game_s {
     Oct_Camera ui_camera; // ui camera (it'll be virtual screen size)
     Oct_Camera render_camera; // for the final backbuffer
     ScaleMode scale_mode;
+    Options options;
 
     // Level in the dungeon
     Level current_level;

@@ -9,6 +9,11 @@ void menu_begin();
 LevelIndex menu_update(); // return value is where to go
 void menu_end();
 
+// save and load current options in the game struct
+void load_options();
+void default_options();
+void save_options();
+
 void level_begin();
 LevelIndex level_update(); // return value is where to go
 void level_end();

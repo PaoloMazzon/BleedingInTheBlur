@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <string.h>
+#include <oct/cJSON.h>
 #include "Game.h"
 #include "Structs.h"
 
@@ -77,6 +78,7 @@ void *startup() {
     g_game.render_camera = oct_CreateCamera();
     g_game.assets = oct_LoadAssetBundle("data");
     g_game.allocator = oct_CreateHeapAllocator();
+    load_options();
 
     // Setup
     const float window_width = oct_WindowWidth();
@@ -214,6 +216,7 @@ void *update(void *ptr) {
 }
 
 void shutdown(void *ptr) {
+    save_options();
     oct_FreeAssetBundle(g_game.assets);
     oct_FreeAllocator(g_game.allocator);
 }
@@ -238,4 +241,58 @@ void debug(const char *fmt, ...) {
     fflush(stdout);
 #endif
     va_end(l);
+}
+
+static const Options default_options_struct = {
+        .music_volume = 1,
+        .sfx_volume = 1,
+        .animation_speed = ANIMATION_SPEED_FULL,
+        .auto_pick_up_item = false,
+};
+
+void load_options() {
+    uint32_t length;
+    void *json_buffer = oct_ReadFile("save.json", g_game.allocator, &length);
+    if (!json_buffer) {
+        oct_Raise(OCT_STATUS_ERROR, false, "Failed to open save file for reading");
+        default_options();
+        return;
+    }
+    cJSON *json = cJSON_ParseWithLength(json_buffer, length);
+
+    cJSON *music_volume_object = cJSON_GetObjectItem(json, "music");
+    g_game.options.music_volume = music_volume_object ? (float)cJSON_GetNumberValue(music_volume_object) : default_options_struct.music_volume;
+    cJSON *sfx_volume_object = cJSON_GetObjectItem(json, "sound");
+    g_game.options.sfx_volume = sfx_volume_object ? (float)cJSON_GetNumberValue(sfx_volume_object) : default_options_struct.sfx_volume;
+    cJSON *animation_speed_object = cJSON_GetObjectItem(json, "animation speed");
+    g_game.options.animation_speed = animation_speed_object ? (AnimationSpeed)cJSON_GetNumberValue(animation_speed_object) : default_options_struct.animation_speed;
+    cJSON *auto_pick_up_item_object = cJSON_GetObjectItem(json, "auto pickup");
+    g_game.options.auto_pick_up_item = auto_pick_up_item_object != nullptr && cJSON_IsTrue(auto_pick_up_item_object);
+
+    cJSON_Delete(json);
+    oct_Free(g_game.allocator, json_buffer);
+}
+
+void default_options() {
+    memcpy(&g_game.options, &default_options_struct, sizeof(Options));
+}
+
+void save_options() {
+    cJSON *json = cJSON_CreateObject();
+
+    cJSON_AddNumberToObject(json, "music", g_game.options.music_volume);
+    cJSON_AddNumberToObject(json, "sound", g_game.options.sfx_volume);
+    cJSON_AddNumberToObject(json, "animation speed", g_game.options.animation_speed);
+    cJSON_AddBoolToObject(json, "auto pickup", g_game.options.auto_pick_up_item);
+
+    FILE *f = fopen("save.json", "w");
+    if (f) {
+        char *text = cJSON_PrintUnformatted(json);
+        fprintf(f, "%s", text);
+        free(text);
+        fclose(f);
+    } else {
+        oct_Raise(OCT_STATUS_ERROR, false, "Failed to open save file for writing");
+    }
+    cJSON_Delete(json);
 }
