@@ -41,3 +41,11 @@ float timer_get_normalized(Timer *timer); // returns a float from 0-1 representi
 bool timer_is_done(Timer *timer); // returns true if the timer is done, only valid until timer_tick is called
 bool timer_in_use(Timer *timer); // returns true if the timer is currently in use
 int32_t timer_frames_left(Timer *timer);
+
+// Basic vector math - these always return the "out" variable where applicable
+int32_t *add_pos(Position lhs, Position rhs, Position out);
+int32_t *subtract_pos(Position lhs, Position rhs, Position out);
+int32_t dot_pos(Position lhs, Position rhs);
+float *add_vec2(Oct_Vec2 lhs, Oct_Vec2 rhs, Oct_Vec2 out);
+float *subtract_vec2(Oct_Vec2 lhs, Oct_Vec2 rhs, Oct_Vec2 out);
+float dot_vec2(Oct_Vec2 lhs, Oct_Vec2 rhs);

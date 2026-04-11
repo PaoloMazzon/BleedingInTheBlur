@@ -21,7 +21,6 @@ void load_sprite_options(const char *path, int32_t count, Oct_Sprite **dest_arra
     for (int32_t i = 0; i < count; i++) {
         temp_path[evil_index] = (char)(i + 48);
         array[i + 1] = oct_GetAsset(g_game.assets, temp_path);
-        debug("Looking for asset %s: %s", temp_path, array[i + 1] != OCT_NO_ASSET ? "FOUND" : "NOT FOUND");
     }
 }
 
@@ -79,6 +78,7 @@ void *startup() {
     g_game.assets = oct_LoadAssetBundle("data");
     g_game.allocator = oct_CreateHeapAllocator();
     load_options();
+    oct_SetFullscreen(g_game.options.fullscreen);
 
     // Setup
     const float window_width = oct_WindowWidth();
@@ -143,14 +143,23 @@ void *update(void *ptr) {
 
 
     // Toggle fullscreen
-    if (oct_KeyDown(OCT_KEY_LALT) && oct_KeyPressed(OCT_KEY_RETURN))
-        oct_SetFullscreen(!oct_WindowIsFullscreen());
-    if (oct_KeyPressed(OCT_KEY_1))
-        g_game.scale_mode = SCALE_MODE_INTEGER;
-    if (oct_KeyPressed(OCT_KEY_2))
-        g_game.scale_mode = SCALE_MODE_ASPECT_RATIO;
-    if (oct_KeyPressed(OCT_KEY_3))
-        g_game.scale_mode = SCALE_MODE_STRETCH;
+    if (oct_KeyDown(OCT_KEY_LALT) && oct_KeyPressed(OCT_KEY_RETURN)) {
+        g_game.options.fullscreen = !g_game.options.fullscreen;
+        oct_SetFullscreen(g_game.options.fullscreen);
+        save_options();
+    }
+    if (oct_KeyPressed(OCT_KEY_1)) {
+        g_game.options.scale_mode = SCALE_MODE_INTEGER;
+        save_options();
+    }
+    if (oct_KeyPressed(OCT_KEY_2)) {
+        g_game.options.scale_mode = SCALE_MODE_ASPECT_RATIO;
+        save_options();
+    }
+    if (oct_KeyPressed(OCT_KEY_3)) {
+        g_game.options.scale_mode = SCALE_MODE_STRETCH;
+        save_options();
+    }
     if (oct_KeyPressed(OCT_KEY_F1))
         debug_mode = !debug_mode;
     const float window_width = oct_WindowWidth();
@@ -167,7 +176,7 @@ void *update(void *ptr) {
     oct_SetTextureCamerasEnabled(false);
     oct_LockCameras(g_game.render_camera);
     oct_DrawClear(&(Oct_Colour){.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = 1.0f});
-    if (g_game.scale_mode == SCALE_MODE_INTEGER) {
+    if (g_game.options.scale_mode == SCALE_MODE_INTEGER) {
         const float scale_x = floorf(window_width / VIRTUAL_WIDTH);
         const float scale_y = floorf(window_height / VIRTUAL_HEIGHT);
         const float scale = scale_x < scale_y ? scale_x : scale_y;
@@ -178,7 +187,7 @@ void *update(void *ptr) {
                 (Oct_Vec2) {x_offset, y_offset},
                 (Oct_Vec2) {scale, scale},
                 0, (Oct_Vec2) {0, 0});
-    } else if (g_game.scale_mode == SCALE_MODE_ASPECT_RATIO) {
+    } else if (g_game.options.scale_mode == SCALE_MODE_ASPECT_RATIO) {
         const float scale_x = window_width / VIRTUAL_WIDTH;
         const float scale_y = window_height / VIRTUAL_HEIGHT;
         const float scale = scale_x < scale_y ? scale_x : scale_y;
@@ -249,7 +258,23 @@ static const Options default_options_struct = {
     .animation_speed = ANIMATION_SPEED_FULL,
     .auto_pick_up_item = false,
     .animate_enemy_movement = true,
+    .scale_mode = SCALE_MODE_INTEGER,
+    .fullscreen = true,
 };
+
+// json should be a json object
+static double get_json_number_with_default(cJSON *json, const char *name, double default_val) {
+    cJSON *nested = cJSON_GetObjectItem(json, name);
+    if (!nested) return default_val;
+    return cJSON_GetNumberValue(nested);
+}
+
+// json should be a json object
+static bool get_json_bool_with_default(cJSON *json, const char *name, bool default_val) {
+    cJSON *nested = cJSON_GetObjectItem(json, name);
+    if (!nested) return default_val;
+    return cJSON_IsTrue(nested);
+}
 
 void load_options() {
     uint32_t length;
@@ -261,16 +286,13 @@ void load_options() {
     }
     cJSON *json = cJSON_ParseWithLength(json_buffer, length);
 
-    cJSON *music_volume_object = cJSON_GetObjectItem(json, "music");
-    g_game.options.music_volume = music_volume_object ? (float)cJSON_GetNumberValue(music_volume_object) : default_options_struct.music_volume;
-    cJSON *sfx_volume_object = cJSON_GetObjectItem(json, "sound");
-    g_game.options.sfx_volume = sfx_volume_object ? (float)cJSON_GetNumberValue(sfx_volume_object) : default_options_struct.sfx_volume;
-    cJSON *animation_speed_object = cJSON_GetObjectItem(json, "animation speed");
-    g_game.options.animation_speed = animation_speed_object ? (AnimationSpeed)cJSON_GetNumberValue(animation_speed_object) : default_options_struct.animation_speed;
-    cJSON *auto_pick_up_item_object = cJSON_GetObjectItem(json, "auto pickup");
-    g_game.options.auto_pick_up_item = auto_pick_up_item_object != nullptr && cJSON_IsTrue(auto_pick_up_item_object);
-    cJSON *animate_enemy_movement_object = cJSON_GetObjectItem(json, "animate enemy movement");
-    g_game.options.animate_enemy_movement = animate_enemy_movement_object != nullptr && cJSON_IsTrue(auto_pick_up_item_object);
+    g_game.options.music_volume = (float)get_json_number_with_default(json, "music", default_options_struct.music_volume);
+    g_game.options.sfx_volume = (float)get_json_number_with_default(json, "sound", default_options_struct.sfx_volume);
+    g_game.options.animation_speed = (AnimationSpeed)get_json_number_with_default(json, "animation speed", default_options_struct.animation_speed);
+    g_game.options.auto_pick_up_item = get_json_bool_with_default(json, "auto pickup", default_options_struct.auto_pick_up_item);
+    g_game.options.animate_enemy_movement = get_json_bool_with_default(json, "animate enemy movement", default_options_struct.animate_enemy_movement);
+    g_game.options.fullscreen = get_json_bool_with_default(json, "fullscreen", default_options_struct.fullscreen);
+    g_game.options.scale_mode = (ScaleMode)get_json_number_with_default(json, "scale mode", default_options_struct.scale_mode);
 
     cJSON_Delete(json);
     oct_Free(g_game.allocator, json_buffer);
@@ -288,6 +310,8 @@ void save_options() {
     cJSON_AddNumberToObject(json, "animation speed", g_game.options.animation_speed);
     cJSON_AddBoolToObject(json, "auto pickup", g_game.options.auto_pick_up_item);
     cJSON_AddBoolToObject(json, "animate enemy movement", g_game.options.animate_enemy_movement);
+    cJSON_AddBoolToObject(json, "fullscreen", g_game.options.fullscreen);
+    cJSON_AddNumberToObject(json, "scale mode", g_game.options.scale_mode);
 
     FILE *f = fopen("save.json", "w");
     if (f) {

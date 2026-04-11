@@ -622,7 +622,16 @@ static void draw_skill_pips_for_group(Oct_Vec2 position, float direction, Statbl
     }
 }
 
-void draw_level_menu() {
+// Position is where the weapon icon will be drawn, text to the right of it
+static void draw_weapon_information(Oct_Vec2 position, Weapon *weapon) {
+    // TODO: This
+    const Oct_Vec2 weapon_icon_offset = {2, 2};
+    const Oct_Vec2 weapon_name_offset = {28, 4};
+    const Oct_Vec2 weapon_stats_offset = {28, 24};
+    const Oct_Vec2 weapon_traits_offset = {28, 44};
+}
+
+static void draw_level_menu() {
     // We don't bother drawing if the menu has been tweened off-screen
     const float target_y = g_game.current_level.state == LEVEL_STATE_PLAYER_MENU ? 16 : -193;
     g_game.current_level.menu.real_y += (target_y - g_game.current_level.menu.real_y) * 0.4f;
@@ -731,11 +740,8 @@ void draw_level_menu() {
         //    Damage + Range
         //    Traits
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuweaponspage.png"), (Oct_Vec2) {start_x, start_y});
-        const float main_weapon_x = 0;
-        const float main_weapon_y = 0;
-        const float soulbound_weapon_x = 0;
-        const float soulbound_weapon_y = 0;
-        // TODO: This
+        draw_weapon_information((Oct_Vec2){start_x + 23, start_y + 42}, &g_game.player.soul_bound_weapon);
+        draw_weapon_information((Oct_Vec2){start_x + 23, start_y + 121}, &g_game.player.soul_bound_weapon);
     } else if (g_game.current_level.menu.tab == MENU_TAB_OPTIONS) {
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuoptionspage.png"), (Oct_Vec2) {start_x, start_y});
         // TODO: This

@@ -399,7 +399,9 @@ typedef struct Options_s {
     float sfx_volume; // normalized 0-1
     AnimationSpeed animation_speed;
     bool auto_pick_up_item; // pick up items without asking when there is free inventory space
-    bool animate_enemy_movement;
+    bool animate_enemy_movement; // should the camera look at enemies when they are close by
+    bool fullscreen;
+    ScaleMode scale_mode;
 } Options;
 
 // Things that can be on a tile in the dungeon
@@ -623,7 +625,6 @@ typedef struct Game_s {
     Oct_Camera world_camera; // in-game-world camera
     Oct_Camera ui_camera; // ui camera (it'll be virtual screen size)
     Oct_Camera render_camera; // for the final backbuffer
-    ScaleMode scale_mode;
     Options options;
 
     // Level in the dungeon
