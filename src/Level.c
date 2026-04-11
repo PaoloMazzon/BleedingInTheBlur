@@ -81,7 +81,7 @@ bool characters_update() {
         } else if (level_attack_animation_complete()) {
             level_next_enemy_turn();
         }
-    } else if (!g_game.current_level.world_turn && g_game.current_level.state == LEVEL_STATE_ENEMY_TURN) {
+    } else if (!g_game.current_level.world_turn && g_game.current_level.state == LEVEL_STATE_ENEMY_TURN && !level_in_attack_animation()) {
         g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
     }
     return false;
@@ -991,7 +991,6 @@ void level_next_enemy_turn() {
             return;
         }
     }
-    g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
     g_game.current_level.world_turn = false;
 }
 
