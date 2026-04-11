@@ -188,7 +188,7 @@ void setup_melee_animation(Character *attacker, Character *receiver, const Trait
     g_game.current_level.Attack.attack_animation_type = ATTACK_ANIMATION_TYPE_MELEE;
     g_game.current_level.Attack.damage = damage;
     g_game.current_level.Attack.successful = passed;
-    timer_start(&g_game.current_level.Attack.animation_timer, ATTACK_ANIMATION_DURATION);
+    timer_start(&g_game.current_level.Attack.animation_timer, get_options_attack_duration());
     g_game.current_level.Attack.tex = OCT_NO_ASSET;
     g_game.current_level.Attack.attacker = attacker;
     g_game.current_level.Attack.receiver = receiver;
@@ -199,7 +199,7 @@ void setup_ranged_animation(Character *attacker, Character *receiver, const Trai
     g_game.current_level.Attack.attack_animation_type = ATTACK_ANIMATION_TYPE_RANGED;
     g_game.current_level.Attack.damage = damage;
     g_game.current_level.Attack.successful = passed;
-    timer_start(&g_game.current_level.Attack.animation_timer, ATTACK_ANIMATION_DURATION);
+    timer_start(&g_game.current_level.Attack.animation_timer, get_options_attack_duration());
     g_game.current_level.Attack.tex = projectile;
     g_game.current_level.Attack.attacker = attacker;
     g_game.current_level.Attack.receiver = receiver;
@@ -212,7 +212,7 @@ void setup_ranged_animation(Character *attacker, Character *receiver, const Trai
     const float angle = oct_PointAngle(
             (Oct_Vec2){(float)attacker->pos[0] * CELL_WIDTH, (float)attacker->pos[1] * CELL_HEIGHT},
             (Oct_Vec2){(float)receiver->pos[0] * CELL_WIDTH, (float)receiver->pos[1] * CELL_HEIGHT});
-    const float frames_before_fadeout = ((float)ATTACK_ANIMATION_DURATION * g_game.current_level.Attack.percent_time_before_fadeout);
+    const float frames_before_fadeout = ((float)get_options_attack_duration() * g_game.current_level.Attack.percent_time_before_fadeout);
     g_game.current_level.Attack.projectile_velocity[0] = (receiver_x - attacker_x) / frames_before_fadeout;
     g_game.current_level.Attack.projectile_velocity[1] = (receiver_y - attacker_y) / frames_before_fadeout;
     if (!passed) {

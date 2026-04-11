@@ -13,6 +13,7 @@ void menu_end();
 void load_options();
 void default_options();
 void save_options();
+int32_t get_options_attack_duration();
 
 void level_begin();
 LevelIndex level_update(); // return value is where to go

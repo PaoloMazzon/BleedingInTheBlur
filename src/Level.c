@@ -63,7 +63,11 @@ bool characters_update() {
             character_take_turn(enemy);
             timer_start(&g_game.current_level.enemy_move_timer, 30 / 2);
         } else if (!timer_in_use(&g_game.current_level.enemy_delayed_turn_timer) && !level_in_attack_animation() && !timer_in_use(&g_game.current_level.enemy_move_timer)) {
-            if (tile_distance(enemy->pos, g_game.player.pos) > 5 || tiles_have_walls_between(enemy->pos, g_game.player.pos)) {
+            // Enemy turns will happen instantly if they either
+            //  a) are > 5 tiles away from the player
+            //  b) they have a wall between the player and them (slightly janky)
+            //  c) the player has requested instant turns in the options
+            if (tile_distance(enemy->pos, g_game.player.pos) > 5 || tiles_have_walls_between(enemy->pos, g_game.player.pos) || !g_game.options.animate_enemy_movement) {
                 // Take turn instantly
                 character_take_turn(enemy);
                 level_next_enemy_turn();
@@ -719,7 +723,15 @@ void draw_level_menu() {
             g_game.player.items[g_game.current_level.menu.cursor_y].type = ITEM_TYPE_NONE;
         }
     } else if (g_game.current_level.menu.tab == MENU_TAB_WEAPONS) {
+        // Weapon should be [O] Name
+        // [Icon] Name
+        //    Damage + Range
+        //    Traits
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuweaponspage.png"), (Oct_Vec2) {start_x, start_y});
+        const float main_weapon_x = 0;
+        const float main_weapon_y = 0;
+        const float soulbound_weapon_x = 0;
+        const float soulbound_weapon_y = 0;
         // TODO: This
     } else if (g_game.current_level.menu.tab == MENU_TAB_OPTIONS) {
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuoptionspage.png"), (Oct_Vec2) {start_x, start_y});

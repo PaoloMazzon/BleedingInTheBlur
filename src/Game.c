@@ -244,10 +244,11 @@ void debug(const char *fmt, ...) {
 }
 
 static const Options default_options_struct = {
-        .music_volume = 1,
-        .sfx_volume = 1,
-        .animation_speed = ANIMATION_SPEED_FULL,
-        .auto_pick_up_item = false,
+    .music_volume = 1,
+    .sfx_volume = 1,
+    .animation_speed = ANIMATION_SPEED_FULL,
+    .auto_pick_up_item = false,
+    .animate_enemy_movement = true,
 };
 
 void load_options() {
@@ -268,6 +269,8 @@ void load_options() {
     g_game.options.animation_speed = animation_speed_object ? (AnimationSpeed)cJSON_GetNumberValue(animation_speed_object) : default_options_struct.animation_speed;
     cJSON *auto_pick_up_item_object = cJSON_GetObjectItem(json, "auto pickup");
     g_game.options.auto_pick_up_item = auto_pick_up_item_object != nullptr && cJSON_IsTrue(auto_pick_up_item_object);
+    cJSON *animate_enemy_movement_object = cJSON_GetObjectItem(json, "animate enemy movement");
+    g_game.options.animate_enemy_movement = animate_enemy_movement_object != nullptr && cJSON_IsTrue(auto_pick_up_item_object);
 
     cJSON_Delete(json);
     oct_Free(g_game.allocator, json_buffer);
@@ -284,6 +287,7 @@ void save_options() {
     cJSON_AddNumberToObject(json, "sound", g_game.options.sfx_volume);
     cJSON_AddNumberToObject(json, "animation speed", g_game.options.animation_speed);
     cJSON_AddBoolToObject(json, "auto pickup", g_game.options.auto_pick_up_item);
+    cJSON_AddBoolToObject(json, "animate enemy movement", g_game.options.animate_enemy_movement);
 
     FILE *f = fopen("save.json", "w");
     if (f) {
@@ -295,4 +299,19 @@ void save_options() {
         oct_Raise(OCT_STATUS_ERROR, false, "Failed to open save file for writing");
     }
     cJSON_Delete(json);
+}
+
+int32_t get_options_attack_duration() {
+    switch (g_game.options.animation_speed) {
+        case (ANIMATION_SPEED_FAST):
+            return 15;
+        case (ANIMATION_SPEED_FULL):
+            return 25;
+        case (ANIMATION_SPEED_FASTER):
+            return 8;
+        case (ANIMATION_SPEED_NONE):
+            return 1;
+    }
+    oct_Raise(OCT_STATUS_ERROR, true, "Attack animation duration is invalid %i", g_game.options.animation_speed);
+    return 0;
 }

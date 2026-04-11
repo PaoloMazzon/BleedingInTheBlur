@@ -76,8 +76,6 @@ const int32_t BASE_STAT_MAX             = 10;
 const int32_t STARTING_SKILL_PIPS       = 22;
 const int32_t TIMESTAMP_NOT_IN_USE      = 0;
 
-const int32_t ATTACK_ANIMATION_DURATION = 15;
-
 const float CELL_WIDTH       = 8;
 const float CELL_HEIGHT      = 8;
 const float VIRTUAL_WIDTH    = 320;

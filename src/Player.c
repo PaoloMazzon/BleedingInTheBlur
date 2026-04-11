@@ -99,6 +99,22 @@ static bool player_attack_view_state() {
     return false;
 }
 
+// Places an item into player inventory at given index -- must be an item at the tile location where the player is
+static void pickup_item(int32_t item_index) {
+    // Call the old item's exit inventory callback
+    if (g_game.player.items[item_index].exit_inventory_callback)
+        g_game.player.items[item_index].exit_inventory_callback(&g_game.player);
+    level_extract_tile_item(g_game.player.pos, &g_game.player.items[item_index]);
+    // Call the new item's enter inventory callback
+    if (g_game.player.items[item_index].enter_inventory_callback)
+        g_game.player.items[item_index].enter_inventory_callback(&g_game.player);
+}
+
+// Replaces player's current soul-bound weapon with whatever is on the ground -- must be an item at the tile location where the player is
+static void pickup_weapon() {
+    level_extract_tile_weapon(g_game.player.pos, &g_game.player.soul_bound_weapon);
+}
+
 static bool player_interaction_state() {
     Character *player = &g_game.player;
     int32_t item_index;
@@ -108,20 +124,14 @@ static bool player_interaction_state() {
     if (popup_get_weapon(g_game.current_level.weapon_popup, &selected_the_weapon)) {
         debug("Player completed weapon popup with result %s.", selected_the_weapon ? "true" : "false");
         if (selected_the_weapon) {
-            level_extract_tile_weapon(g_game.player.pos, &g_game.player.soul_bound_weapon);
+            pickup_weapon();
         }
         return true;
     }
     if (popup_get_item(g_game.current_level.item_popup, &item_index)) {
         debug("Player completed item popup with result %i.", item_index);
         if (item_index != -1) {
-            // Call the old item's exit inventory callback
-            if (g_game.player.items[item_index].exit_inventory_callback)
-                g_game.player.items[item_index].exit_inventory_callback(&g_game.player);
-            level_extract_tile_item(g_game.player.pos, &g_game.player.items[item_index]);
-            // Call the new item's enter inventory callback
-            if (g_game.player.items[item_index].enter_inventory_callback)
-                g_game.player.items[item_index].enter_inventory_callback(&g_game.player);
+            pickup_item(item_index);
         }
         return true;
     }

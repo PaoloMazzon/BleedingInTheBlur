@@ -399,6 +399,7 @@ typedef struct Options_s {
     float sfx_volume; // normalized 0-1
     AnimationSpeed animation_speed;
     bool auto_pick_up_item; // pick up items without asking when there is free inventory space
+    bool animate_enemy_movement;
 } Options;
 
 // Things that can be on a tile in the dungeon
