@@ -88,3 +88,4 @@ http-client.private.env.json
 *.log
 BleedingintheBlur/
 data/
+save.json

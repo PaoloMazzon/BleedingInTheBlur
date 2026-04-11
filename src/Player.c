@@ -190,11 +190,28 @@ static bool player_interaction_state() {
             // If we moved onto a weapon/item, we should show the popup to pick it up before passing turn
             TileContents *tile = level_get_tile(player->pos);
             if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_WEAPON) {
-                g_game.current_level.weapon_popup = popup_weapon_select(tile->weapon);
-                debug("Player hit weapon popup.");
+                if (g_game.options.auto_pick_up_item && g_game.player.soul_bound_weapon.type == WEAPON_TYPE_NONE) {
+                    pickup_weapon();
+                    debug("Player automatically picked up weapon");
+                } else {
+                    g_game.current_level.weapon_popup = popup_weapon_select(tile->weapon);
+                    debug("Player hit weapon popup.");
+                }
             } else if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_ITEM) {
-                g_game.current_level.item_popup = popup_item_select(tile->item);
-                debug("Player hit item popup.");
+                int32_t available_item_index = -1;
+                for (int32_t i = 0; i < INVENTORY_SIZE; i++) {
+                    if (player->items[i].type == ITEM_TYPE_NONE) {
+                        available_item_index = i;
+                        break;
+                    }
+                }
+                if (g_game.options.auto_pick_up_item && available_item_index != -1) {
+                    pickup_item(available_item_index);
+                    debug("Player automatically picked up weapon");
+                } else {
+                    g_game.current_level.item_popup = popup_item_select(tile->item);
+                    debug("Player hit item popup.");
+                }
             } else {
                 player_has_taken_actions = true;
             }

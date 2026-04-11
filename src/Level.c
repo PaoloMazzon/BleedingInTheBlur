@@ -66,7 +66,7 @@ bool characters_update() {
             // Enemy turns will happen instantly if they either
             //  a) are > 5 tiles away from the player
             //  b) they have a wall between the player and them (slightly janky)
-            //  c) the player has requested instant turns in the options
+            //  c) the player has requested instant turns in the options TODO: This doesn't work
             if (tile_distance(enemy->pos, g_game.player.pos) > 5 || tiles_have_walls_between(enemy->pos, g_game.player.pos) || !g_game.options.animate_enemy_movement) {
                 // Take turn instantly
                 character_take_turn(enemy);
@@ -393,6 +393,17 @@ static TileVisibility tile_visible_to_player(Position tile, Statblock *player_cu
     return TILE_VISIBILITY_FULLY_VISIBLE;
 }
 
+
+void draw_props() {
+    const Oct_Sprite sprite = oct_GetAsset(g_game.assets, "props.json");
+    for (int32_t i = 0; i < MAX_PROPS; i++) {
+        if (!g_game.current_level.props[i].active) continue;
+        oct_DrawSpriteFrame(
+                sprite, g_game.current_level.props[i].prop_index,
+                (Oct_Vec2){g_game.current_level.props[i].pos[0] * CELL_WIDTH, g_game.current_level.props[i].pos[1] * CELL_HEIGHT});
+    }
+}
+
 static void draw_tiles() {
     float camera_x, camera_y;
     get_camera_coords(&camera_x, &camera_y, nullptr, nullptr);
@@ -409,6 +420,8 @@ static void draw_tiles() {
 
     oct_DrawTexture(g_game.current_level.level_tex, (Oct_Vec2){0, 0});
 
+    draw_props();
+
     // Draw the weapons/items on these tiles
     for (int32_t y = start_draw_y; y < start_draw_y + tile_vertical; y++) {
         for (int32_t x = start_draw_x; x < start_draw_x + tile_horizontal; x++) {
@@ -418,16 +431,6 @@ static void draw_tiles() {
                 oct_DrawTexture(oct_GetAsset(g_game.assets, "objects/item.png"), (Oct_Vec2){x * CELL_WIDTH, y * CELL_HEIGHT});
             }
         }
-    }
-}
-
-void draw_props() {
-    const Oct_Sprite sprite = oct_GetAsset(g_game.assets, "props.json");
-    for (int32_t i = 0; i < MAX_PROPS; i++) {
-        if (!g_game.current_level.props[i].active) continue;
-        oct_DrawSpriteFrame(
-                sprite, g_game.current_level.props[i].prop_index,
-                (Oct_Vec2){g_game.current_level.props[i].pos[0] * CELL_WIDTH, g_game.current_level.props[i].pos[1] * CELL_HEIGHT});
     }
 }
 
@@ -834,7 +837,6 @@ LevelIndex level_update() {
     // Drawing the world
     oct_LockCameras(g_game.world_camera);
     draw_tiles();
-    draw_props();
     draw_characters();
     draw_fog_of_war();
     draw_character_outlines();
