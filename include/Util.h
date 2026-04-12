@@ -43,9 +43,9 @@ bool timer_in_use(Timer *timer); // returns true if the timer is currently in us
 int32_t timer_frames_left(Timer *timer);
 
 // Basic vector math - these always return the "out" variable where applicable
-int32_t *add_pos(Position lhs, Position rhs, Position out);
-int32_t *subtract_pos(Position lhs, Position rhs, Position out);
-int32_t dot_pos(Position lhs, Position rhs);
-float *add_vec2(Oct_Vec2 lhs, Oct_Vec2 rhs, Oct_Vec2 out);
-float *subtract_vec2(Oct_Vec2 lhs, Oct_Vec2 rhs, Oct_Vec2 out);
-float dot_vec2(Oct_Vec2 lhs, Oct_Vec2 rhs);
+int32_t *add_pos(const Position lhs, const Position rhs, Position out);
+int32_t *subtract_pos(const Position lhs, const Position rhs, Position out);
+int32_t dot_pos(const Position lhs, const Position rhs);
+float *add_vec2(const Oct_Vec2 lhs, const Oct_Vec2 rhs, Oct_Vec2 out);
+float *subtract_vec2(const Oct_Vec2 lhs, const Oct_Vec2 rhs, Oct_Vec2 out);
+float dot_vec2(const Oct_Vec2 lhs, const Oct_Vec2 rhs);

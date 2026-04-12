@@ -108,34 +108,34 @@ int32_t timer_frames_left(Timer *timer) {
     return timer->end_frame - g_game.frame;
 }
 
-int32_t *add_pos(Position lhs, Position rhs, Position out) {
+int32_t *add_pos(const Position lhs, const Position rhs, Position out) {
     out[0] = lhs[0] + rhs[0];
     out[1] = lhs[1] + rhs[1];
     return out;
 }
 
-int32_t *subtract_pos(Position lhs, Position rhs, Position out) {
+int32_t *subtract_pos(const Position lhs, const Position rhs, Position out) {
     out[0] = lhs[0] - rhs[0];
     out[1] = lhs[1] - rhs[1];
     return out;
 }
 
-int32_t dot_pos(Position lhs, Position rhs) {
+int32_t dot_pos(const Position lhs, const Position rhs) {
     return (lhs[0] * rhs[0]) + (lhs[1] * rhs[1]);
 }
 
-float *add_vec2(Oct_Vec2 lhs, Oct_Vec2 rhs, Oct_Vec2 out) {
+float *add_vec2(const Oct_Vec2 lhs, const Oct_Vec2 rhs, Oct_Vec2 out) {
     out[0] = lhs[0] + rhs[0];
     out[1] = lhs[1] + rhs[1];
     return out;
 }
 
-float *subtract_vec2(Oct_Vec2 lhs, Oct_Vec2 rhs, Oct_Vec2 out) {
+float *subtract_vec2(const Oct_Vec2 lhs, const Oct_Vec2 rhs, Oct_Vec2 out) {
     out[0] = lhs[0] - rhs[0];
     out[1] = lhs[1] - rhs[1];
     return out;
 }
 
-float dot_vec2(Oct_Vec2 lhs, Oct_Vec2 rhs) {
+float dot_vec2(const Oct_Vec2 lhs, const Oct_Vec2 rhs) {
     return (lhs[0] * rhs[0]) + (lhs[1] * rhs[1]);
 }
