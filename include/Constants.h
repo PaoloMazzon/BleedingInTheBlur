@@ -86,6 +86,7 @@ extern const struct Traits_s RUST_SELF_DAMAGE_TRAITS;
 #define GLYPH_UP ";"
 #define GLYPH_DOWN "<"
 #define GLYPH_POINT_RIGHT "="
+#define GLYPH_RANGE ">"
 
 #define MAX_ALARMS 100
 #define INVENTORY_SIZE 4

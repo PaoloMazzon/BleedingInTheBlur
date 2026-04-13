@@ -626,15 +626,18 @@ static void draw_skill_pips_for_group(Oct_Vec2 position, float direction, Statbl
 static void draw_weapon_information(Oct_Vec2 position, Weapon *weapon) {
     if (weapon->type == WEAPON_TYPE_NONE) return;
     const Oct_Vec2 weapon_icon_offset = {2, 2};
-    const Oct_Vec2 weapon_name_offset = {28, 4};
-    const Oct_Vec2 weapon_stats_offset = {28, 24};
+    const Oct_Vec2 weapon_name_offset = {28, 3};
+    const Oct_Vec2 weapon_stats_offset = {23, 24};
     const Oct_Vec2 weapon_traits_offset = {28, 44};
     Oct_Vec2 sum_result;
     Oct_FontAtlas fancy_font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    Oct_FontAtlas dice_font = oct_GetAsset(g_game.assets, "fnt_dice");
     oct_DrawTexture(weapon->icon, add_vec2(position, weapon_icon_offset, sum_result));
     oct_DrawText(fancy_font, add_vec2(position, weapon_name_offset, sum_result), 1, "%s", weapon->info.name);
     traits_draw(&weapon->info.traits, add_vec2(position, weapon_traits_offset, sum_result), true, false);
-    // TODO: Draw weapon stats
+    int32_t pips, dc;
+    character_get_attack_base_stats(&g_game.player, &weapon->info.traits, &pips, &dc);
+    oct_DrawText(dice_font, add_vec2(position, weapon_stats_offset, sum_result), 1, "1%s%i%s%s%i %s%i", GLYPH_D8, pips, GLYPH_D6, GLYPH_ARROW, dc, GLYPH_RANGE, weapon->range);
 }
 
 static void draw_level_menu() {
@@ -746,7 +749,7 @@ static void draw_level_menu() {
         //    Damage + Range
         //    Traits
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuweaponspage.png"), (Oct_Vec2) {start_x, start_y});
-        draw_weapon_information((Oct_Vec2){start_x + 23, start_y + 42}, &g_game.player.soul_bound_weapon);
+        draw_weapon_information((Oct_Vec2){start_x + 23, start_y + 42}, &g_game.player.starting_weapon);
         draw_weapon_information((Oct_Vec2){start_x + 23, start_y + 121}, &g_game.player.soul_bound_weapon);
     } else if (g_game.current_level.menu.tab == MENU_TAB_OPTIONS) {
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuoptionspage.png"), (Oct_Vec2) {start_x, start_y});
