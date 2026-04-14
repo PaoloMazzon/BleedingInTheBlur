@@ -54,7 +54,11 @@ void traits_draw(Traits *traits, const Oct_Vec2 position, bool attack_traits, bo
         if (traits->Character.soul_bind)     trait_string[trait_string_index++] = 95;
     }
 
-    // TODO: Draw the trait string
+    oct_DrawText(
+            oct_GetAsset(g_game.assets, "fnt_traiticons"),
+            position,
+            1,
+            "%s", trait_string);
 }
 
 void base_statblock(Statblock *sb) {
