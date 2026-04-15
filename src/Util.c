@@ -32,6 +32,13 @@ void update_camera_coords() {
     camera_actual_zoom += (camera_zoom - camera_actual_zoom) * 0.4f;
 }
 
+void set_camera_coords(Position p) {
+    camera_x = (((float)p[0] * CELL_WIDTH) + (CELL_WIDTH / 2)) - (camera_w / 2);
+    camera_y = (((float)(p[1] + 1) * CELL_HEIGHT) + (CELL_HEIGHT / 2)) - (camera_h / 2);
+    camera_w = camera_actual_zoom * GAME_VIEW_WIDTH;
+    camera_h = camera_actual_zoom * GAME_VIEW_HEIGHT;
+}
+
 void get_camera_coords(float *x, float *y, float *w, float *h) {
     if (x) *x = roundf(camera_x);
     if (y) *y = roundf(camera_y);

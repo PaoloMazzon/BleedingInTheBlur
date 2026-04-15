@@ -273,7 +273,7 @@ static void room_placement_pass(LevelGeneratingState *state) {
 
         if (!found_spot_for_a_room && !revert_to_lowest_size) {
             revert_to_lowest_size = true;
-            state->room_count += 1;
+            i--;
             debug("Ran out of space for room size [%i,%i] at room %i. Reverting to smallest room.", room_size[0], room_size[1], i);
         } else if (!found_spot_for_a_room /* && revert_to_lowest_size */) {
             debug("Ran out of space for more rooms at room %i", i);

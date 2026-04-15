@@ -650,6 +650,10 @@ static void draw_level_menu() {
     const float start_x = 32;
     const float start_y = g_game.current_level.menu.real_y;
 
+    // Interpolate item cursor
+    const float cursor_target_y = start_y + 43 + (g_game.current_level.menu.cursor_y * 32);
+    g_game.current_level.menu.cursor_real_y += (cursor_target_y - g_game.current_level.menu.cursor_real_y) * 0.4f;
+
     oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menubackground.png"), (Oct_Vec2){start_x, start_y});
 
     if (g_game.current_level.menu.tab == MENU_TAB_STATS) {
@@ -710,10 +714,6 @@ static void draw_level_menu() {
                         1, "~ %s", g_game.player.items[i].real_name);
             }
         }
-
-        // Interpolate item cursor
-        const float cursor_target_y = start_y + 43 + (g_game.current_level.menu.cursor_y * 32);
-        g_game.current_level.menu.cursor_real_y += (cursor_target_y - g_game.current_level.menu.cursor_real_y) * 0.4f;
 
         // Draw the item cursor
         oct_DrawTextureInt(
@@ -790,6 +790,9 @@ void level_begin() {
     g_game.current_level.tile_visibilities_turn = oct_Zalloc(g_game.allocator, sizeof(int32_t) * params.level_size[0] * params.level_size[1]);
     player_init(player_start_pos);
     g_game.current_level.menu.real_y = -200;
+
+    // Set camera to the player
+    set_camera_coords(g_game.player.pos);
 
     // Debug
     for (int32_t i = 0; i < 5; i++) {
