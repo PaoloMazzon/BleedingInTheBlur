@@ -187,6 +187,7 @@ static bool player_interaction_state() {
     Character *player = &g_game.player;
     int32_t item_index;
     bool selected_the_weapon;
+    bool confirmed_go_to_next_floor;
 
     // Skip the turn if a popup just resolved
     if (popup_get_weapon(g_game.current_level.weapon_popup, &selected_the_weapon)) {
@@ -200,6 +201,13 @@ static bool player_interaction_state() {
         debug("Player completed item popup with result %i.", item_index);
         if (item_index != -1) {
             pickup_item(item_index);
+        }
+        return true;
+    }
+    if (popup_get_confirm(g_game.current_level.confirm_go_to_next_floor_pointer, &confirmed_go_to_next_floor)) {
+        debug("Player completed next floor popup with result %s", confirmed_go_to_next_floor ? "true" : "false");
+        if (confirmed_go_to_next_floor) {
+            level_begin_next_level();
         }
         return true;
     }
