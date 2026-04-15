@@ -37,6 +37,7 @@ void level_set_displayed_enemy(Character *c);
 void level_transition_to_enemy_turns();
 void level_next_enemy_turn();
 bool tiles_have_walls_between(Position tile1, Position tile2);
+void level_begin_next_level(); // transition to the next level (fade out and save and all that jazz)
 
 // Move item/weapon from a tile into a new slot. It is an error to call this with a tile that does not contain an item/weapon
 void level_extract_tile_item(Position tile, Item *out_item);

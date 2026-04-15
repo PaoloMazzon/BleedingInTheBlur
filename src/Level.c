@@ -80,7 +80,7 @@ bool characters_update() {
             look_at(enemy->pos, 1);
         } else if (level_attack_animation_complete()) {
             level_next_enemy_turn();
-        }
+        } // TODO: Only one enemy seems to be able to attack per turn sometimes
     } else if (!g_game.current_level.world_turn && g_game.current_level.state == LEVEL_STATE_ENEMY_TURN && !level_in_attack_animation()) {
         g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
     }
@@ -393,7 +393,6 @@ static TileVisibility tile_visible_to_player(Position tile, Statblock *player_cu
     return TILE_VISIBILITY_FULLY_VISIBLE;
 }
 
-
 void draw_props() {
     const Oct_Sprite sprite = oct_GetAsset(g_game.assets, "props.json");
     for (int32_t i = 0; i < MAX_PROPS; i++) {
@@ -446,6 +445,7 @@ static void draw_fog_of_war() {
     character_get_current_stats(&g_game.player, &player_current_stats);
     const Oct_Texture full_block = oct_GetAsset(g_game.assets, "fow.png");
     const Oct_Texture part_block = oct_GetAsset(g_game.assets, "fow_half.png");
+    // TODO: Draw some sort of building/rain and all that outside the map to represent the player ascending up the tower
 
     // Draw shadows over places the player can't see
     for (int32_t y = start_draw_y; y < start_draw_y + tile_vertical; y++) {
@@ -759,10 +759,17 @@ static void draw_level_menu() {
     }
 }
 
-void process_character_attack() {
+static void process_character_attack() {
     if (level_attack_animation_complete()) {
         complete_attack_animation();
     }
+}
+
+// Only shown when the player is dead
+static void draw_death_screen() {
+    const float death_screen_target_y = 300;
+    g_game.current_level.death_screen_real_y += (death_screen_target_y - g_game.current_level.death_screen_real_y) * 0.4f;
+    // TODO: Draw the death logo thing
 }
 
 void level_begin() {
@@ -844,7 +851,8 @@ LevelIndex level_update() {
             next_character = characters_update();
         }
 
-        player_update();
+        if (character_is_alive(&g_game.player))
+            player_update();
     }
     const bool world_turn_occurred = g_game.current_level.world_turn;
     update_camera_coords();
@@ -862,9 +870,13 @@ LevelIndex level_update() {
     oct_LockCameras(g_game.ui_camera);
     draw_attack_view_ui();
     draw_ui();
-    draw_level_menu();
-    if (popups_are_active())
-        draw_and_update_popups();
+    if (character_is_alive(&g_game.player)) {
+        draw_level_menu();
+        if (popups_are_active())
+            draw_and_update_popups();
+    } else {
+        draw_death_screen();
+    }
 
     process_character_attack();
 
@@ -1043,4 +1055,8 @@ void level_extract_tile_weapon(Position tile, Weapon *out_weapon) {
             break;
         }
     }
+}
+
+void level_begin_next_level() {
+    // TODO: This
 }

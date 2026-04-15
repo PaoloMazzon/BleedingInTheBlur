@@ -115,6 +115,74 @@ static void pickup_weapon() {
     level_extract_tile_weapon(g_game.player.pos, &g_game.player.soul_bound_weapon);
 }
 
+// Called when the player first moves into a tile this turn -- returns true if the player's turn is done
+static bool player_moved_into_tile(TileContents *tile) {
+    Character *player = &g_game.player;
+
+    // If we moved onto a weapon/item, we should show the popup to pick it up before passing turn
+    if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_WEAPON) {
+        if (g_game.options.auto_pick_up_item && g_game.player.soul_bound_weapon.type == WEAPON_TYPE_NONE) {
+            pickup_weapon();
+            debug("Player automatically picked up weapon");
+        } else {
+            g_game.current_level.weapon_popup = popup_weapon_select(tile->weapon);
+            debug("Player hit weapon popup.");
+        }
+    } else if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_ITEM) {
+        int32_t available_item_index = -1;
+        for (int32_t i = 0; i < INVENTORY_SIZE; i++) {
+            if (player->items[i].type == ITEM_TYPE_NONE) {
+                available_item_index = i;
+                break;
+            }
+        }
+        if (g_game.options.auto_pick_up_item && available_item_index != -1) {
+            pickup_item(available_item_index);
+            debug("Player automatically picked up weapon");
+        } else {
+            g_game.current_level.item_popup = popup_item_select(tile->item);
+            debug("Player hit item popup.");
+        }
+    } else if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_STAIRS) {
+        // Show a pop-up asking the player if they want to leave the room now
+        g_game.current_level.confirm_go_to_next_floor_pointer = popup_confirm("Proceed to next floor?");
+    } else {
+        return true;
+    }
+    return false;
+}
+
+static void auto_attack_tile(const Position target_position) {
+    Character *player = &g_game.player;
+    TileContents *t = level_get_tile(target_position);
+    assert(t);
+
+    // Auto-attack characters by moving into them
+    character_attempt_attack(player,
+                             &player->weapons[player->active_weapon].info.traits,
+                             t->character,
+                             player->weapons[player->active_weapon].damage);
+    level_set_displayed_enemy(t->character);
+    g_game.current_level.attack_view.attack_cursor[0] = target_position[0];
+    g_game.current_level.attack_view.attack_cursor[1] = target_position[1];
+    g_game.current_level.attack_view.spell = nullptr;
+    g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
+}
+
+static void player_use_current_item() {
+    Character *player = &g_game.player;
+    if (player->items[player->selected_item].type == ITEM_TYPE_ATTACK_SPELL) {
+        g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
+        g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
+        g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
+        g_game.current_level.attack_view.cursor_real_pos[0] = (float)g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH;
+        g_game.current_level.attack_view.cursor_real_pos[1] = (float)g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT;
+        g_game.current_level.attack_view.spell = &player->items[player->selected_item];
+    } else if (!use_item(&player->items[player->selected_item], player)) {
+        player->items[player->selected_item].type = ITEM_TYPE_NONE;
+    }
+}
+
 static bool player_interaction_state() {
     Character *player = &g_game.player;
     int32_t item_index;
@@ -166,17 +234,7 @@ static bool player_interaction_state() {
     }
 
     if (oct_KeyPressed(BUTTON_ITEM_USE) && player->items[player->selected_item].type != ITEM_TYPE_NONE) {
-
-        if (player->items[player->selected_item].type == ITEM_TYPE_ATTACK_SPELL) {
-            g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
-            g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
-            g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
-            g_game.current_level.attack_view.cursor_real_pos[0] = (float)g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH;
-            g_game.current_level.attack_view.cursor_real_pos[1] = (float)g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT;
-            g_game.current_level.attack_view.spell = &player->items[player->selected_item];
-        } else if (!use_item(&player->items[player->selected_item], player)) {
-            player->items[player->selected_item].type = ITEM_TYPE_NONE;
-        }
+        player_use_current_item();
     }
 
     // Process movement
@@ -185,47 +243,16 @@ static bool player_interaction_state() {
                 g_game.player.pos[0] + movement_direction[0],
                 g_game.player.pos[1] + movement_direction[1],
         };
+
+        // The player can move into open tiles and possible trigger a pickup if there is an item there or whatever
+        // or the player might move onto a tile with a character, in which case they will attack them
         TileContents *t = level_get_tile(target_position);
         if (character_move(&g_game.player, target_position)) {
-            // If we moved onto a weapon/item, we should show the popup to pick it up before passing turn
-            TileContents *tile = level_get_tile(player->pos);
-            if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_WEAPON) {
-                if (g_game.options.auto_pick_up_item && g_game.player.soul_bound_weapon.type == WEAPON_TYPE_NONE) {
-                    pickup_weapon();
-                    debug("Player automatically picked up weapon");
-                } else {
-                    g_game.current_level.weapon_popup = popup_weapon_select(tile->weapon);
-                    debug("Player hit weapon popup.");
-                }
-            } else if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_ITEM) {
-                int32_t available_item_index = -1;
-                for (int32_t i = 0; i < INVENTORY_SIZE; i++) {
-                    if (player->items[i].type == ITEM_TYPE_NONE) {
-                        available_item_index = i;
-                        break;
-                    }
-                }
-                if (g_game.options.auto_pick_up_item && available_item_index != -1) {
-                    pickup_item(available_item_index);
-                    debug("Player automatically picked up weapon");
-                } else {
-                    g_game.current_level.item_popup = popup_item_select(tile->item);
-                    debug("Player hit item popup.");
-                }
-            } else {
+            if (player_moved_into_tile(t)) {
                 player_has_taken_actions = true;
             }
         } else if (t && t->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(target_position, player->pos) <= player->weapons[player->active_weapon].range) {
-            // Auto-attack characters by moving into them
-            character_attempt_attack(player,
-                                     &player->weapons[player->active_weapon].info.traits,
-                                     t->character,
-                                     player->weapons[player->active_weapon].damage);
-            level_set_displayed_enemy(t->character);
-            g_game.current_level.attack_view.attack_cursor[0] = target_position[0];
-            g_game.current_level.attack_view.attack_cursor[1] = target_position[1];
-            g_game.current_level.attack_view.spell = nullptr;
-            g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
+            auto_attack_tile(target_position);
         }
     }
 

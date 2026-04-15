@@ -134,14 +134,15 @@ typedef enum {
 } DrawnType;
 typedef enum {
     TILE_CONTENTS_TYPE_NONE      = 0,
-    TILE_CONTENTS_TYPE_CHARACTER = 1,
-    TILE_CONTENTS_TYPE_WALL      = 2,
+    TILE_CONTENTS_TYPE_CHARACTER = 1, // characters can not exist in the same tile as walls
+    TILE_CONTENTS_TYPE_WALL      = 2, // can also be a door, opening a door sets the tile type to none
     TILE_CONTENTS_TYPE_LOW_WALL  = 3, // something that arrows and the like can go over
 } TileContentsType;
 typedef enum {
-    TILE_EXTRA_CONTENTS_TYPE_NONE      = 0,
-    TILE_EXTRA_CONTENTS_TYPE_ITEM      = 1,
-    TILE_EXTRA_CONTENTS_TYPE_WEAPON    = 2,
+    TILE_EXTRA_CONTENTS_TYPE_NONE   = 0, // nothing on the ground here
+    TILE_EXTRA_CONTENTS_TYPE_ITEM   = 1, // item crate on the ground
+    TILE_EXTRA_CONTENTS_TYPE_WEAPON = 2, // weapon crate on the ground
+    TILE_EXTRA_CONTENTS_TYPE_STAIRS = 3, // stairs to the next floor
 } TileExtraContentsType;
 typedef enum {
     WEAPON_TYPE_NONE     = 0,
@@ -616,6 +617,10 @@ typedef struct Level_s {
     // Player popup management
     PopupWeaponSelectPointer weapon_popup;
     PopupItemSelectPointer item_popup;
+
+    // For general transitions to death or other levels
+    float death_screen_real_y;
+    PopupConfirmPointer confirm_go_to_next_floor_pointer;
 } Level;
 
 typedef struct Game_s {

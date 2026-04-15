@@ -41,6 +41,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->bonus_stats.marksman = 1;
         out->info.traits.Attack.melee = true;
         out->info.traits.Attack.heavy = true;
+        out->info.traits.Attack.blade = true;
     } else if (weapon_type == WEAPON_TYPE_BOW) {
         out->type = WEAPON_TYPE_BOW;
         out->icon = oct_GetAsset(g_game.assets, "attacks/bow_icon.png");

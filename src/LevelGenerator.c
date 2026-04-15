@@ -610,13 +610,23 @@ static void center_of_room(RoomSpace *r, Position center_out) {
 
 // Places the stairs up and down
 static void place_stairs_pass(LevelGeneratingState *state, Position out_player_pos) {
+    // Find stairs position
     Position stairs_down, stairs_up;
     center_of_room(&state->rooms[0], stairs_down);
     center_of_room(&state->rooms[state->last_room], stairs_up);
+
+    // Place the stairs graphically
     oct_SetTilemap(state->base_tilemap, stairs_up[0], stairs_up[1], TILE_STAIRS_UP);
     oct_SetTilemap(state->base_tilemap, stairs_down[0], stairs_down[1], TILE_STAIRS_DOWN);
+
+    // Set player start pos
     out_player_pos[0] = stairs_down[0];
     out_player_pos[1] = stairs_down[1];
+
+    // Register the stairs up as a proper tile in the tilemap
+    TileContents *t = level_get_tile(stairs_up);
+    assert(t);
+    t->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_STAIRS;
 }
 
 // Gets a random position in a room, will be floor
