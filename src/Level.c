@@ -681,6 +681,7 @@ static void draw_level_menu() {
         oct_GetTextSize(font, text_size, 1, "%i -", statblock_get_dc(sb.learning));
         oct_DrawText(font, (Oct_Vec2) {start_x + 165 - text_size[0], start_y + 121 - vertical_offset}, 1, "%i -",
                      statblock_get_dc(sb.learning));
+        // TODO: Draw player traits
     } else if (g_game.current_level.menu.tab == MENU_TAB_ITEMS) {
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuitemspage.png"), (Oct_Vec2) {start_x, start_y});
         Oct_Asset font = oct_GetAsset(g_game.assets, "fnt_pixel");
