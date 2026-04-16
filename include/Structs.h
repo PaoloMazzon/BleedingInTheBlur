@@ -19,6 +19,8 @@ typedef bool (*ItemEnterInventoryCallback)(Character *);
 typedef bool (*ItemExitInventoryCallback)(Character *);
 typedef bool (*ItemUseCallback)(Character *);
 typedef bool (*ItemGetTraitsCallback)(Character *, Traits *, int32_t *);
+typedef void (*MenuOptionDrawCallback)(Oct_Vec2, int32_t index);
+typedef void (*MenuOptionChangeCallback)(int32_t index);
 typedef int32_t Position[2];
 typedef int32_t IntRange[2];
 
@@ -189,6 +191,11 @@ typedef enum {
     ANIMATION_SPEED_FAST   = 2, // faster than intended animation speed
     ANIMATION_SPEED_FASTER = 3, // fastest without disappearing completely
 } AnimationSpeed;
+typedef enum {
+    MENU_OPTION_TYPE_SELECT           = 0, // Clicking it immediately produces its effect
+    MENU_OPTION_TYPE_CYCLE_HORIZONTAL = 1, // Clicking lets the user cycle left and right
+    MENU_OPTION_TYPE_CYCLE_VERTICAL   = 2, // Clicking lets the user cycle up and down
+} MenuOptionType;
 
 // These should all be bools
 struct Traits_s {
@@ -233,6 +240,27 @@ struct Traits_s {
     bool occult;
     bool holy;
 };
+
+// A selectable option in a menu
+typedef struct MenuOption_s {
+    MenuOptionType type;
+    Oct_Vec2 drawn_position; // position to draw this element
+    const char *name; // name that will be drawn at drawn_position
+    int32_t index; // if the option can be cycled this will be the value thats cycling
+    int32_t max_index; // maximum value of index + 1
+    MenuOptionDrawCallback draw_callback; // for drawing additional things other than the text
+    MenuOptionChangeCallback change_callback; // called whenever the option is cycled or selected. index is invalid if its not a cycling option
+} MenuOption;
+
+// Top-level menuing system
+// This is slightly convoluted. You will specify menu_options by appending to the menu_options list then in menu_grid
+// you will point to specific indices into menu_options so the menu knows how to let the user navigate with the arrow keys.
+typedef struct MenuSystem_s {
+    MenuOption menu_options[MAX_MENU_ELEMENTS];
+    int32_t menu_option_count;
+    int32_t menu_grid[MAX_MENU_ELEMENTS]; // 2-d array of indices into menu_options for the purpose of user navigation
+    IntRange menu_grid_size;
+} MenuSystem;
 
 // These are countdowns, above 0 means its active this turn
 typedef struct StatusEffects_s {
