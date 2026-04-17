@@ -31,6 +31,12 @@ MenuTab *menu_get_tab(MenuSystem *system, int32_t index) {
     return &system->tabs[index];
 }
 
+void menu_set_tab(MenuSystem *system, int32_t index) {
+    assert(system);
+    assert(index < system->tab_count && index >= 0);
+    system->current_tab = index;
+}
+
 void menu_tab_add_option(MenuTab *tab, const MenuOption *new_option, const Position new_pos_in_menu) {
     assert(tab);
     assert(new_option);

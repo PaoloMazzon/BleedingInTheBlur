@@ -12,5 +12,8 @@ void menu_tab_add_option(MenuTab *tab, const MenuOption *new_option, const Posit
 // Returns the tab at that position. Must be less than the amount specified when you created the system
 MenuTab *menu_get_tab(MenuSystem *system, int32_t index);
 
+// Sets the current menu tab. Must be a valid index (< tab_count when the system was created)
+void menu_set_tab(MenuSystem *system, int32_t index);
+
 // Updates and draws a menu system
 void menu_system_process_and_draw(MenuSystem *system);
