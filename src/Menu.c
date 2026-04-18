@@ -58,7 +58,7 @@ void menu_begin() {
 
 LevelIndex menu_update() {
     menu_system_process_and_draw(&test_menu);
-    return LEVEL_INDEX_FLOOR_1;//should_play_game ? LEVEL_INDEX_FLOOR_1 : LEVEL_INDEX_MENU;
+    return should_play_game ? LEVEL_INDEX_FLOOR_1 : LEVEL_INDEX_MENU;
 }
 
 void menu_end() {

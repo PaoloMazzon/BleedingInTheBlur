@@ -57,9 +57,9 @@ void menu_tab_add_option(MenuSystemTab *tab, const MenuOption *new_option, const
 // Returns the next index this should go to (y value should be -1 or 1). Can return the same index if there is no other spot
 static int32_t next_vertical_spot(MenuSystemTab *tab, int32_t x_pos, int32_t move) {
     // TODO: This should move the cursor horizontal as well in the event of
-    // x  x  x <-- here
-    // x <-- going down should go here
-    // x  x  x  x
+    //       x  x  x <-- here
+    //       x <-- going down should go here
+    //       x  x  x  x
     int32_t new_index = tab->cursor_pos[1] + move;
     MenuOption *new_option = get_menu_grid_pos(tab, (Position){x_pos, new_index});
     const int32_t max_iterations = 20;
