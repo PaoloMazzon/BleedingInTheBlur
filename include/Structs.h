@@ -244,6 +244,7 @@ struct Traits_s {
 // A selectable option in a menu
 typedef struct MenuOption_s {
     MenuOptionType type;
+    uint64_t id;
     Oct_Vec2 drawn_position; // position to draw this element
     const char *name; // name that will be drawn at drawn_position
     int32_t index; // if the option can be cycled this will be the value thats cycling

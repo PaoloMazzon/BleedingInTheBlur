@@ -2,6 +2,9 @@
 #include <assert.h>
 #include "Game.h"
 #include "MenuSystem.h"
+#include "Util.h"
+
+#define sign(x) (x > 0.0f ? 1.0f : -1.0f)
 
 const int32_t INVALID_GRID_POS = -1;
 
@@ -19,6 +22,7 @@ static MenuOption *get_menu_grid_pos(MenuSystemTab *tab, Position p) {
 void menu_system_initialize(MenuSystem *menu_system, int32_t tab_count) {
     memset(menu_system, 0, sizeof(MenuSystem));
     menu_system->tabs = oct_Zalloc(g_game.allocator, sizeof(MenuTab) * tab_count);
+    menu_system->tab_count = tab_count;
 }
 
 void menu_system_destroy(MenuSystem *menu_system) {
@@ -47,10 +51,15 @@ void menu_tab_add_option(MenuSystemTab *tab, const MenuOption *new_option, const
     assert(index != MAX_MENU_ELEMENTS);
     memcpy(&tab->menu_options[index], new_option, sizeof(MenuOption));
     tab->menu_grid[(new_pos_in_menu[1] * MAX_MENU_HEIGHT) + new_pos_in_menu[0]] = index;
+    tab->menu_options[index].id = new_oct_id();
 }
 
 // Returns the next index this should go to (y value should be -1 or 1). Can return the same index if there is no other spot
 static int32_t next_vertical_spot(MenuSystemTab *tab, int32_t x_pos, int32_t move) {
+    // TODO: This should move the cursor horizontal as well in the event of
+    // x  x  x <-- here
+    // x <-- going down should go here
+    // x  x  x  x
     int32_t new_index = tab->cursor_pos[1] + move;
     MenuOption *new_option = get_menu_grid_pos(tab, (Position){x_pos, new_index});
     const int32_t max_iterations = 20;
@@ -103,9 +112,11 @@ void menu_system_process_and_draw(MenuSystem *system) {
         // Cycle current option
         if (option->type == MENU_OPTION_TYPE_CYCLE_HORIZONTAL && move_horizontal != 0) {
             option->index += move_horizontal;
+            option->bounce_amount = move_horizontal * 3;
         }
         if (option->type == MENU_OPTION_TYPE_CYCLE_VERTICAL && move_vertical != 0) {
             option->index += move_vertical;
+            option->bounce_amount = move_vertical * 3;
         }
 
         if (option->index >= option->max_index)
@@ -125,5 +136,25 @@ void menu_system_process_and_draw(MenuSystem *system) {
         }
     }
 
-    // TODO: Draw all options
+    for (int32_t i = 0; i < tab->menu_option_count; i++) {
+        MenuOption *current_option = &tab->menu_options[i];
+
+        // Draw the option text
+        oct_DrawTextInt(
+            OCT_INTERPOLATE_ALL, current_option->id,
+            oct_GetAsset(g_game.allocator, "fnt_pixel"),
+            current_option->drawn_position, 1,
+            "%s", current_option->name);
+
+        // Tweening bounce logic
+        current_option->bounce_amount -= current_option->bounce_amount * 0.95; // todo proper oscillation
+
+        // Draw arrows in the event that the option is a cycling one
+        // TODO: This
+
+        // And the optional drawing callback
+        if (current_option->draw_callback) {
+            current_option->draw_callback(current_option->drawn_position, current_option->index);
+        }
+    }
 }
