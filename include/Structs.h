@@ -250,6 +250,7 @@ typedef struct MenuOption_s {
     int32_t max_index; // maximum value of index + 1
     MenuOptionDrawCallback draw_callback; // for drawing additional things other than the text
     MenuOptionChangeCallback change_callback; // called whenever the option is cycled or selected. index is invalid if its not a cycling option
+    float bounce_amount; // for tweening when cycling
 } MenuOption;
 
 // A tab in a menu, can be cycled between
@@ -259,6 +260,7 @@ typedef struct MenuSystemTab_s {
     int32_t menu_grid[MAX_MENU_ELEMENTS]; // 2-d array of indices into menu_options for the purpose of user navigation
     IntRange menu_grid_size;
     Position cursor_pos;
+    bool selected_current_option; // if its a cycling option they can lock the cursor
 } MenuSystemTab;
 
 // Top-level menuing system

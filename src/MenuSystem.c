@@ -34,6 +34,7 @@ MenuSystemTab *menu_get_tab(MenuSystem *system, int32_t index) {
 void menu_set_tab(MenuSystem *system, int32_t index) {
     assert(system);
     assert(index < system->tab_count && index >= 0);
+    system->tabs[system->current_tab].selected_current_option = false;
     system->current_tab = index;
 }
 
@@ -90,18 +91,38 @@ void menu_system_process_and_draw(MenuSystem *system) {
     const int32_t move_horizontal = (int32_t)oct_KeyPressed(BUTTON_RIGHT) - (int32_t)oct_KeyPressed(BUTTON_LEFT);
     const int32_t move_vertical = (int32_t)oct_KeyPressed(BUTTON_DOWN) - (int32_t)oct_KeyPressed(BUTTON_UP);
     MenuSystemTab *tab = &system->tabs[system->current_tab];
+    MenuOption *option = get_menu_grid_pos(tab, tab->cursor_pos);
+    assert(option); // if this fails then next_x_spot is failing probably
 
-    // TODO: Add a check to see if we are cycling an option or changing options
-    if (move_horizontal != 0)
-        tab->cursor_pos[0] = next_horizontal_spot(tab, tab->cursor_pos[1], move_horizontal);
-    if (move_vertical != 0)
-        tab->cursor_pos[1] = next_vertical_spot(tab, tab->cursor_pos[0], move_vertical);
+    if (!tab->selected_current_option) {
+        if (move_horizontal != 0)
+            tab->cursor_pos[0] = next_horizontal_spot(tab, tab->cursor_pos[1], move_horizontal);
+        if (move_vertical != 0)
+            tab->cursor_pos[1] = next_vertical_spot(tab, tab->cursor_pos[0], move_vertical);
+    } else {
+        // Cycle current option
+        if (option->type == MENU_OPTION_TYPE_CYCLE_HORIZONTAL && move_horizontal != 0) {
+            option->index += move_horizontal;
+        }
+        if (option->type == MENU_OPTION_TYPE_CYCLE_VERTICAL && move_vertical != 0) {
+            option->index += move_vertical;
+        }
+
+        if (option->index >= option->max_index)
+            option->index = 0;
+        if (option->index < 0)
+            option->index = option->max_index - 1;
+    }
 
     if (oct_KeyPressed(BUTTON_CONFIRM)) {
-        MenuOption *option = get_menu_grid_pos(tab, tab->cursor_pos);
-        assert(option); // if this fails then next_x_spot is failing probably
-
-        // TODO: Either toggle lock the cursor to this option if its cycling or select it if its not cycling
+        // Start cycling
+        if (!tab->selected_current_option && option->type != MENU_OPTION_TYPE_SELECT) {
+            tab->selected_current_option = false;
+        } else if (tab->selected_current_option) { // un cycle
+            tab->selected_current_option = false;
+        } else { // choose this option
+            option->change_callback(option->index);
+        }
     }
 
     // TODO: Draw all options
