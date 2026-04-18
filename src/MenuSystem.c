@@ -13,7 +13,7 @@ static MenuOption *get_menu_grid_pos(MenuSystemTab *tab, Position p) {
     assert(tab);
     if (p[0] >= MAX_MENU_WIDTH || p[1] >= MAX_MENU_HEIGHT || p[0] < 0 || p[1] < 0)
         return nullptr;
-    const int32_t value_at_pos = tab->menu_grid[(p[1] * MAX_MENU_HEIGHT) + p[0]];
+    const int32_t value_at_pos = tab->menu_grid[(p[1] * MAX_MENU_WIDTH) + p[0]];
     if (value_at_pos != INVALID_GRID_POS)
         return &tab->menu_options[value_at_pos];
     return nullptr;
@@ -21,8 +21,11 @@ static MenuOption *get_menu_grid_pos(MenuSystemTab *tab, Position p) {
 
 void menu_system_initialize(MenuSystem *menu_system, int32_t tab_count) {
     memset(menu_system, 0, sizeof(MenuSystem));
-    menu_system->tabs = oct_Zalloc(g_game.allocator, sizeof(MenuTab) * tab_count);
+    menu_system->tabs = oct_Zalloc(g_game.allocator, sizeof(MenuSystemTab) * tab_count);
     menu_system->tab_count = tab_count;
+    for (int32_t i = 0; i < tab_count; i++)
+        for (int32_t j = 0; j < MAX_MENU_ELEMENTS; j++)
+            menu_system->tabs[i].menu_grid[j] = INVALID_GRID_POS;
 }
 
 void menu_system_destroy(MenuSystem *menu_system) {
@@ -50,7 +53,7 @@ void menu_tab_add_option(MenuSystemTab *tab, const MenuOption *new_option, const
     tab->menu_option_count += 1;
     assert(index != MAX_MENU_ELEMENTS);
     memcpy(&tab->menu_options[index], new_option, sizeof(MenuOption));
-    tab->menu_grid[(new_pos_in_menu[1] * MAX_MENU_HEIGHT) + new_pos_in_menu[0]] = index;
+    tab->menu_grid[(new_pos_in_menu[1] * MAX_MENU_WIDTH) + new_pos_in_menu[0]] = index;
     tab->menu_options[index].id = new_oct_id();
 }
 
@@ -79,7 +82,7 @@ static int32_t next_vertical_spot(MenuSystemTab *tab, int32_t x_pos, int32_t mov
 
 // Returns the next index this should go to (y value should be -1 or 1). Can return the same index if there is no other spot
 static int32_t next_horizontal_spot(MenuSystemTab *tab, int32_t y_pos, int32_t move) {
-    int32_t new_index = tab->cursor_pos[1] + move;
+    int32_t new_index = tab->cursor_pos[0] + move;
     MenuOption *new_option = get_menu_grid_pos(tab, (Position){new_index, y_pos});
     const int32_t max_iterations = 20;
     int32_t iterations = 0;
@@ -142,7 +145,7 @@ void menu_system_process_and_draw(MenuSystem *system) {
         // Draw the option text
         oct_DrawTextInt(
             OCT_INTERPOLATE_ALL, current_option->id,
-            oct_GetAsset(g_game.allocator, "fnt_pixel"),
+            oct_GetAsset(g_game.assets, "fnt_pixel"),
             current_option->drawn_position, 1,
             "%s", current_option->name);
 

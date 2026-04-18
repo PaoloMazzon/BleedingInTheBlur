@@ -259,7 +259,6 @@ typedef struct MenuSystemTab_s {
     MenuOption menu_options[MAX_MENU_ELEMENTS];
     int32_t menu_option_count;
     int32_t menu_grid[MAX_MENU_ELEMENTS]; // 2-d array of indices into menu_options for the purpose of user navigation
-    IntRange menu_grid_size;
     Position cursor_pos;
     bool selected_current_option; // if its a cycling option they can lock the cursor
 } MenuSystemTab;
