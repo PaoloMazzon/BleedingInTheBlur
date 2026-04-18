@@ -253,19 +253,19 @@ typedef struct MenuOption_s {
 } MenuOption;
 
 // A tab in a menu, can be cycled between
-typedef struct MenuTab_s {
+typedef struct MenuSystemTab_s {
     MenuOption menu_options[MAX_MENU_ELEMENTS];
     int32_t menu_option_count;
     int32_t menu_grid[MAX_MENU_ELEMENTS]; // 2-d array of indices into menu_options for the purpose of user navigation
     IntRange menu_grid_size;
     Position cursor_pos;
-} MenuTab;
+} MenuSystemTab;
 
 // Top-level menuing system
 // This is slightly convoluted. You will specify menu_options by appending to the menu_options list then in menu_grid
 // you will point to specific indices into menu_options so the menu knows how to let the user navigate with the arrow keys.
 typedef struct MenuSystem_s {
-    MenuTab *tabs;
+    MenuSystemTab *tabs;
     int32_t tab_count;
     int32_t current_tab;
 } MenuSystem;
