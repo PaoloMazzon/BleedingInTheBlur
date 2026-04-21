@@ -58,6 +58,7 @@ void menu_begin() {
 
 LevelIndex menu_update() {
     oct_LockCameras(g_game.ui_camera);
+    oct_SetTextureCamerasEnabled(false);
     menu_system_process_and_draw(&test_menu);
     return should_play_game ? LEVEL_INDEX_FLOOR_1 : LEVEL_INDEX_MENU;
 }
