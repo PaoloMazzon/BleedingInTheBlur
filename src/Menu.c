@@ -32,14 +32,14 @@ void menu_begin() {
     tab_character = menu_get_tab(&test_menu, tab_index_character);
     MenuOption option_play = {
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {140, 185},
+        .drawn_position = {140, 175},
         .name = "Play",
         .draw_callback = nullptr,
         .change_callback = play_change_callback,
     };
     MenuOption option_cycle = {
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {140, 205},
+        .drawn_position = {140, 195},
         .name = "Cycle",
         .index = 0,
         .max_index = 3,
@@ -48,7 +48,7 @@ void menu_begin() {
     };
     MenuOption option_exit = {
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {140, 225},
+        .drawn_position = {140, 215},
         .name = "Exit",
         .draw_callback = nullptr,
         .change_callback = exit_change_callback,
