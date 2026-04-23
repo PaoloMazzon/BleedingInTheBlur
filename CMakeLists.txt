@@ -24,5 +24,6 @@ add_executable(${PROJECT_NAME}
         src/AttackAnimation.c
         src/PersistentEffects.c
         src/MenuSystem.c
+        src/MenuDetails.c
 )
 target_link_libraries(${PROJECT_NAME} OctarineEngine)

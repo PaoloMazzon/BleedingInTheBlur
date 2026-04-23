@@ -16,9 +16,11 @@ static void play_change_callback(int32_t _) {
     debug("Pressed play");
     should_play_game = true;
 }
+
 static void cycler_change_callback(int32_t index) {
     debug("Changed cycler to %i", index);
 }
+
 static void exit_change_callback(int32_t _) {
     debug("Pressed exit");
 }
