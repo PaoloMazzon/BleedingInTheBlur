@@ -53,6 +53,8 @@ void menu_tab_add_option(MenuSystemTab *tab, const MenuOption *new_option, const
     tab->menu_option_count += 1;
     assert(index != MAX_MENU_ELEMENTS);
     memcpy(&tab->menu_options[index], new_option, sizeof(MenuOption));
+    tab->menu_options[index].tween_position[0] = tab->menu_options[index].drawn_position[0];
+    tab->menu_options[index].tween_position[1] = tab->menu_options[index].drawn_position[1];
     tab->menu_grid[(new_pos_in_menu[1] * MAX_MENU_WIDTH) + new_pos_in_menu[0]] = index;
     tab->menu_options[index].id = new_oct_id();
 }
@@ -128,7 +130,7 @@ void menu_system_process_and_draw(MenuSystem *system) {
             option->index = option->max_index - 1;
     }
 
-    if (oct_KeyPressed(BUTTON_CONFIRM)) {
+    if (oct_KeyPressed(BUTTON_CONFIRM) || oct_KeyPressed(OCT_KEY_SPACE) || oct_KeyPressed(OCT_KEY_RETURN)) {
         // Start cycling
         if (!tab->selected_current_option && option->type != MENU_OPTION_TYPE_SELECT) {
             tab->selected_current_option = false;
@@ -141,12 +143,22 @@ void menu_system_process_and_draw(MenuSystem *system) {
 
     for (int32_t i = 0; i < tab->menu_option_count; i++) {
         MenuOption *current_option = &tab->menu_options[i];
+        const bool selected = option == current_option;
+        const float select_offset = 8;
+
+        // Find the target position for this piece of text then tween to it
+        const Oct_Vec2 target_pos = {
+            current_option->drawn_position[0] + (selected ? select_offset : 0),
+            current_option->drawn_position[1]
+        };
+        current_option->tween_position[0] += (target_pos[0] - current_option->tween_position[0]) * 0.4f;
+        current_option->tween_position[1] += (target_pos[1] - current_option->tween_position[1]) * 0.4f;
 
         // Draw the option text
         oct_DrawTextInt(
             OCT_INTERPOLATE_ALL, current_option->id,
             oct_GetAsset(g_game.assets, "fnt_pixel"),
-            current_option->drawn_position, 1,
+            current_option->tween_position, 1,
             "%s", current_option->name);
 
         // Tweening bounce logic

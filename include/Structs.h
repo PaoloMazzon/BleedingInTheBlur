@@ -246,6 +246,7 @@ typedef struct MenuOption_s {
     MenuOptionType type;
     uint64_t id;
     Oct_Vec2 drawn_position; // position to draw this element
+    Oct_Vec2 tween_position; // where this will actually be drawn
     const char *name; // name that will be drawn at drawn_position
     int32_t index; // if the option can be cycled this will be the value thats cycling
     int32_t max_index; // maximum value of index + 1
