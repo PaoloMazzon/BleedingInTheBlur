@@ -30,14 +30,14 @@ void menu_begin() {
     tab_character = menu_get_tab(&test_menu, tab_index_character);
     MenuOption option_play = {
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {10, 10},
+        .drawn_position = {140, 185},
         .name = "Play",
         .draw_callback = nullptr,
         .change_callback = play_change_callback,
     };
     MenuOption option_cycle = {
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {10, 40},
+        .drawn_position = {140, 205},
         .name = "Cycle",
         .index = 0,
         .max_index = 3,
@@ -46,7 +46,7 @@ void menu_begin() {
     };
     MenuOption option_exit = {
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {10, 70},
+        .drawn_position = {140, 225},
         .name = "Exit",
         .draw_callback = nullptr,
         .change_callback = exit_change_callback,
@@ -59,7 +59,15 @@ void menu_begin() {
 LevelIndex menu_update() {
     oct_LockCameras(g_game.ui_camera);
     oct_SetTextureCamerasEnabled(false);
+
+    // Draw some title stuff
+    oct_DrawTexture(
+        oct_GetAsset(g_game.assets, "menu/title.png"),
+        (Oct_Vec2){(320 - 298) / 2, 10});
+
+    // Menu system
     menu_system_process_and_draw(&test_menu);
+
     return should_play_game ? LEVEL_INDEX_FLOOR_1 : LEVEL_INDEX_MENU;
 }
 

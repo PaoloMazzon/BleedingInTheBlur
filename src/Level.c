@@ -836,6 +836,7 @@ void level_begin() {
 }
 
 LevelIndex level_update() {
+    oct_SetTextureCamerasEnabled(true);
     const float window_width = oct_WindowWidth();
     const float window_height = oct_WindowHeight();
     float camera_x, camera_y, camera_w, camera_h;
@@ -872,6 +873,7 @@ LevelIndex level_update() {
 
     // UI drawing
     oct_LockCameras(g_game.ui_camera);
+    oct_SetTextureCamerasEnabled(false);
     draw_attack_view_ui();
     draw_ui();
     if (character_is_alive(&g_game.player)) {

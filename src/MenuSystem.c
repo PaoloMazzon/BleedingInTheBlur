@@ -117,10 +117,12 @@ void menu_system_process_and_draw(MenuSystem *system) {
         // Cycle current option
         if (option->type == MENU_OPTION_TYPE_CYCLE_HORIZONTAL && move_horizontal != 0) {
             option->index += move_horizontal;
+            option->change_callback(option->index);
             option->bounce_amount = move_horizontal * 3;
         }
         if (option->type == MENU_OPTION_TYPE_CYCLE_VERTICAL && move_vertical != 0) {
             option->index += move_vertical;
+            option->change_callback(option->index);
             option->bounce_amount = move_vertical * 3;
         }
 
@@ -133,7 +135,7 @@ void menu_system_process_and_draw(MenuSystem *system) {
     if (oct_KeyPressed(BUTTON_CONFIRM) || oct_KeyPressed(OCT_KEY_SPACE) || oct_KeyPressed(OCT_KEY_RETURN)) {
         // Start cycling
         if (!tab->selected_current_option && option->type != MENU_OPTION_TYPE_SELECT) {
-            tab->selected_current_option = false;
+            tab->selected_current_option = true;
         } else if (tab->selected_current_option) { // un cycle
             tab->selected_current_option = false;
         } else { // choose this option
@@ -158,7 +160,7 @@ void menu_system_process_and_draw(MenuSystem *system) {
         oct_DrawTextInt(
             OCT_INTERPOLATE_ALL, current_option->id,
             oct_GetAsset(g_game.assets, "fnt_pixel"),
-            current_option->tween_position, 1,
+            (Oct_Vec2){current_option->tween_position[0] + current_option->bounce_amount, current_option->tween_position[1]}, 1,
             "%s", current_option->name);
 
         // Tweening bounce logic
