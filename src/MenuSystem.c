@@ -167,7 +167,19 @@ void menu_system_process_and_draw(MenuSystem *system) {
         current_option->bounce_amount -= current_option->bounce_amount * 0.95; // todo proper oscillation
 
         // Draw arrows in the event that the option is a cycling one
-        // TODO: This
+        if (current_option->type == MENU_OPTION_TYPE_CYCLE_HORIZONTAL) {
+            Oct_Vec2 text_size;
+            oct_GetTextSize(
+                oct_GetAsset(g_game.assets, "fnt_pixel"),
+                text_size, 1,
+                "%s", current_option->name);
+            oct_DrawTexture(
+                    oct_GetAsset(g_game.assets, "menu/arrow_left.png"),
+                    (Oct_Vec2){current_option->tween_position[0] - 12, current_option->tween_position[1] + 1});
+            oct_DrawTexture(
+                    oct_GetAsset(g_game.assets, "menu/arrow_right.png"),
+                    (Oct_Vec2){current_option->tween_position[0] + text_size[0] + 3, current_option->tween_position[1] + 1});
+        }
 
         // And the optional drawing callback
         if (current_option->draw_callback) {
