@@ -194,7 +194,7 @@ typedef enum {
 typedef enum {
     MENU_OPTION_TYPE_SELECT           = 0, // Clicking it immediately produces its effect
     MENU_OPTION_TYPE_CYCLE_HORIZONTAL = 1, // Clicking lets the user cycle left and right
-    MENU_OPTION_TYPE_CYCLE_VERTICAL   = 2, // Clicking lets the user cycle up and down
+    MENU_OPTION_TYPE_CYCLE_INFINITE   = 2, // Clicking lets the user move the index by +/- 1
 } MenuOptionType;
 
 // These should all be bools
@@ -251,7 +251,7 @@ typedef struct MenuOption_s {
     int32_t index; // if the option can be cycled this will be the value thats cycling
     int32_t max_index; // maximum value of index + 1
     MenuOptionDrawCallback draw_callback; // for drawing additional things other than the text
-    MenuOptionChangeCallback change_callback; // called whenever the option is cycled or selected. index is invalid if its not a cycling option
+    MenuOptionChangeCallback change_callback; // called whenever the option is cycled or selected. index is invalid if its not cycling, its in the range [0, max_index) if its cycling and either -1 or +1 if its infinitely cycling
     float bounce_amount; // for tweening when cycling
 } MenuOption;
 

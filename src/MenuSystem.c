@@ -120,10 +120,9 @@ void menu_system_process_and_draw(MenuSystem *system) {
             option->change_callback(option->index);
             option->bounce_amount = move_horizontal * 3;
         }
-        if (option->type == MENU_OPTION_TYPE_CYCLE_VERTICAL && move_vertical != 0) {
-            option->index += move_vertical;
-            option->change_callback(option->index);
-            option->bounce_amount = move_vertical * 3;
+        if (option->type == MENU_OPTION_TYPE_CYCLE_INFINITE && move_horizontal != 0) {
+            option->change_callback(move_horizontal);
+            option->bounce_amount = move_horizontal * 3;
         }
 
         if (option->index >= option->max_index)
@@ -167,7 +166,7 @@ void menu_system_process_and_draw(MenuSystem *system) {
         current_option->bounce_amount -= current_option->bounce_amount * 0.95; // todo proper oscillation
 
         // Draw arrows in the event that the option is a cycling one
-        if (current_option->type == MENU_OPTION_TYPE_CYCLE_HORIZONTAL && current_option == option && tab->selected_current_option) {
+        if (current_option->type != MENU_OPTION_TYPE_SELECT && current_option == option && tab->selected_current_option) {
             Oct_Vec2 text_size;
             oct_GetTextSize(
                 oct_GetAsset(g_game.assets, "fnt_pixel"),

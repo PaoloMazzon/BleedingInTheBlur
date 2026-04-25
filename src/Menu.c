@@ -1,3 +1,4 @@
+#include <string.h>
 #include <oct/Octarine.h>
 #include "Game.h"
 #include "MenuSystem.h"
@@ -12,6 +13,9 @@ static MenuSystemTab *tab_character;
 static const int32_t tab_index_character = 2;
 static bool should_play_game = false;
 
+static Statblock player_starting_statblock;
+static int32_t player_available_points;
+
 static void play_change_callback(int32_t _) {
     debug("Pressed play");
     should_play_game = true;
@@ -25,7 +29,12 @@ static void exit_change_callback(int32_t _) {
     debug("Pressed exit");
 }
 
+
+
 void menu_begin() {
+    memset(&player_starting_statblock, 0, sizeof(Statblock));
+    player_available_points = 20;
+
     menu_system_initialize(&test_menu, 3);
     tab_start = menu_get_tab(&test_menu, tab_index_start);
     tab_options = menu_get_tab(&test_menu, tab_index_options);
