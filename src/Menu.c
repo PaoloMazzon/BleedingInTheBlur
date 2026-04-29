@@ -21,15 +21,15 @@ static void play_change_callback(int32_t _) {
     should_play_game = true;
 }
 
-static void cycler_change_callback(int32_t index) {
-    debug("Changed cycler to %i", index);
+static void settings_change_callback(int32_t index) {
+    debug("Went to settings screen");
+    menu_set_tab(&test_menu, tab_index_options);
 }
 
 static void exit_change_callback(int32_t _) {
-    debug("Pressed exit");
+    oct_Log("Quit game from main menu.");
+    exit(0);
 }
-
-
 
 void menu_begin() {
     memset(&player_starting_statblock, 0, sizeof(Statblock));
@@ -47,13 +47,13 @@ void menu_begin() {
         .change_callback = play_change_callback,
     };
     MenuOption option_cycle = {
-        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
+        .type = MENU_OPTION_TYPE_SELECT,
         .drawn_position = {140, 195},
         .name = "Cycle",
         .index = 0,
         .max_index = 3,
         .draw_callback = nullptr,
-        .change_callback = cycler_change_callback,
+        .change_callback = settings_change_callback,
     };
     MenuOption option_exit = {
         .type = MENU_OPTION_TYPE_SELECT,

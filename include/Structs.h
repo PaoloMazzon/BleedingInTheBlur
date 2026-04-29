@@ -177,6 +177,7 @@ typedef enum {
     SCALE_MODE_INTEGER      = 0, // Integer scaling
     SCALE_MODE_ASPECT_RATIO = 1, // Maintain aspect ratio
     SCALE_MODE_STRETCH      = 2, // Stretch to fit the screen
+    SCALE_MODE_MAX          = 3,
 } ScaleMode;
 typedef enum {
     ITEM_TYPE_NONE          = 0, // not a valid item
@@ -190,6 +191,7 @@ typedef enum {
     ANIMATION_SPEED_FULL   = 1, // intended animation speed
     ANIMATION_SPEED_FAST   = 2, // faster than intended animation speed
     ANIMATION_SPEED_FASTER = 3, // fastest without disappearing completely
+    ANIMATION_SPEED_MAX    = 4,
 } AnimationSpeed;
 typedef enum {
     MENU_OPTION_TYPE_SELECT           = 0, // Clicking it immediately produces its effect
