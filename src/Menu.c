@@ -47,28 +47,28 @@ void menu_begin() {
     tab_character = menu_get_tab(&test_menu, tab_index_character);
     MenuOption option_play = {
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {140, 175},
+        .drawn_position = {20, 175},
         .name = "Play",
         .draw_callback = nullptr,
         .change_callback = play_change_callback,
     };
     MenuOption option_cycle = {
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {140, 195},
+        .drawn_position = {20, 195},
         .name = "Options",
         .draw_callback = nullptr,
         .change_callback = settings_change_callback,
     };
     MenuOption option_exit = {
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {140, 215},
+        .drawn_position = {20, 215},
         .name = "Exit",
         .draw_callback = nullptr,
         .change_callback = exit_change_callback,
     };
     MenuOption option_back = {
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {140, 215},
+        .drawn_position = {20, 90 + 20 * 7},
         .name = "Back",
         .draw_callback = nullptr,
         .change_callback = back_change_callback,
