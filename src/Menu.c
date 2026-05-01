@@ -2,6 +2,7 @@
 #include <oct/Octarine.h>
 #include "Game.h"
 #include "MenuSystem.h"
+#include "MenuDetails.h"
 
 static MenuSystem test_menu = {0};
 static const int32_t TAB_COUNT = 3;
@@ -31,6 +32,11 @@ static void exit_change_callback(int32_t _) {
     exit(0);
 }
 
+static void back_change_callback(int32_t _) {
+    debug("Returned to main screen");
+    menu_set_tab(&test_menu, tab_index_start);
+}
+
 void menu_begin() {
     memset(&player_starting_statblock, 0, sizeof(Statblock));
     player_available_points = 20;
@@ -49,9 +55,7 @@ void menu_begin() {
     MenuOption option_cycle = {
         .type = MENU_OPTION_TYPE_SELECT,
         .drawn_position = {140, 195},
-        .name = "Cycle",
-        .index = 0,
-        .max_index = 3,
+        .name = "Options",
         .draw_callback = nullptr,
         .change_callback = settings_change_callback,
     };
@@ -62,9 +66,24 @@ void menu_begin() {
         .draw_callback = nullptr,
         .change_callback = exit_change_callback,
     };
+    MenuOption option_back = {
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {140, 215},
+        .name = "Back",
+        .draw_callback = nullptr,
+        .change_callback = back_change_callback,
+    };
     menu_tab_add_option(tab_start, &option_play, (Position){0, 0});
     menu_tab_add_option(tab_start, &option_cycle, (Position){0, 1});
     menu_tab_add_option(tab_start, &option_exit, (Position){0, 2});
+    menu_tab_add_option(tab_options, &music_volume_option,           (Position){0, 0});
+    menu_tab_add_option(tab_options, &sfx_volume_option,             (Position){0, 1});
+    menu_tab_add_option(tab_options, &animation_speed_option,        (Position){0, 2});
+    menu_tab_add_option(tab_options, &auto_pick_up_item_option,      (Position){0, 3});
+    menu_tab_add_option(tab_options, &animate_enemy_movement_option, (Position){0, 4});
+    menu_tab_add_option(tab_options, &fullscreen_option,             (Position){0, 5});
+    menu_tab_add_option(tab_options, &scale_mode_option,             (Position){0, 6});
+    menu_tab_add_option(tab_options, &option_back,                   (Position){0, 7});
 }
 
 LevelIndex menu_update() {
