@@ -82,6 +82,15 @@ const char *ANIMATION_SPEED_NAMES[4] = {
         "Faster",
 };
 
+const int32_t MAX_SPRITE_OPTIONS_PER_LAYER[6] = {
+        10, // Body
+        1, // Shoes
+        2, // Pants
+        4, // Shirt
+        8, // Head
+        10, // Accessory
+};
+
 const int32_t SOUL_BOUND_WEAPON_SLOT    = 1;
 const int32_t STARTING_WEAPON_SLOT      = 0;
 const int32_t STARTING_BASE_STAT_POINTS = 15;

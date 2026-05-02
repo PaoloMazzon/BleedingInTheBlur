@@ -1,25 +1,31 @@
 #include <string.h>
 #include <oct/Octarine.h>
+
+#include "Character.h"
 #include "Game.h"
 #include "MenuSystem.h"
 #include "MenuDetails.h"
 
 static MenuSystem test_menu = {0};
-static const int32_t TAB_COUNT = 3;
+static const int32_t TAB_COUNT = 4;
 static MenuSystemTab *tab_start;
 static const int32_t tab_index_start = 0;
 static MenuSystemTab *tab_options;
 static const int32_t tab_index_options = 1;
 static MenuSystemTab *tab_character;
 static const int32_t tab_index_character = 2;
+static MenuSystemTab *tab_stats;
+static const int32_t tab_index_stats = 2;
 static bool should_play_game = false;
 
 static Statblock player_starting_statblock;
 static int32_t player_available_points;
 
+/********************************* Top-level menu/shared *********************************/
+
 static void play_change_callback(int32_t _) {
     debug("Pressed play");
-    should_play_game = true;
+    menu_set_tab(&test_menu, tab_index_character);
 }
 
 static void settings_change_callback(int32_t index) {
@@ -37,6 +43,61 @@ static void back_change_callback(int32_t _) {
     menu_set_tab(&test_menu, tab_index_start);
 }
 
+static void back_to_character_change_callback(int32_t _) {
+    debug("Returned to main screen");
+    menu_set_tab(&test_menu, tab_index_character);
+}
+
+/********************************* Character creation *********************************/
+
+static void body_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_BODY] = index;
+}
+static void shoes_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_SHOES] = index;
+}
+static void pants_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_PANTS] = index;
+}
+static void shirt_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_SHIRT] = index;
+}
+static void head_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_HEAD] = index;
+}
+static void accessory_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_ACCESSORY] = index;
+}
+static void body_colour_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_BODY] = index;
+}
+static void shoes_colour_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_SHOES] = index;
+}
+static void pants_colour_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_PANTS] = index;
+}
+static void shirt_colour_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_SHIRT] = index;
+}
+static void head_colour_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_HEAD] = index;
+}
+static void accessory_colour_change_callback(int32_t index) {
+    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_ACCESSORY] = index;
+}
+static void next_change_callback(int32_t _) {
+    menu_set_tab(&test_menu, tab_index_stats);
+}
+static void random_character_callback(int32_t _) {
+    info_set_random_sprite_layers(&g_game.player.info);
+}
+
+/********************************* Stat allocation *********************************/
+
+
+
+/********************************* Actual menu logic *********************************/
 void menu_begin() {
     memset(&player_starting_statblock, 0, sizeof(Statblock));
     player_available_points = 20;
@@ -45,6 +106,7 @@ void menu_begin() {
     tab_start = menu_get_tab(&test_menu, tab_index_start);
     tab_options = menu_get_tab(&test_menu, tab_index_options);
     tab_character = menu_get_tab(&test_menu, tab_index_character);
+    tab_stats = menu_get_tab(&test_menu, tab_index_stats);
     MenuOption option_play = {
         .type = MENU_OPTION_TYPE_SELECT,
         .drawn_position = {20, 175},
@@ -76,6 +138,7 @@ void menu_begin() {
     menu_tab_add_option(tab_start, &option_play, 0, (Position){0, 0});
     menu_tab_add_option(tab_start, &option_cycle, 0, (Position){0, 1});
     menu_tab_add_option(tab_start, &option_exit, 0, (Position){0, 2});
+
     menu_tab_add_option(tab_options, &music_volume_option, (int32_t)g_game.options.music_volume * 10, (Position){0, 0});
     menu_tab_add_option(tab_options, &sfx_volume_option, (int32_t)g_game.options.music_volume * 10, (Position){0, 1});
     menu_tab_add_option(tab_options, &animation_speed_option, g_game.options.animation_speed, (Position){0, 2});
@@ -84,6 +147,120 @@ void menu_begin() {
     menu_tab_add_option(tab_options, &fullscreen_option, 0, (Position){0, 5});
     menu_tab_add_option(tab_options, &scale_mode_option, g_game.options.scale_mode, (Position){0, 6});
     menu_tab_add_option(tab_options, &option_back, 0, (Position){0, 7});
+
+
+    const MenuOption option_body_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = body_change_callback,
+    };
+    const MenuOption option_shoes_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = shoes_change_callback,
+    };
+    const MenuOption option_pants_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = pants_change_callback,
+    };
+    const MenuOption option_shirt_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = shirt_change_callback,
+    };
+    const MenuOption option_head_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = head_change_callback,
+    };
+    const MenuOption option_accessory_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = accessory_change_callback,
+    };
+    const MenuOption option_body_colour_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = body_colour_change_callback,
+    };
+    const MenuOption option_shoes_colour_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = shoes_colour_change_callback,
+    };
+    const MenuOption option_pants_colour_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = pants_colour_change_callback,
+    };
+    const MenuOption option_shirt_colour_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = shirt_colour_change_callback,
+    };
+    const MenuOption option_head_colour_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = head_colour_change_callback,
+    };
+    const MenuOption option_accessory_colour_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = accessory_colour_change_callback,
+    };
+    const MenuOption option_next_change = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = next_change_callback,
+    };
+    const MenuOption option_random_character = {
+        .name = "",
+        .max_index = 0,
+        .type = MENU_OPTION_TYPE_SELECT,
+        .drawn_position = {},
+        .change_callback = random_character_callback,
+    };
+    menu_tab_add_option(tab_character, &option_body_change, 0,             (Position){});
+    menu_tab_add_option(tab_character, &option_shoes_change, 0,            (Position){});
+    menu_tab_add_option(tab_character, &option_pants_change, 0,            (Position){});
+    menu_tab_add_option(tab_character, &option_shirt_change, 0,            (Position){});
+    menu_tab_add_option(tab_character, &option_head_change, 0,             (Position){});
+    menu_tab_add_option(tab_character, &option_accessory_change, 0,        (Position){});
+    menu_tab_add_option(tab_character, &option_body_colour_change, 0,      (Position){});
+    menu_tab_add_option(tab_character, &option_shoes_colour_change, 0,     (Position){});
+    menu_tab_add_option(tab_character, &option_pants_colour_change, 0,     (Position){});
+    menu_tab_add_option(tab_character, &option_shirt_colour_change, 0,     (Position){});
+    menu_tab_add_option(tab_character, &option_head_colour_change, 0,      (Position){});
+    menu_tab_add_option(tab_character, &option_accessory_colour_change, 0, (Position){});
+    menu_tab_add_option(tab_character, &option_next_change, 0,             (Position){});
+    menu_tab_add_option(tab_character, &option_random_character, 0,        (Position){});
 }
 
 LevelIndex menu_update() {
