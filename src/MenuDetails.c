@@ -1,3 +1,4 @@
+#include <math.h>
 #include "MenuDetails.h"
 #include "Game.h"
 
@@ -7,7 +8,7 @@
 const MenuOption music_volume_option = {
     .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
     .name = "Music Volume",
-    .max_index = 10,
+    .max_index = 11,
     .drawn_position = {start_x, start_y + (movement_y * 0)},
     .change_callback = music_volume_change_callback,
     .draw_callback = music_volume_draw_callback,
@@ -15,7 +16,7 @@ const MenuOption music_volume_option = {
 const MenuOption sfx_volume_option = {
     .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
     .name = "SFX Volume",
-    .max_index = 10,
+    .max_index = 11,
     .drawn_position = {start_x, start_y + (movement_y * 1)},
     .change_callback = sfx_volume_change_callback,
     .draw_callback = sfx_volume_draw_callback,
@@ -37,7 +38,7 @@ const MenuOption auto_pick_up_item_option = {
 };
 const MenuOption animate_enemy_movement_option = {
     .type = MENU_OPTION_TYPE_SELECT,
-    .name = "Animate Enemy Movement",
+    .name = "Enemy Movement",
     .drawn_position = {start_x, start_y + (movement_y * 4)},
     .change_callback = animate_enemy_movement_change_callback,
     .draw_callback = animate_enemy_movement_draw_callback,
@@ -59,50 +60,107 @@ const MenuOption scale_mode_option = {
 };
 
 void music_volume_change_callback(int32_t index) {
-    // TODO: This
+    g_game.options.music_volume = (float)index / 10;
+    save_options();
 }
 void music_volume_draw_callback(Oct_Vec2 position, int32_t index) {
-    // TODO: This
+    Oct_Vec2 text_size;
+    Oct_FontAtlas font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    const int32_t amount = (int32_t)roundf(g_game.options.music_volume * 10.0f);
+    oct_GetTextSize(font, text_size, 1, "%i", amount);
+    oct_DrawText(
+        font,
+        (Oct_Vec2){VIRTUAL_WIDTH - text_size[0] - 20, position[1]}, 1,
+        "%i", amount);
 }
 
 void sfx_volume_change_callback(int32_t index) {
-    // TODO: This
+    g_game.options.sfx_volume = (float)index / 10.0f;
+    save_options();
 }
 void sfx_volume_draw_callback(Oct_Vec2 position, int32_t index) {
-    // TODO: This
+    Oct_Vec2 text_size;
+    Oct_FontAtlas font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    const int32_t amount = (int32_t)roundf(g_game.options.sfx_volume * 10.0f);
+    oct_GetTextSize(font, text_size, 1, "%i", amount);
+    oct_DrawText(
+        font,
+        (Oct_Vec2){VIRTUAL_WIDTH - text_size[0] - 20, position[1]}, 1,
+        "%i", amount);
 }
 
 void animation_speed_change_callback(int32_t index) {
-    // TODO: This
+    g_game.options.animation_speed = index;
+    save_options();
 }
 void animation_speed_draw_callback(Oct_Vec2 position, int32_t index) {
-    // TODO: This
+    const char *scale_mode = ANIMATION_SPEED_NAMES[g_game.options.animation_speed];
+    Oct_Vec2 text_size;
+    Oct_FontAtlas font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    oct_GetTextSize(font, text_size, 1, "%s", scale_mode);
+    oct_DrawText(
+        font,
+        (Oct_Vec2){VIRTUAL_WIDTH - text_size[0] - 20, position[1]}, 1,
+        "%s", scale_mode);
 }
 
 void auto_pick_up_item_change_callback(int32_t index) {
-    // TODO: This
+    g_game.options.auto_pick_up_item = !g_game.options.auto_pick_up_item;
+    save_options();
 }
 void auto_pick_up_item_draw_callback(Oct_Vec2 position, int32_t index) {
-    // TODO: This
+    const char *fullscreen = g_game.options.auto_pick_up_item ? "Enabled" : "Disabled";
+    Oct_Vec2 text_size;
+    Oct_FontAtlas font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    oct_GetTextSize(font, text_size, 1, "%s", fullscreen);
+    oct_DrawText(
+        font,
+        (Oct_Vec2){VIRTUAL_WIDTH - text_size[0] - 20, position[1]}, 1,
+        "%s", fullscreen);
 }
 
 void animate_enemy_movement_change_callback(int32_t index) {
-    // TODO: This
+    g_game.options.animate_enemy_movement = !g_game.options.animate_enemy_movement;
+    save_options();
 }
 void animate_enemy_movement_draw_callback(Oct_Vec2 position, int32_t index) {
-    // TODO: This
+    const char *fullscreen = g_game.options.animate_enemy_movement ? "Enabled" : "Disabled";
+    Oct_Vec2 text_size;
+    Oct_FontAtlas font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    oct_GetTextSize(font, text_size, 1, "%s", fullscreen);
+    oct_DrawText(
+        font,
+        (Oct_Vec2){VIRTUAL_WIDTH - text_size[0] - 20, position[1]}, 1,
+        "%s", fullscreen);
 }
 
 void fullscreen_change_callback(int32_t index) {
-    // TODO: This
+    g_game.options.fullscreen = !g_game.options.fullscreen;
+    oct_SetFullscreen(g_game.options.fullscreen);
+    save_options();
 }
 void fullscreen_draw_callback(Oct_Vec2 position, int32_t index) {
-    // TODO: This
+    const char *fullscreen = g_game.options.fullscreen ? "Enabled" : "Disabled";
+    Oct_Vec2 text_size;
+    Oct_FontAtlas font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    oct_GetTextSize(font, text_size, 1, "%s", fullscreen);
+    oct_DrawText(
+        font,
+        (Oct_Vec2){VIRTUAL_WIDTH - text_size[0] - 20, position[1]}, 1,
+        "%s", fullscreen);
 }
 
 void scale_mode_change_callback(int32_t index) {
-    // TODO: This
+    g_game.options.scale_mode = index;
+    save_options();
 }
 void scale_mode_draw_callback(Oct_Vec2 position, int32_t index) {
-    // TODO: This
+    const char *scale_mode = SCALE_MODE_NAMES[g_game.options.scale_mode];
+    Oct_Vec2 text_size;
+    Oct_FontAtlas font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    oct_GetTextSize(font, text_size, 1, "%s", scale_mode);
+    oct_DrawText(
+        font,
+        (Oct_Vec2){VIRTUAL_WIDTH - text_size[0] - 20, position[1]}, 1,
+        "%s", scale_mode);
 }

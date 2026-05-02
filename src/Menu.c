@@ -73,17 +73,17 @@ void menu_begin() {
         .draw_callback = nullptr,
         .change_callback = back_change_callback,
     };
-    menu_tab_add_option(tab_start, &option_play, (Position){0, 0});
-    menu_tab_add_option(tab_start, &option_cycle, (Position){0, 1});
-    menu_tab_add_option(tab_start, &option_exit, (Position){0, 2});
-    menu_tab_add_option(tab_options, &music_volume_option,           (Position){0, 0});
-    menu_tab_add_option(tab_options, &sfx_volume_option,             (Position){0, 1});
-    menu_tab_add_option(tab_options, &animation_speed_option,        (Position){0, 2});
-    menu_tab_add_option(tab_options, &auto_pick_up_item_option,      (Position){0, 3});
-    menu_tab_add_option(tab_options, &animate_enemy_movement_option, (Position){0, 4});
-    menu_tab_add_option(tab_options, &fullscreen_option,             (Position){0, 5});
-    menu_tab_add_option(tab_options, &scale_mode_option,             (Position){0, 6});
-    menu_tab_add_option(tab_options, &option_back,                   (Position){0, 7});
+    menu_tab_add_option(tab_start, &option_play, 0, (Position){0, 0});
+    menu_tab_add_option(tab_start, &option_cycle, 0, (Position){0, 1});
+    menu_tab_add_option(tab_start, &option_exit, 0, (Position){0, 2});
+    menu_tab_add_option(tab_options, &music_volume_option, (int32_t)g_game.options.music_volume * 10, (Position){0, 0});
+    menu_tab_add_option(tab_options, &sfx_volume_option, (int32_t)g_game.options.music_volume * 10, (Position){0, 1});
+    menu_tab_add_option(tab_options, &animation_speed_option, g_game.options.animation_speed, (Position){0, 2});
+    menu_tab_add_option(tab_options, &auto_pick_up_item_option, 0, (Position){0, 3});
+    menu_tab_add_option(tab_options, &animate_enemy_movement_option, 0, (Position){0, 4});
+    menu_tab_add_option(tab_options, &fullscreen_option, 0, (Position){0, 5});
+    menu_tab_add_option(tab_options, &scale_mode_option, g_game.options.scale_mode, (Position){0, 6});
+    menu_tab_add_option(tab_options, &option_back, 0, (Position){0, 7});
 }
 
 LevelIndex menu_update() {

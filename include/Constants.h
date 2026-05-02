@@ -12,6 +12,8 @@ extern const char *WEAPON_TYPE_NAMES[6];
 extern const char *RARITY_NAMES[4];
 extern const char *GAME_STATES[7];
 extern const char *SPRITE_LAYER_NAMES[6];
+extern const char *SCALE_MODE_NAMES[3];
+extern const char *ANIMATION_SPEED_NAMES[4];
 
 // How many base stat points you have, no stat can have more than BASE_STAT_MAX
 extern const int32_t STARTING_BASE_STAT_POINTS;

@@ -45,7 +45,7 @@ void menu_set_tab(MenuSystem *system, int32_t index) {
     system->current_tab = index;
 }
 
-void menu_tab_add_option(MenuSystemTab *tab, const MenuOption *new_option, const Position new_pos_in_menu) {
+void menu_tab_add_option(MenuSystemTab *tab, const MenuOption *new_option, int32_t default_index, const Position new_pos_in_menu) {
     assert(tab);
     assert(new_option);
     assert(new_pos_in_menu[0] < MAX_MENU_WIDTH && new_pos_in_menu[1] < MAX_MENU_HEIGHT && new_pos_in_menu[0] >= 0 && new_pos_in_menu[1] >= 0);
@@ -57,6 +57,7 @@ void menu_tab_add_option(MenuSystemTab *tab, const MenuOption *new_option, const
     tab->menu_options[index].tween_position[1] = tab->menu_options[index].drawn_position[1];
     tab->menu_grid[(new_pos_in_menu[1] * MAX_MENU_WIDTH) + new_pos_in_menu[0]] = index;
     tab->menu_options[index].id = new_oct_id();
+    tab->menu_options[index].index = default_index;
 }
 
 // Returns the next index this should go to (y value should be -1 or 1). Can return the same index if there is no other spot
@@ -113,10 +114,16 @@ void menu_system_process_and_draw(MenuSystem *system) {
             tab->cursor_pos[0] = next_horizontal_spot(tab, tab->cursor_pos[1], move_horizontal);
         if (move_vertical != 0)
             tab->cursor_pos[1] = next_vertical_spot(tab, tab->cursor_pos[0], move_vertical);
-    } else {
+    } else if (move_horizontal != 0) {
         // Cycle current option
         if (option->type == MENU_OPTION_TYPE_CYCLE_HORIZONTAL && move_horizontal != 0) {
             option->index += move_horizontal;
+
+            if (option->index >= option->max_index)
+                option->index = 0;
+            if (option->index < 0)
+                option->index = option->max_index - 1;
+
             option->change_callback(option->index);
             option->bounce_amount = move_horizontal * 3;
         }
@@ -124,11 +131,6 @@ void menu_system_process_and_draw(MenuSystem *system) {
             option->change_callback(move_horizontal);
             option->bounce_amount = move_horizontal * 3;
         }
-
-        if (option->index >= option->max_index)
-            option->index = 0;
-        if (option->index < 0)
-            option->index = option->max_index - 1;
     }
 
     if (oct_KeyPressed(BUTTON_CONFIRM) || oct_KeyPressed(OCT_KEY_SPACE) || oct_KeyPressed(OCT_KEY_RETURN)) {

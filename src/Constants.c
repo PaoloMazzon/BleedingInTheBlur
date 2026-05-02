@@ -69,6 +69,19 @@ extern const char *SPRITE_LAYER_NAMES[6] = {
         "Sprite Layer Accessories"
 };
 
+const char *SCALE_MODE_NAMES[3] = {
+        "Integer",
+        "Aspect Ratio",
+        "Stretch",
+};
+
+const char *ANIMATION_SPEED_NAMES[4] = {
+        "None",
+        "Full",
+        "Fast",
+        "Faster",
+};
+
 const int32_t SOUL_BOUND_WEAPON_SLOT    = 1;
 const int32_t STARTING_WEAPON_SLOT      = 0;
 const int32_t STARTING_BASE_STAT_POINTS = 15;
