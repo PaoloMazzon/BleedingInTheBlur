@@ -5,6 +5,7 @@
 #include "Game.h"
 #include "MenuSystem.h"
 #include "MenuDetails.h"
+#include "Constants.h"
 
 static MenuSystem test_menu = {0};
 static const int32_t TAB_COUNT = 4;
@@ -150,86 +151,86 @@ void menu_begin() {
 
 
     const MenuOption option_body_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Body",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_BODY],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = body_change_callback,
     };
     const MenuOption option_shoes_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Shoes",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_SHOES],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = shoes_change_callback,
     };
     const MenuOption option_pants_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Pants",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_PANTS],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = pants_change_callback,
     };
     const MenuOption option_shirt_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Shirt",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_SHIRT],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = shirt_change_callback,
     };
     const MenuOption option_head_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Head",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_HEAD],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = head_change_callback,
     };
     const MenuOption option_accessory_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Accessory",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_ACCESSORY],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = accessory_change_callback,
     };
     const MenuOption option_body_colour_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Body",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_BODY],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = body_colour_change_callback,
     };
     const MenuOption option_shoes_colour_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Shoes",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_SHOES],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = shoes_colour_change_callback,
     };
     const MenuOption option_pants_colour_change = {
-        .name = "",
-        .max_index = 0,
+        .name = "Pants",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_PANTS],
         .type = MENU_OPTION_TYPE_SELECT,
         .drawn_position = {},
         .change_callback = pants_colour_change_callback,
     };
     const MenuOption option_shirt_colour_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Shirt",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_SHIRT],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = shirt_colour_change_callback,
     };
     const MenuOption option_head_colour_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Head",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_HEAD],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = head_colour_change_callback,
     };
     const MenuOption option_accessory_colour_change = {
-        .name = "",
-        .max_index = 0,
-        .type = MENU_OPTION_TYPE_SELECT,
+        .name = "Accessory",
+        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_ACCESSORY],
+        .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {},
         .change_callback = accessory_colour_change_callback,
     };
