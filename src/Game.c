@@ -339,3 +339,13 @@ int32_t get_options_attack_duration() {
     oct_Raise(OCT_STATUS_ERROR, true, "Attack animation duration is invalid %i", g_game.options.animation_speed);
     return 0;
 }
+
+void queue_level_transition(TransitionType type, int32_t duration_in_frames) {
+    g_game.level_transitions.start_frame = g_game.frame;
+    g_game.level_transitions.duration = duration_in_frames;
+    g_game.level_transitions.type = type;
+}
+
+bool in_level_transition() {
+    return g_game.frame >= g_game.level_transitions.start_frame && g_game.frame < (g_game.level_transitions.start_frame + g_game.level_transitions.duration);
+}

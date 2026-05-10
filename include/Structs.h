@@ -533,6 +533,19 @@ typedef struct AttackView_s {
     Item *spell; // if this is non-null, the attack is a weapon attack. Otherwise, it is a spell attack and the item use function will be used to initiate the attack
 } AttackView;
 
+// Type of level transitions
+typedef enum {
+    TRANSITION_TYPE_FADE_IN  = 0,
+    TRANSITION_TYPE_FADE_OUT = 1,
+} TransitionType;
+
+// Level transitions
+typedef struct TransitionState_s {
+    TransitionType type;
+    int32_t start_frame; // frame the transition was requested
+    int32_t duration; // duration requested in frames
+} TransitionState;
+
 // Different tabs the player can be in while in the in-game menu
 typedef enum {
     MENU_TAB_STATS   = 0,
@@ -672,6 +685,7 @@ typedef struct Game_s {
     Oct_Camera ui_camera; // ui camera (it'll be virtual screen size)
     Oct_Camera render_camera; // for the final backbuffer
     Options options;
+    TransitionState level_transitions;
 
     // Level in the dungeon
     Level current_level;

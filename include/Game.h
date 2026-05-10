@@ -15,6 +15,10 @@ void default_options();
 void save_options();
 int32_t get_options_attack_duration();
 
+// level transitions
+void queue_level_transition(TransitionType type, int32_t duration_in_frames);
+bool in_level_transition(); // returns true if a level transition is underway
+
 void level_begin();
 LevelIndex level_update(); // return value is where to go
 void level_end();
