@@ -67,6 +67,62 @@ void load_sprite_layers() {
     g_game.layer_sprite_counts[5]++;
 }
 
+// Calls a level's update function
+static void level_update_function(LevelIndex level) {
+    switch (level) {
+        case LEVEL_INDEX_MENU:
+            menu_update();
+            break;
+        case LEVEL_INDEX_FLOOR_1:
+        case LEVEL_INDEX_FLOOR_2:
+        case LEVEL_INDEX_FLOOR_3:
+        case LEVEL_INDEX_FLOOR_4:
+        case LEVEL_INDEX_FLOOR_5:
+            level_update();
+            break;
+        default:
+            oct_Raise(OCT_STATUS_ERROR, true, "Unhandled level index %i.", level);
+    }
+}
+
+// Calls a level's end function
+static void level_end_function(LevelIndex level) {
+    debug("Calling level end function for %s", LEVEL_INDEX_NAMES[level]);
+    switch (level) {
+        case LEVEL_INDEX_MENU:
+            menu_end();
+            break;
+        case LEVEL_INDEX_FLOOR_1:
+        case LEVEL_INDEX_FLOOR_2:
+        case LEVEL_INDEX_FLOOR_3:
+        case LEVEL_INDEX_FLOOR_4:
+        case LEVEL_INDEX_FLOOR_5:
+            level_end();
+            break;
+        default:
+            oct_Raise(OCT_STATUS_ERROR, true, "Unhandled level index %i.", level);
+    }
+}
+
+// Calls a level's start function
+static void level_begin_function(LevelIndex level) {
+    debug("Calling level begin function for %s", LEVEL_INDEX_NAMES[level]);
+    switch (level) {
+        case LEVEL_INDEX_MENU:
+            menu_begin();
+            break;
+        case LEVEL_INDEX_FLOOR_1:
+        case LEVEL_INDEX_FLOOR_2:
+        case LEVEL_INDEX_FLOOR_3:
+        case LEVEL_INDEX_FLOOR_4:
+        case LEVEL_INDEX_FLOOR_5:
+            level_begin();
+            break;
+        default:
+            oct_Raise(OCT_STATUS_ERROR, true, "Unhandled level index %i.", level);
+    }
+}
+
 void *startup() {
     debug("Starting the game.");
 
@@ -110,37 +166,20 @@ void *update(void *ptr) {
     oct_DrawClear(&(Oct_Colour){.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = 1.0f});
     oct_SetTextureCamerasEnabled(true);
 
-    if (g_game.level_index == LEVEL_INDEX_MENU) {
-        const LevelIndex new_index = menu_update();
-        if (new_index == LEVEL_INDEX_QUIT) {
-            debug("Quitting from the menu.");
-            menu_end();
-            abort();
-        } else if (new_index != LEVEL_INDEX_MENU) {
-            debug("Switching from the menu to level index %i.", new_index);
-            menu_end();
-            g_game.level_index = new_index;
-            level_begin();
-        }
-    } else {
-        const LevelIndex new_index = level_update();
-        if (new_index == LEVEL_INDEX_MENU) {
-            debug("Quitting from level %i to the menu.", g_game.level_index);
-            level_end();
-            g_game.level_index = new_index;
-            menu_begin();
-        } else if (new_index == LEVEL_INDEX_QUIT) {
-            debug("Quitting from level %i.", g_game.level_index);
-            level_end();
-            abort();
-        } else if (new_index != g_game.level_index) {
-            debug("Going from level %i to level %i.", g_game.level_index, new_index);
-            level_end();
-            g_game.level_index = new_index;
-            level_begin();
+    // Update current level
+    level_update_function(g_game.level_index);
+
+    // Update level transitions
+    if (in_level_transition()) {
+        // TODO: Draw the transition
+
+        // Transition between levels
+        if (g_game.frame >= g_game.level_transitions.start_frame + g_game.level_transitions.duration) {
+            level_end_function(g_game.level_index);
+            level_begin_function(g_game.level_transitions.next_level);
+            g_game.level_index = g_game.level_transitions.next_level;
         }
     }
-
 
     // Toggle fullscreen
     if (oct_KeyDown(OCT_KEY_LALT) && oct_KeyPressed(OCT_KEY_RETURN)) {
@@ -340,10 +379,11 @@ int32_t get_options_attack_duration() {
     return 0;
 }
 
-void queue_level_transition(TransitionType type, int32_t duration_in_frames) {
+void queue_level_transition(LevelIndex next_level, TransitionType type, int32_t duration_in_frames) {
     g_game.level_transitions.start_frame = g_game.frame;
     g_game.level_transitions.duration = duration_in_frames;
     g_game.level_transitions.type = type;
+    g_game.level_transitions.next_level = next_level;
 }
 
 bool in_level_transition() {

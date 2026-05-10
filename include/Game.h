@@ -6,7 +6,7 @@
 extern Game g_game;
 
 void menu_begin();
-LevelIndex menu_update(); // return value is where to go
+void menu_update(); // return value is where to go
 void menu_end();
 
 // save and load current options in the game struct
@@ -16,11 +16,11 @@ void save_options();
 int32_t get_options_attack_duration();
 
 // level transitions
-void queue_level_transition(TransitionType type, int32_t duration_in_frames);
+void queue_level_transition(LevelIndex next_level, TransitionType type, int32_t duration_in_frames);
 bool in_level_transition(); // returns true if a level transition is underway
 
 void level_begin();
-LevelIndex level_update(); // return value is where to go
+void level_update(); // return value is where to go
 void level_end();
 void create_label(const char *text, const Position position, Oct_Colour colour, bool needs_to_be_freed);
 void create_dice_label(const char *text, const Position position, Oct_Colour colour, bool needs_to_be_freed);

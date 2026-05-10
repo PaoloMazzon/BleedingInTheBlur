@@ -542,6 +542,7 @@ typedef enum {
 // Level transitions
 typedef struct TransitionState_s {
     TransitionType type;
+    LevelIndex next_level; // level we're going to
     int32_t start_frame; // frame the transition was requested
     int32_t duration; // duration requested in frames
 } TransitionState;

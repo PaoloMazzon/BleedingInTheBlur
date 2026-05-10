@@ -91,6 +91,17 @@ const int32_t MAX_SPRITE_OPTIONS_PER_LAYER[6] = {
         10, // Accessory
 };
 
+const char *LEVEL_INDEX_NAMES[8] = {
+        "Menu",
+        "Floor 1",
+        "Floor 2",
+        "Floor 3",
+        "Floor 4",
+        "Floor 5",
+        "Floor Final",
+        "Quit",
+};
+
 const int32_t SOUL_BOUND_WEAPON_SLOT    = 1;
 const int32_t STARTING_WEAPON_SLOT      = 0;
 const int32_t STARTING_BASE_STAT_POINTS = 15;
