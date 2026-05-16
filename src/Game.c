@@ -67,6 +67,21 @@ void load_sprite_layers() {
     g_game.layer_sprite_counts[5]++;
 }
 
+static void draw_level_transitions() {
+    const float frames_remaining = g_game.level_transitions.duration - (g_game.frame - g_game.level_transitions.start_frame);
+    const float percent_remaining = g_game.level_transitions.duration / frames_remaining;
+
+    if (g_game.level_transitions.type == TRANSITION_TYPE_FADE_OUT) {
+        Oct_Colour c = {.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = 1 - percent_remaining};
+        oct_DrawClear(&c);
+    } else if (g_game.level_transitions.type == TRANSITION_TYPE_FADE_OUT) {
+        Oct_Colour c = {.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = percent_remaining};
+        oct_DrawClear(&c);
+    } else {
+        oct_Raise(OCT_STATUS_ERROR, false, "Unimplemented level transition %i", g_game.level_transitions.type);
+    }
+}
+
 // Calls a level's update function
 static void level_update_function(LevelIndex level) {
     switch (level) {
@@ -171,10 +186,10 @@ void *update(void *ptr) {
 
     // Update level transitions
     if (in_level_transition()) {
-        // TODO: Draw the transition
+        draw_level_transitions();
 
         // Transition between levels
-        if (g_game.frame >= g_game.level_transitions.start_frame + g_game.level_transitions.duration) {
+        if (g_game.frame >= (g_game.level_transitions.start_frame + g_game.level_transitions.duration)) {
             level_end_function(g_game.level_index);
             level_begin_function(g_game.level_transitions.next_level);
             g_game.level_index = g_game.level_transitions.next_level;

@@ -26,6 +26,7 @@ static int32_t player_available_points;
 
 static void play_change_callback(int32_t _) {
     debug("Pressed play");
+    should_play_game = true; // TODO: Debug bullshit
     menu_set_tab(&test_menu, tab_index_character);
 }
 
@@ -264,7 +265,7 @@ void menu_begin() {
     menu_tab_add_option(tab_character, &option_random_character, 0,        (Position){});
 }
 
-LevelIndex menu_update() {
+void menu_update() {
     oct_LockCameras(g_game.ui_camera);
     oct_SetTextureCamerasEnabled(false);
 
@@ -276,7 +277,9 @@ LevelIndex menu_update() {
     // Menu system
     menu_system_process_and_draw(&test_menu);
 
-    return should_play_game ? LEVEL_INDEX_FLOOR_1 : LEVEL_INDEX_MENU;
+    if (should_play_game && !in_level_transition()) {
+        queue_level_transition(LEVEL_INDEX_FLOOR_1, TRANSITION_TYPE_FADE_OUT, 30);
+    }
 }
 
 void menu_end() {

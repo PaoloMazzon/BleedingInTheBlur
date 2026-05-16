@@ -835,7 +835,7 @@ void level_begin() {
     tile->item = &g_game.current_level.items[6];
 }
 
-LevelIndex level_update() {
+void level_update() {
     oct_SetTextureCamerasEnabled(true);
     const float window_width = oct_WindowWidth();
     const float window_height = oct_WindowHeight();
@@ -891,7 +891,6 @@ LevelIndex level_update() {
         g_game.current_level.enemy_turn_can_uptick_turn = false;
         g_game.current_level.turn++;
     }
-    return g_game.level_index;
 }
 
 void level_end() {
