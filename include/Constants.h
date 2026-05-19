@@ -14,7 +14,7 @@ extern const char *GAME_STATES[7];
 extern const char *SPRITE_LAYER_NAMES[6];
 extern const char *SCALE_MODE_NAMES[3];
 extern const char *ANIMATION_SPEED_NAMES[4];
-extern const char *LEVEL_INDEX_NAMES[8];
+extern const char *LEVEL_INDEX_NAMES[9];
 
 // Max bodies/shirts/shoes/whatever
 extern const int32_t MAX_SPRITE_OPTIONS_PER_LAYER[6];

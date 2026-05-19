@@ -128,6 +128,7 @@ typedef enum {
     LEVEL_INDEX_FLOOR_5     = 5,
     LEVEL_INDEX_FLOOR_FINAL = 6,
     LEVEL_INDEX_QUIT        = 7, // quit the game
+    LEVEL_INDEX_NONE        = 8, // transition with no target
 } LevelIndex;
 typedef enum {
     DRAWN_TYPE_TEXTURE   = 0,
@@ -543,8 +544,9 @@ typedef enum {
 typedef struct TransitionState_s {
     TransitionType type;
     LevelIndex next_level; // level we're going to
-    int32_t start_frame; // frame the transition was requested
-    int32_t duration; // duration requested in frames
+    int32_t start_frame;   // frame the transition was requested
+    int32_t duration;      // duration requested in frames
+    bool in_transition;    // if there is an active transition right now
 } TransitionState;
 
 // Different tabs the player can be in while in the in-game menu

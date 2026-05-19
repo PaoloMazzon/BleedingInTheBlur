@@ -69,14 +69,17 @@ void load_sprite_layers() {
 
 static void draw_level_transitions() {
     const float frames_remaining = g_game.level_transitions.duration - (g_game.frame - g_game.level_transitions.start_frame);
-    const float percent_remaining = g_game.level_transitions.duration / frames_remaining;
+    const float percent_remaining = frames_remaining / g_game.level_transitions.duration;
 
     if (g_game.level_transitions.type == TRANSITION_TYPE_FADE_OUT) {
-        Oct_Colour c = {.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = 1 - percent_remaining};
-        oct_DrawClear(&c);
-    } else if (g_game.level_transitions.type == TRANSITION_TYPE_FADE_OUT) {
-        Oct_Colour c = {.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = percent_remaining};
-        oct_DrawClear(&c);
+        const Oct_Vec2 position = {-368.0f + ((1.0f - percent_remaining) * 368.0f)};
+        oct_DrawTexture(
+                oct_GetAsset(g_game.assets, "menu/fadeeffect.png"),
+                position);
+    } else if (g_game.level_transitions.type == TRANSITION_TYPE_FADE_IN) {
+        oct_DrawTexture(
+                oct_GetAsset(g_game.assets, "menu/fadeeffect.png"),
+                (Oct_Vec2){-368 + (percent_remaining * 368)});
     } else {
         oct_Raise(OCT_STATUS_ERROR, false, "Unimplemented level transition %i", g_game.level_transitions.type);
     }
@@ -190,9 +193,16 @@ void *update(void *ptr) {
 
         // Transition between levels
         if (g_game.frame >= (g_game.level_transitions.start_frame + g_game.level_transitions.duration)) {
-            level_end_function(g_game.level_index);
-            level_begin_function(g_game.level_transitions.next_level);
-            g_game.level_index = g_game.level_transitions.next_level;
+            if (g_game.level_transitions.next_level != LEVEL_INDEX_NONE) {
+                level_end_function(g_game.level_index);
+                level_begin_function(g_game.level_transitions.next_level);
+                g_game.level_index = g_game.level_transitions.next_level;
+            }
+            g_game.level_transitions.in_transition = false;
+
+            if (g_game.level_transitions.type == TRANSITION_TYPE_FADE_OUT) {
+                queue_level_transition(LEVEL_INDEX_NONE, TRANSITION_TYPE_FADE_IN, g_game.level_transitions.duration);
+            }
         }
     }
 
@@ -395,12 +405,14 @@ int32_t get_options_attack_duration() {
 }
 
 void queue_level_transition(LevelIndex next_level, TransitionType type, int32_t duration_in_frames) {
+    if (in_level_transition()) return;
     g_game.level_transitions.start_frame = g_game.frame;
     g_game.level_transitions.duration = duration_in_frames;
     g_game.level_transitions.type = type;
     g_game.level_transitions.next_level = next_level;
+    g_game.level_transitions.in_transition = true;
 }
 
 bool in_level_transition() {
-    return g_game.frame >= g_game.level_transitions.start_frame && g_game.frame < (g_game.level_transitions.start_frame + g_game.level_transitions.duration);
+    return g_game.level_transitions.in_transition;
 }
