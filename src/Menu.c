@@ -26,7 +26,7 @@ static int32_t player_available_points;
 
 static void play_change_callback(int32_t _) {
     debug("Pressed play");
-    should_play_game = true; // TODO: Debug bullshit
+    //should_play_game = true; // TODO: Debug bullshit
     menu_set_tab(&test_menu, tab_index_character);
 }
 
@@ -151,118 +151,136 @@ void menu_begin() {
     menu_tab_add_option(tab_options, &option_back, 0, (Position){0, 7});
 
 
+    const float body_x = 30;
+    const float body_second_x = 220;
+    const float body_start_y = 70;
+    float body_y = body_start_y;
+    const float body_increment_y = 20;
     const MenuOption option_body_change = {
         .name = "Body",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_BODY],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_x, body_y},
         .change_callback = body_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_shoes_change = {
         .name = "Shoes",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_SHOES],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_x, body_y},
         .change_callback = shoes_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_pants_change = {
         .name = "Pants",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_PANTS],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_x, body_y},
         .change_callback = pants_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_shirt_change = {
         .name = "Shirt",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_SHIRT],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_x, body_y},
         .change_callback = shirt_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_head_change = {
         .name = "Head",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_HEAD],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_x, body_y},
         .change_callback = head_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_accessory_change = {
         .name = "Accessory",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_ACCESSORY],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_x, body_y},
         .change_callback = accessory_change_callback,
     };
+    body_y = body_start_y;
     const MenuOption option_body_colour_change = {
-        .name = "Body",
+        .name = "B-Colour",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_BODY],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_second_x, body_y},
         .change_callback = body_colour_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_shoes_colour_change = {
-        .name = "Shoes",
+        .name = "S-Colour",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_SHOES],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_second_x, body_y},
         .change_callback = shoes_colour_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_pants_colour_change = {
-        .name = "Pants",
+        .name = "P-Colour",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_PANTS],
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {},
+        .drawn_position = {body_second_x, body_y},
         .change_callback = pants_colour_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_shirt_colour_change = {
-        .name = "Shirt",
+        .name = "S-Colour",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_SHIRT],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_second_x, body_y},
         .change_callback = shirt_colour_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_head_colour_change = {
-        .name = "Head",
+        .name = "H-Colour",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_HEAD],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_second_x, body_y},
         .change_callback = head_colour_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_accessory_colour_change = {
-        .name = "Accessory",
+        .name = "A-Colour",
         .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_ACCESSORY],
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
-        .drawn_position = {},
+        .drawn_position = {body_second_x, body_y},
         .change_callback = accessory_colour_change_callback,
     };
+    body_y += body_increment_y;
     const MenuOption option_next_change = {
-        .name = "",
+        .name = "Next",
         .max_index = 0,
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {},
+        .drawn_position = {body_second_x, body_y},
         .change_callback = next_change_callback,
     };
     const MenuOption option_random_character = {
-        .name = "",
+        .name = "Random",
         .max_index = 0,
         .type = MENU_OPTION_TYPE_SELECT,
-        .drawn_position = {},
+        .drawn_position = {body_x, body_y},
         .change_callback = random_character_callback,
     };
-    menu_tab_add_option(tab_character, &option_body_change, 0,             (Position){});
-    menu_tab_add_option(tab_character, &option_shoes_change, 0,            (Position){});
-    menu_tab_add_option(tab_character, &option_pants_change, 0,            (Position){});
-    menu_tab_add_option(tab_character, &option_shirt_change, 0,            (Position){});
-    menu_tab_add_option(tab_character, &option_head_change, 0,             (Position){});
-    menu_tab_add_option(tab_character, &option_accessory_change, 0,        (Position){});
-    menu_tab_add_option(tab_character, &option_body_colour_change, 0,      (Position){});
-    menu_tab_add_option(tab_character, &option_shoes_colour_change, 0,     (Position){});
-    menu_tab_add_option(tab_character, &option_pants_colour_change, 0,     (Position){});
-    menu_tab_add_option(tab_character, &option_shirt_colour_change, 0,     (Position){});
-    menu_tab_add_option(tab_character, &option_head_colour_change, 0,      (Position){});
-    menu_tab_add_option(tab_character, &option_accessory_colour_change, 0, (Position){});
-    menu_tab_add_option(tab_character, &option_next_change, 0,             (Position){});
-    menu_tab_add_option(tab_character, &option_random_character, 0,        (Position){});
+    body_y += body_increment_y;
+    menu_tab_add_option(tab_character, &option_body_change, 0,             (Position){0, 0});
+    menu_tab_add_option(tab_character, &option_shoes_change, 0,            (Position){0, 1});
+    menu_tab_add_option(tab_character, &option_pants_change, 0,            (Position){0, 2});
+    menu_tab_add_option(tab_character, &option_shirt_change, 0,            (Position){0, 3});
+    menu_tab_add_option(tab_character, &option_head_change, 0,             (Position){0, 4});
+    menu_tab_add_option(tab_character, &option_accessory_change, 0,        (Position){0, 5});
+    menu_tab_add_option(tab_character, &option_body_colour_change, 0,      (Position){1, 0});
+    menu_tab_add_option(tab_character, &option_shoes_colour_change, 0,     (Position){1, 1});
+    menu_tab_add_option(tab_character, &option_pants_colour_change, 0,     (Position){1, 2});
+    menu_tab_add_option(tab_character, &option_shirt_colour_change, 0,     (Position){1, 3});
+    menu_tab_add_option(tab_character, &option_head_colour_change, 0,      (Position){1, 4});
+    menu_tab_add_option(tab_character, &option_accessory_colour_change, 0, (Position){1, 5});
+    menu_tab_add_option(tab_character, &option_next_change, 0,             (Position){1, 6});
+    menu_tab_add_option(tab_character, &option_random_character, 0,        (Position){0, 6});
 }
 
 void menu_update() {
@@ -276,6 +294,8 @@ void menu_update() {
 
     // Menu system
     menu_system_process_and_draw(&test_menu);
+
+    // TODO: Draw the character preview while choosing your appearence
 
     if (should_play_game && !in_level_transition()) {
         queue_level_transition(LEVEL_INDEX_FLOOR_1, TRANSITION_TYPE_FADE_OUT, 30);
