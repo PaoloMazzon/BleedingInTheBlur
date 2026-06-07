@@ -192,3 +192,7 @@ void menu_system_process_and_draw(MenuSystem *system) {
         }
     }
 }
+
+int32_t menu_get_current_tab(MenuSystem *system) {
+    return system->current_tab;
+}

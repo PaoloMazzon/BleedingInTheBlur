@@ -64,7 +64,7 @@ bool popup_get_weapon(PopupWeaponSelectPointer weapon_pointer, bool *selected);
 bool popup_get_item(PopupItemSelectPointer item_pointer, int32_t *index); // -1 means no new item
 bool popup_get_confirm(PopupConfirmPointer confirm_pointer, bool *selected);
 
-void player_init(Position start_pos);
+void player_init(Position pos);
 void player_update();
 int32_t get_player_current_attack_range();
 

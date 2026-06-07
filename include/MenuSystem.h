@@ -17,3 +17,5 @@ void menu_set_tab(MenuSystem *system, int32_t index);
 
 // Updates and draws a menu system
 void menu_system_process_and_draw(MenuSystem *system);
+
+int32_t menu_get_current_tab(MenuSystem *system);

@@ -53,22 +53,22 @@ static void back_to_character_change_callback(int32_t _) {
 /********************************* Character creation *********************************/
 
 static void body_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_BODY] = index;
+    g_game.player.info.sprite.layers[SPRITE_LAYER_BODY] = index;
 }
 static void shoes_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_SHOES] = index;
+    g_game.player.info.sprite.layers[SPRITE_LAYER_SHOES] = index;
 }
 static void pants_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_PANTS] = index;
+    g_game.player.info.sprite.layers[SPRITE_LAYER_PANTS] = index;
 }
 static void shirt_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_SHIRT] = index;
+    g_game.player.info.sprite.layers[SPRITE_LAYER_SHIRT] = index;
 }
 static void head_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_HEAD] = index;
+    g_game.player.info.sprite.layers[SPRITE_LAYER_HEAD] = index;
 }
 static void accessory_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_ACCESSORY] = index;
+    g_game.player.info.sprite.layers[SPRITE_LAYER_ACCESSORY] = index;
 }
 static void body_colour_change_callback(int32_t index) {
     g_game.player.info.sprite.layer_colours[SPRITE_LAYER_BODY] = index;
@@ -103,6 +103,10 @@ static void random_character_callback(int32_t _) {
 void menu_begin() {
     memset(&player_starting_statblock, 0, sizeof(Statblock));
     player_available_points = 20;
+
+    // Setup the player to be able to be drawn without properly initializing the full character
+    info_set_random_sprite_layers(&g_game.player.info);
+    g_game.player.info.scale_x = 1;
 
     menu_system_initialize(&test_menu, 3);
     tab_start = menu_get_tab(&test_menu, tab_index_start);
@@ -206,7 +210,7 @@ void menu_begin() {
     body_y = body_start_y;
     const MenuOption option_body_colour_change = {
         .name = "B-Colour",
-        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_BODY],
+        .max_index = MAX_COLOURS,
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {body_second_x, body_y},
         .change_callback = body_colour_change_callback,
@@ -214,7 +218,7 @@ void menu_begin() {
     body_y += body_increment_y;
     const MenuOption option_shoes_colour_change = {
         .name = "S-Colour",
-        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_SHOES],
+        .max_index = MAX_COLOURS,
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {body_second_x, body_y},
         .change_callback = shoes_colour_change_callback,
@@ -222,7 +226,7 @@ void menu_begin() {
     body_y += body_increment_y;
     const MenuOption option_pants_colour_change = {
         .name = "P-Colour",
-        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_PANTS],
+        .max_index = MAX_COLOURS,
         .type = MENU_OPTION_TYPE_SELECT,
         .drawn_position = {body_second_x, body_y},
         .change_callback = pants_colour_change_callback,
@@ -230,7 +234,7 @@ void menu_begin() {
     body_y += body_increment_y;
     const MenuOption option_shirt_colour_change = {
         .name = "S-Colour",
-        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_SHIRT],
+        .max_index = MAX_COLOURS,
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {body_second_x, body_y},
         .change_callback = shirt_colour_change_callback,
@@ -238,7 +242,7 @@ void menu_begin() {
     body_y += body_increment_y;
     const MenuOption option_head_colour_change = {
         .name = "H-Colour",
-        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_HEAD],
+        .max_index = MAX_COLOURS,
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {body_second_x, body_y},
         .change_callback = head_colour_change_callback,
@@ -246,7 +250,7 @@ void menu_begin() {
     body_y += body_increment_y;
     const MenuOption option_accessory_colour_change = {
         .name = "A-Colour",
-        .max_index = MAX_SPRITE_OPTIONS_PER_LAYER[SPRITE_LAYER_ACCESSORY],
+        .max_index = MAX_COLOURS,
         .type = MENU_OPTION_TYPE_CYCLE_HORIZONTAL,
         .drawn_position = {body_second_x, body_y},
         .change_callback = accessory_colour_change_callback,
@@ -295,7 +299,14 @@ void menu_update() {
     // Menu system
     menu_system_process_and_draw(&test_menu);
 
-    // TODO: Draw the character preview while choosing your appearence
+    // Draw the player's preview if we are customizing their appearence atm
+    if (menu_get_current_tab(&test_menu) == tab_index_character) {
+        draw_object(
+            &g_game.player.info,
+            (Oct_Vec2){(VIRTUAL_WIDTH / 2) - 10, (VIRTUAL_HEIGHT / 2)},
+            4,
+            1);
+    }
 
     if (should_play_game && !in_level_transition()) {
         queue_level_transition(LEVEL_INDEX_FLOOR_1, TRANSITION_TYPE_FADE_OUT, 30);
