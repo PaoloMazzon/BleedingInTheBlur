@@ -28,6 +28,12 @@ extern const int32_t BASE_STAT_MAX;
 // How many skill pips players get at the start of the game
 extern const int32_t STARTING_SKILL_PIPS;
 
+// How many skill pips are in each skill by default, before allocation
+extern const int32_t MINIMUM_PIPS_PER_SKILL;
+
+// How many skill pips are in each base skill by default, before allocation
+extern const int32_t MINIMUM_PIPS_PER_BASE_SKILL;
+
 // Constant that defines a timestamp as being not in use
 extern const int32_t TIMESTAMP_NOT_IN_USE;
 

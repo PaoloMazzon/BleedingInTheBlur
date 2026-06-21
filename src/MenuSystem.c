@@ -158,32 +158,49 @@ void menu_system_process_and_draw(MenuSystem *system) {
         current_option->tween_position[1] += (target_pos[1] - current_option->tween_position[1]) * 0.4f;
 
         // Draw the option text
-        oct_DrawTextInt(
-            OCT_INTERPOLATE_ALL, current_option->id,
-            oct_GetAsset(g_game.assets, "fnt_pixel"),
-            (Oct_Vec2){current_option->tween_position[0] + current_option->bounce_amount, current_option->tween_position[1]}, 1,
-            "%s", current_option->name);
+        if (current_option->type != MENU_OPTION_TYPE_CYCLE_INFINITE) {
+            oct_DrawTextInt(
+                    OCT_INTERPOLATE_ALL, current_option->id,
+                    oct_GetAsset(g_game.assets, "fnt_pixel"),
+                    (Oct_Vec2) {current_option->tween_position[0] + current_option->bounce_amount,
+                                current_option->tween_position[1]}, 1,
+                    "%s", current_option->name);
+        }
 
         // Tweening bounce logic
         current_option->bounce_amount -= current_option->bounce_amount * 0.95; // todo proper oscillation
 
         // Draw arrows in the event that the option is a cycling one
         if (current_option->type != MENU_OPTION_TYPE_SELECT && current_option == option && tab->selected_current_option) {
-            Oct_Vec2 text_size;
-            oct_GetTextSize(
-                oct_GetAsset(g_game.assets, "fnt_pixel"),
-                text_size, 1,
-                "%s", current_option->name);
-            oct_DrawTexture(
-                    oct_GetAsset(g_game.assets, "menu/arrow_left.png"),
-                    (Oct_Vec2){current_option->tween_position[0] - 12, current_option->tween_position[1] + 1});
-            oct_DrawTexture(
-                    oct_GetAsset(g_game.assets, "menu/arrow_right.png"),
-                    (Oct_Vec2){current_option->tween_position[0] + text_size[0] + 3, current_option->tween_position[1] + 1});
+            if (current_option->type != MENU_OPTION_TYPE_CYCLE_INFINITE) {
+                Oct_Vec2 text_size;
+                oct_GetTextSize(
+                        oct_GetAsset(g_game.assets, "fnt_pixel"),
+                        text_size, 1,
+                        "%s", current_option->name);
+                oct_DrawTexture(
+                        oct_GetAsset(g_game.assets, "menu/arrow_left.png"),
+                        (Oct_Vec2) {current_option->tween_position[0] - 12, current_option->tween_position[1] + 1});
+                oct_DrawTexture(
+                        oct_GetAsset(g_game.assets, "menu/arrow_right.png"),
+                        (Oct_Vec2) {current_option->tween_position[0] + text_size[0] + 3,
+                                    current_option->tween_position[1] + 1});
+            } else {
+                oct_DrawTextureInt(
+                        OCT_INTERPOLATE_ALL, current_option->id,
+                        oct_GetAsset(g_game.assets, "menu/movementbar.png"),
+                        (Oct_Vec2) {current_option->tween_position[0] - 12, current_option->tween_position[1]});
+            }
         } else if (current_option == option) {
-            oct_DrawTexture(
-                    oct_GetAsset(g_game.assets, "menu/pointer.png"),
-                    (Oct_Vec2){current_option->tween_position[0] - 20, current_option->tween_position[1] + 1});
+            if (current_option->type != MENU_OPTION_TYPE_CYCLE_INFINITE) {
+                oct_DrawTexture(
+                        oct_GetAsset(g_game.assets, "menu/pointer.png"),
+                        (Oct_Vec2) {current_option->tween_position[0] - 20, current_option->tween_position[1] + 1});
+            } else {
+                oct_DrawTexture(
+                        oct_GetAsset(g_game.assets, "menu/pointer_small.png"),
+                        (Oct_Vec2) {current_option->tween_position[0] - 22, current_option->tween_position[1]});
+            }
         }
 
         // And the optional drawing callback

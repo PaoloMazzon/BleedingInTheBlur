@@ -1,4 +1,5 @@
 #include <string.h>
+#include <math.h>
 #include <oct/Octarine.h>
 
 #include "Character.h"
@@ -20,7 +21,8 @@ static const int32_t tab_index_stats = 3;
 static bool should_play_game = false;
 
 static Statblock player_starting_statblock;
-static int32_t player_available_points;
+static int32_t player_available_base_points;
+static int32_t player_available_skill_points;
 
 /********************************* Top-level menu/shared *********************************/
 
@@ -99,31 +101,41 @@ static void random_character_callback(int32_t _) {
 
 // Evil piece of shit code generation
 #define STAT_CALLBACK(stat, min, max) static void stats_##stat##_callback(int32_t direction) { \
-    if (player_starting_statblock.stat < max && player_available_points > 0 && direction == 1) { \
+    if (player_starting_statblock.stat < max && player_available_skill_points > 0 && direction == 1) { \
         player_starting_statblock.stat += 1;                                     \
-        player_available_points -= 1;                                            \
+        player_available_skill_points -= 1;                                      \
     } else if (direction == -1 && player_starting_statblock.stat > min) {        \
         player_starting_statblock.stat -= 1;                                     \
-        player_available_points += 1;                                            \
+        player_available_skill_points += 1;                                      \
     }                                                                            \
 }
 
-STAT_CALLBACK(wits, 2, 5)
+#define BASE_STAT_CALLBACK(stat, min, max) static void stats_##stat##_callback(int32_t direction) { \
+    if (player_starting_statblock.stat < max && player_available_base_points > 0 && direction == 1) { \
+        player_starting_statblock.stat += 1;                                     \
+        player_available_base_points -= 1;                                       \
+    } else if (direction == -1 && player_starting_statblock.stat > min) {        \
+        player_starting_statblock.stat -= 1;                                     \
+        player_available_base_points += 1;                                       \
+    }                                                                            \
+}
+
+BASE_STAT_CALLBACK(wits, 2, BASE_STAT_MAX)
 STAT_CALLBACK(perception, 2, 5)
 STAT_CALLBACK(escape, 2, 5)
 STAT_CALLBACK(deception, 2, 5)
 STAT_CALLBACK(trapping, 2, 5)
-STAT_CALLBACK(grit, 2, 5)
+BASE_STAT_CALLBACK(grit, 2, BASE_STAT_MAX)
 STAT_CALLBACK(suffer, 2, 5)
 STAT_CALLBACK(healing, 2, 5)
 STAT_CALLBACK(deaths_door, 2, 5)
 STAT_CALLBACK(attrition, 2, 5)
-STAT_CALLBACK(martial, 2, 5)
+BASE_STAT_CALLBACK(martial, 2, BASE_STAT_MAX)
 STAT_CALLBACK(blades, 2, 5)
 STAT_CALLBACK(marksman, 2, 5)
 STAT_CALLBACK(grappler, 2, 5)
 STAT_CALLBACK(evade, 2, 5)
-STAT_CALLBACK(learning, 2, 5)
+BASE_STAT_CALLBACK(learning, 2, BASE_STAT_MAX)
 STAT_CALLBACK(occult, 2, 5)
 STAT_CALLBACK(herbalism, 2, 5)
 STAT_CALLBACK(tactics, 2, 5)
@@ -132,8 +144,14 @@ STAT_CALLBACK(cartography, 2, 5)
 /********************************* Actual menu logic *********************************/
 void menu_begin() {
     memset(&player_starting_statblock, 0, sizeof(Statblock));
-    player_available_points = 20;
-
+    player_available_base_points = STARTING_BASE_STAT_POINTS;
+    player_available_skill_points = STARTING_SKILL_PIPS;
+    for (int32_t base_stat = 0; base_stat < 4; base_stat++) {
+        for (int32_t skill = 0; skill < 4; skill++) {
+            *get_skill_pip(&player_starting_statblock, base_stat, skill) = MINIMUM_PIPS_PER_SKILL;
+        }
+        player_starting_statblock.base_stats[base_stat] = MINIMUM_PIPS_PER_BASE_SKILL;
+    }
 
     // Setup the player to be able to be drawn without properly initializing the full character
     info_set_random_sprite_layers(&g_game.player.info);
@@ -317,45 +335,188 @@ void menu_begin() {
     menu_tab_add_option(tab_character, &option_random_character, 0,        (Position){0, 6});
 
     const MenuOption option_wits = {
-            .name = "   ",
+            .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {60, 74},
+            .drawn_position = {60, 77},
             .change_callback = stats_wits_callback,
     };
     const MenuOption option_perception = {
-            .name = "   ",
+            .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {45, 85},
+            .drawn_position = {47, 89},
             .change_callback = stats_perception_callback,
     };
     const MenuOption option_escape = {
-            .name = "   ",
+            .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {57, 97},
+            .drawn_position = {62, 97},
             .change_callback = stats_escape_callback,
     };
     const MenuOption option_deception = {
-            .name = "   ",
+            .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {50, 104},
+            .drawn_position = {51, 105},
             .change_callback = stats_deception_callback,
     };
     const MenuOption option_trapping = {
-            .name = "   ",
+            .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {49, 113},
+            .drawn_position = {54, 113},
             .change_callback = stats_trapping_callback,
     };
-    menu_tab_add_option(tab_stats, &option_wits, 0,             (Position){0, 0});
-    menu_tab_add_option(tab_stats, &option_perception, 0,            (Position){0, 1});
-    menu_tab_add_option(tab_stats, &option_escape, 0,            (Position){0, 2});
-    menu_tab_add_option(tab_stats, &option_deception, 0,            (Position){0, 3});
-    menu_tab_add_option(tab_stats, &option_trapping, 0,             (Position){0, 4});
+    const MenuOption option_martial = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {34, 141},
+            .change_callback = stats_martial_callback,
+    };
+    const MenuOption option_blades = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {65, 153},
+            .change_callback = stats_blades_callback,
+    };
+    const MenuOption option_marksman = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {49, 161},
+            .change_callback = stats_marksman_callback,
+    };
+    const MenuOption option_grappler = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {60, 169},
+            .change_callback = stats_grappler_callback,
+    };
+    const MenuOption option_evade = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {66, 176},
+            .change_callback = stats_evade_callback,
+    };
+    /*const MenuOption option_ = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {},
+            .change_callback = stats__callback,
+    };
+    const MenuOption option_ = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {},
+            .change_callback = stats__callback,
+    };
+    const MenuOption option_ = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {},
+            .change_callback = stats__callback,
+    };
+    const MenuOption option_ = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {},
+            .change_callback = stats__callback,
+    };
+    const MenuOption option_ = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {},
+            .change_callback = stats__callback,
+    };
+    const MenuOption option_ = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {},
+            .change_callback = stats__callback,
+    };
+    const MenuOption option_ = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {},
+            .change_callback = stats__callback,
+    };
+    const MenuOption option_ = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {},
+            .change_callback = stats__callback,
+    };
+    const MenuOption option_ = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {},
+            .change_callback = stats__callback,
+    };
+    const MenuOption option_ = {
+            .name = "",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {},
+            .change_callback = stats__callback,
+    }; TODO - Handle the right side of the screen text being in the opposite direction
+    */
+    menu_tab_add_option(tab_stats, &option_wits, 0,       (Position){0, 0});
+    menu_tab_add_option(tab_stats, &option_perception, 0, (Position){0, 1});
+    menu_tab_add_option(tab_stats, &option_escape, 0,     (Position){0, 2});
+    menu_tab_add_option(tab_stats, &option_deception, 0,  (Position){0, 3});
+    menu_tab_add_option(tab_stats, &option_trapping, 0,   (Position){0, 4});
+    menu_tab_add_option(tab_stats, &option_martial, 0,       (Position){0, 5});
+    menu_tab_add_option(tab_stats, &option_blades, 0, (Position){0, 6});
+    menu_tab_add_option(tab_stats, &option_marksman, 0,     (Position){0, 7});
+    menu_tab_add_option(tab_stats, &option_grappler, 0,  (Position){0, 8});
+    menu_tab_add_option(tab_stats, &option_evade, 0,   (Position){0, 9});
+}
+
+static void draw_pips_big(Oct_Vec2 position, float direction, int32_t count) {
+    const float y = position[1];
+    const float pip_horizontal_jump = direction * 6;
+    const Oct_Asset pip_tex = oct_GetAsset(g_game.assets, "hud/skillpip.png");
+    float x = position[0];
+    Oct_Colour base_colour = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f};
+    for (int32_t i = 0; i < count; i++) {
+        Oct_Colour *c = &base_colour;
+        oct_DrawTextureColour(
+                pip_tex,
+                c,
+                (Oct_Vec2){x, y});
+        x += pip_horizontal_jump;
+    }
+}
+
+static void draw_pips(Oct_Vec2 position, float direction, int32_t count) {
+    const float y = position[1];
+    const float pip_horizontal_jump = direction * 4;
+    const Oct_Asset pip_tex = oct_GetAsset(g_game.assets, "hud/ingamepip.png");
+    float x = position[0];
+    Oct_Colour base_colour = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f};
+    for (int32_t i = 0; i < count; i++) {
+        Oct_Colour *c = &base_colour;
+        oct_DrawTextureColour(
+                pip_tex,
+                c,
+                (Oct_Vec2){x, y});
+        x += pip_horizontal_jump;
+    }
 }
 
 void menu_update() {
@@ -379,6 +540,25 @@ void menu_update() {
             1);
     } else if (menu_get_current_tab(&test_menu) == tab_index_stats) {
         oct_DrawTexture(oct_GetAsset(g_game.assets, "menu/statsscreen.png"), (Oct_Vec2){0, 0});
+
+        // Draw pips in each skill
+        draw_pips_big((Oct_Vec2){92, 74}, 1, player_starting_statblock.wits);
+        draw_pips((Oct_Vec2){92, 89 + (0 * 8)}, 1, player_starting_statblock.wits_stats[0]);
+        draw_pips((Oct_Vec2){92, 89 + (1 * 8)}, 1, player_starting_statblock.wits_stats[1]);
+        draw_pips((Oct_Vec2){92, 89 + (2 * 8)}, 1, player_starting_statblock.wits_stats[2]);
+        draw_pips((Oct_Vec2){92, 89 + (3 * 8)}, 1, player_starting_statblock.wits_stats[3]);
+
+        draw_pips_big((Oct_Vec2){92, 138}, 1, player_starting_statblock.martial);
+        draw_pips((Oct_Vec2){92, 153 + (0 * 8)}, 1, player_starting_statblock.martial_stats[0]);
+        draw_pips((Oct_Vec2){92, 153 + (1 * 8)}, 1, player_starting_statblock.martial_stats[1]);
+        draw_pips((Oct_Vec2){92, 153 + (2 * 8)}, 1, player_starting_statblock.martial_stats[2]);
+        draw_pips((Oct_Vec2){92, 153 + (3 * 8)}, 1, player_starting_statblock.martial_stats[3]);
+
+        // Draw the remaining skill and base points
+        Oct_Vec2 size = {0};
+        Oct_FontAtlas font = oct_GetAsset(g_game.assets, "fnt_pixel");
+        oct_GetTextSize(font, size, 1, "Skill Points: %i / Base Points: %i", player_available_skill_points, player_available_base_points);
+        oct_DrawText(font, (Oct_Vec2){roundf((VIRTUAL_WIDTH / 2) - (size[0] / 2)), 50}, 1, "Skill Points: %i / Base Points: %i", player_available_skill_points, player_available_base_points);
     }
 
     if (should_play_game && !in_level_transition()) {
