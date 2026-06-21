@@ -16,7 +16,7 @@ static const int32_t tab_index_options = 1;
 static MenuSystemTab *tab_character;
 static const int32_t tab_index_character = 2;
 static MenuSystemTab *tab_stats;
-static const int32_t tab_index_stats = 2;
+static const int32_t tab_index_stats = 3;
 static bool should_play_game = false;
 
 static Statblock player_starting_statblock;
@@ -97,18 +97,49 @@ static void random_character_callback(int32_t _) {
 
 /********************************* Stat allocation *********************************/
 
+// Evil piece of shit code generation
+#define STAT_CALLBACK(stat, min, max) static void stats_##stat##_callback(int32_t direction) { \
+    if (player_starting_statblock.stat < max && player_available_points > 0 && direction == 1) { \
+        player_starting_statblock.stat += 1;                                     \
+        player_available_points -= 1;                                            \
+    } else if (direction == -1 && player_starting_statblock.stat > min) {        \
+        player_starting_statblock.stat -= 1;                                     \
+        player_available_points += 1;                                            \
+    }                                                                            \
+}
 
+STAT_CALLBACK(wits, 2, 5)
+STAT_CALLBACK(perception, 2, 5)
+STAT_CALLBACK(escape, 2, 5)
+STAT_CALLBACK(deception, 2, 5)
+STAT_CALLBACK(trapping, 2, 5)
+STAT_CALLBACK(grit, 2, 5)
+STAT_CALLBACK(suffer, 2, 5)
+STAT_CALLBACK(healing, 2, 5)
+STAT_CALLBACK(deaths_door, 2, 5)
+STAT_CALLBACK(attrition, 2, 5)
+STAT_CALLBACK(martial, 2, 5)
+STAT_CALLBACK(blades, 2, 5)
+STAT_CALLBACK(marksman, 2, 5)
+STAT_CALLBACK(grappler, 2, 5)
+STAT_CALLBACK(evade, 2, 5)
+STAT_CALLBACK(learning, 2, 5)
+STAT_CALLBACK(occult, 2, 5)
+STAT_CALLBACK(herbalism, 2, 5)
+STAT_CALLBACK(tactics, 2, 5)
+STAT_CALLBACK(cartography, 2, 5)
 
 /********************************* Actual menu logic *********************************/
 void menu_begin() {
     memset(&player_starting_statblock, 0, sizeof(Statblock));
     player_available_points = 20;
 
+
     // Setup the player to be able to be drawn without properly initializing the full character
     info_set_random_sprite_layers(&g_game.player.info);
     g_game.player.info.scale_x = 1;
 
-    menu_system_initialize(&test_menu, 3);
+    menu_system_initialize(&test_menu, 4);
     tab_start = menu_get_tab(&test_menu, tab_index_start);
     tab_options = menu_get_tab(&test_menu, tab_index_options);
     tab_character = menu_get_tab(&test_menu, tab_index_character);
@@ -284,6 +315,47 @@ void menu_begin() {
     menu_tab_add_option(tab_character, &option_accessory_colour_change, 0, (Position){1, 5});
     menu_tab_add_option(tab_character, &option_next_change, 0,             (Position){1, 6});
     menu_tab_add_option(tab_character, &option_random_character, 0,        (Position){0, 6});
+
+    const MenuOption option_wits = {
+            .name = "   ",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {60, 74},
+            .change_callback = stats_wits_callback,
+    };
+    const MenuOption option_perception = {
+            .name = "   ",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {45, 85},
+            .change_callback = stats_perception_callback,
+    };
+    const MenuOption option_escape = {
+            .name = "   ",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {57, 97},
+            .change_callback = stats_escape_callback,
+    };
+    const MenuOption option_deception = {
+            .name = "   ",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {50, 104},
+            .change_callback = stats_deception_callback,
+    };
+    const MenuOption option_trapping = {
+            .name = "   ",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
+            .drawn_position = {49, 113},
+            .change_callback = stats_trapping_callback,
+    };
+    menu_tab_add_option(tab_stats, &option_wits, 0,             (Position){0, 0});
+    menu_tab_add_option(tab_stats, &option_perception, 0,            (Position){0, 1});
+    menu_tab_add_option(tab_stats, &option_escape, 0,            (Position){0, 2});
+    menu_tab_add_option(tab_stats, &option_deception, 0,            (Position){0, 3});
+    menu_tab_add_option(tab_stats, &option_trapping, 0,             (Position){0, 4});
 }
 
 void menu_update() {
@@ -305,6 +377,8 @@ void menu_update() {
             (Oct_Vec2){(VIRTUAL_WIDTH / 2) - 10, (VIRTUAL_HEIGHT / 2)},
             4,
             1);
+    } else if (menu_get_current_tab(&test_menu) == tab_index_stats) {
+        oct_DrawTexture(oct_GetAsset(g_game.assets, "menu/statsscreen.png"), (Oct_Vec2){0, 0});
     }
 
     if (should_play_game && !in_level_transition()) {
