@@ -404,77 +404,76 @@ void menu_begin() {
             .drawn_position = {66, 176},
             .change_callback = stats_evade_callback,
     };
-    /*const MenuOption option_ = {
+    const MenuOption option_grit = {
             .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {},
-            .change_callback = stats__callback,
+            .drawn_position = {250, 78},
+            .change_callback = stats_grit_callback,
     };
-    const MenuOption option_ = {
+    const MenuOption option_suffer = {
             .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {},
-            .change_callback = stats__callback,
+            .drawn_position = {246, 89},
+            .change_callback = stats_suffer_callback,
     };
-    const MenuOption option_ = {
+    const MenuOption option_healing = {
             .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {},
-            .change_callback = stats__callback,
+            .drawn_position = {250, 97},
+            .change_callback = stats_healing_callback,
     };
-    const MenuOption option_ = {
+    const MenuOption option_deaths_door = {
             .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {},
-            .change_callback = stats__callback,
+            .drawn_position = {274, 105},
+            .change_callback = stats_deaths_door_callback,
     };
-    const MenuOption option_ = {
+    const MenuOption option_attrition = {
             .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {},
-            .change_callback = stats__callback,
+            .drawn_position = {253, 113},
+            .change_callback = stats_attrition_callback,
     };
-    const MenuOption option_ = {
+    const MenuOption option_learning = {
             .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {},
-            .change_callback = stats__callback,
+            .drawn_position = {286, 141},
+            .change_callback = stats_learning_callback,
     };
-    const MenuOption option_ = {
+    const MenuOption option_occult = {
             .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {},
-            .change_callback = stats__callback,
+            .drawn_position = {247, 153},
+            .change_callback = stats_occult_callback,
     };
-    const MenuOption option_ = {
+    const MenuOption option_herbalism = {
             .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {},
-            .change_callback = stats__callback,
+            .drawn_position = {261, 161},
+            .change_callback = stats_herbalism_callback,
     };
-    const MenuOption option_ = {
+    const MenuOption option_tactics = {
             .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {},
-            .change_callback = stats__callback,
+            .drawn_position = {251, 169},
+            .change_callback = stats_tactics_callback,
     };
-    const MenuOption option_ = {
+    const MenuOption option_cartography = {
             .name = "",
             .max_index = 0,
             .type = MENU_OPTION_TYPE_CYCLE_INFINITE,
-            .drawn_position = {},
-            .change_callback = stats__callback,
-    }; TODO - Handle the right side of the screen text being in the opposite direction
-    */
+            .drawn_position = {272, 176},
+            .change_callback = stats_cartography_callback,
+    };
     menu_tab_add_option(tab_stats, &option_wits, 0,       (Position){0, 0});
     menu_tab_add_option(tab_stats, &option_perception, 0, (Position){0, 1});
     menu_tab_add_option(tab_stats, &option_escape, 0,     (Position){0, 2});
@@ -485,6 +484,16 @@ void menu_begin() {
     menu_tab_add_option(tab_stats, &option_marksman, 0,     (Position){0, 7});
     menu_tab_add_option(tab_stats, &option_grappler, 0,  (Position){0, 8});
     menu_tab_add_option(tab_stats, &option_evade, 0,   (Position){0, 9});
+    menu_tab_add_option(tab_stats, &option_grit, 0,       (Position){1, 0});
+    menu_tab_add_option(tab_stats, &option_suffer, 0, (Position){1, 1});
+    menu_tab_add_option(tab_stats, &option_healing, 0,     (Position){1, 2});
+    menu_tab_add_option(tab_stats, &option_deaths_door, 0,  (Position){1, 3});
+    menu_tab_add_option(tab_stats, &option_attrition, 0,   (Position){1, 4});
+    menu_tab_add_option(tab_stats, &option_learning, 0,       (Position){1, 5});
+    menu_tab_add_option(tab_stats, &option_occult, 0, (Position){1, 6});
+    menu_tab_add_option(tab_stats, &option_herbalism, 0,     (Position){1, 7});
+    menu_tab_add_option(tab_stats, &option_tactics, 0,  (Position){1, 8});
+    menu_tab_add_option(tab_stats, &option_cartography, 0,   (Position){1, 9});
 }
 
 static void draw_pips_big(Oct_Vec2 position, float direction, int32_t count) {
@@ -553,6 +562,20 @@ void menu_update() {
         draw_pips((Oct_Vec2){92, 153 + (1 * 8)}, 1, player_starting_statblock.martial_stats[1]);
         draw_pips((Oct_Vec2){92, 153 + (2 * 8)}, 1, player_starting_statblock.martial_stats[2]);
         draw_pips((Oct_Vec2){92, 153 + (3 * 8)}, 1, player_starting_statblock.martial_stats[3]);
+
+        const float lsx = 215 - 4;
+        const float small_offset = 2;
+        draw_pips_big((Oct_Vec2){lsx, 74}, -1, player_starting_statblock.grit);
+        draw_pips((Oct_Vec2){lsx + small_offset, 89 + (0 * 8)}, -1, player_starting_statblock.grit_stats[0]);
+        draw_pips((Oct_Vec2){lsx + small_offset, 89 + (1 * 8)}, -1, player_starting_statblock.grit_stats[1]);
+        draw_pips((Oct_Vec2){lsx + small_offset, 89 + (2 * 8)}, -1, player_starting_statblock.grit_stats[2]);
+        draw_pips((Oct_Vec2){lsx + small_offset, 89 + (3 * 8)}, -1, player_starting_statblock.grit_stats[3]);
+
+        draw_pips_big((Oct_Vec2){lsx, 138}, -1, player_starting_statblock.learning);
+        draw_pips((Oct_Vec2){lsx + small_offset, 153 + (0 * 8)}, -1, player_starting_statblock.learning_stats[0]);
+        draw_pips((Oct_Vec2){lsx + small_offset, 153 + (1 * 8)}, -1, player_starting_statblock.learning_stats[1]);
+        draw_pips((Oct_Vec2){lsx + small_offset, 153 + (2 * 8)}, -1, player_starting_statblock.learning_stats[2]);
+        draw_pips((Oct_Vec2){lsx + small_offset, 153 + (3 * 8)}, -1, player_starting_statblock.learning_stats[3]);
 
         // Draw the remaining skill and base points
         Oct_Vec2 size = {0};

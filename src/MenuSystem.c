@@ -125,11 +125,12 @@ void menu_system_process_and_draw(MenuSystem *system) {
                 option->index = option->max_index - 1;
 
             option->change_callback(option->index);
-            option->bounce_amount = move_horizontal * 3;
+            option->bounce_amount = (float)move_horizontal * 3;
         }
         if (option->type == MENU_OPTION_TYPE_CYCLE_INFINITE && move_horizontal != 0) {
-            option->change_callback(move_horizontal);
-            option->bounce_amount = move_horizontal * 3;
+            const int32_t REAL_MOVE = system->tabs[system->current_tab].cursor_pos[0] != 0 ? -move_horizontal : move_horizontal;
+            option->change_callback(REAL_MOVE);
+            option->bounce_amount = (float)REAL_MOVE * 3;
         }
     }
 
@@ -197,9 +198,15 @@ void menu_system_process_and_draw(MenuSystem *system) {
                         oct_GetAsset(g_game.assets, "menu/pointer.png"),
                         (Oct_Vec2) {current_option->tween_position[0] - 20, current_option->tween_position[1] + 1});
             } else {
-                oct_DrawTexture(
-                        oct_GetAsset(g_game.assets, "menu/pointer_small.png"),
-                        (Oct_Vec2) {current_option->tween_position[0] - 22, current_option->tween_position[1]});
+                // hacky pile of shit
+                if (system->tabs[system->current_tab].cursor_pos[0] == 0)
+                    oct_DrawTexture(
+                            oct_GetAsset(g_game.assets, "menu/pointer_small.png"),
+                            (Oct_Vec2) {current_option->tween_position[0] - 22, current_option->tween_position[1]});
+                else
+                    oct_DrawTexture(
+                            oct_GetAsset(g_game.assets, "menu/pointer_small_left.png"),
+                            (Oct_Vec2) {current_option->tween_position[0] - 22 + 12, current_option->tween_position[1]});
             }
         }
 
