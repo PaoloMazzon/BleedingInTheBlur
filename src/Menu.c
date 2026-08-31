@@ -24,6 +24,9 @@ static Statblock player_starting_statblock;
 static int32_t player_available_base_points;
 static int32_t player_available_skill_points;
 
+static float background_pos_x = 0;
+static float background_pos_y = 0;
+
 /********************************* Top-level menu/shared *********************************/
 
 static void play_change_callback(int32_t _) {
@@ -531,6 +534,21 @@ static void draw_pips(Oct_Vec2 position, float direction, int32_t count) {
 void menu_update() {
     oct_LockCameras(g_game.ui_camera);
     oct_SetTextureCamerasEnabled(false);
+
+    // Draw the menu background
+    const float menu_background_width = 200;
+    const float menu_background_height = 200;
+    Oct_Asset menu_background = oct_GetAsset(g_game.assets, "menubackground.png");
+    const float count_horizontal = ceilf(VIRTUAL_WIDTH / menu_background_width) + 1;
+    const float count_vertical = ceilf(VIRTUAL_HEIGHT / menu_background_height) + 1;
+    for (int32_t y = -1; y < count_vertical; y++) {
+        for (int32_t x = -1; x < count_horizontal; x++) {
+            oct_DrawTexture(menu_background,
+                            (Oct_Vec2){background_pos_x + (x * menu_background_width), background_pos_y + (y * menu_background_height)});
+        }
+    }
+    background_pos_x += cosf((float)(g_game.frame) * 0.005f) * 0.5f;
+    background_pos_y += sinf((float)(g_game.frame) * 0.005f) * 0.5f;
 
     // Draw some title stuff
     oct_DrawTexture(
