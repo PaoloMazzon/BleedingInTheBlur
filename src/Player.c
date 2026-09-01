@@ -7,7 +7,7 @@
 
 void player_init(Position start_pos) {
     Statblock sb;
-    random_statblock(&sb);
+    memcpy(&sb, &g_game.player.initial_statblock, sizeof(Statblock));
     print_statblock(&sb);
     character_create(&sb, (Position){start_pos[0], start_pos[1]}, &g_game.player);
     info_set_random_sprite_layers(&g_game.player.info);

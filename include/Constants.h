@@ -112,7 +112,7 @@ extern const struct Traits_s RUST_SELF_DAMAGE_TRAITS;
 #define MAX_SPRITE_LAYERS 6
 #define MAX_COLOURS 10
 #define MAX_MENU_WIDTH 10
-#define MAX_MENU_HEIGHT 10
+#define MAX_MENU_HEIGHT 15
 #define MAX_MENU_ELEMENTS (MAX_MENU_WIDTH * MAX_MENU_HEIGHT)
 
 // These are compiler preprocessors for easy access

@@ -1,12 +1,14 @@
 #include <string.h>
 #include <math.h>
 #include <oct/Octarine.h>
+#include <assert.h>
 
 #include "Character.h"
 #include "Game.h"
 #include "MenuSystem.h"
 #include "MenuDetails.h"
 #include "Constants.h"
+#include "Util.h"
 
 static MenuSystem test_menu = {0};
 static const int32_t TAB_COUNT = 4;
@@ -31,7 +33,6 @@ static float background_pos_y = 0;
 
 static void play_change_callback(int32_t _) {
     debug("Pressed play");
-    //should_play_game = true; // TODO: Debug bullshit
     menu_set_tab(&test_menu, tab_index_character);
 }
 
@@ -143,6 +144,50 @@ STAT_CALLBACK(occult, 2, 5)
 STAT_CALLBACK(herbalism, 2, 5)
 STAT_CALLBACK(tactics, 2, 5)
 STAT_CALLBACK(cartography, 2, 5)
+
+static void randomize_stats_callback(int32_t _) {
+    memset(&player_starting_statblock, 0, sizeof(Statblock));
+    player_available_base_points = STARTING_BASE_STAT_POINTS;
+    player_available_skill_points = STARTING_SKILL_PIPS;
+    for (int32_t base_stat = 0; base_stat < 4; base_stat++) {
+        for (int32_t skill = 0; skill < 4; skill++) {
+            *get_skill_pip(&player_starting_statblock, base_stat, skill) = MINIMUM_PIPS_PER_SKILL;
+        }
+        player_starting_statblock.base_stats[base_stat] = MINIMUM_PIPS_PER_BASE_SKILL;
+    }
+    assert(player_available_base_points < (BASE_STAT_MAX - MINIMUM_PIPS_PER_BASE_SKILL) * 4);
+    while (player_available_base_points > 0) {
+        const int32_t stat = random_int(0, 4);
+        if (player_starting_statblock.base_stats[stat] >= BASE_STAT_MAX) continue;
+        player_starting_statblock.base_stats[stat] += 1;
+        player_available_base_points--;
+    }
+    while (player_available_skill_points > 0) {
+        const int32_t base = random_int(0, 4);
+        const int32_t stat = random_int(0, 4);
+        int32_t *skill = get_skill_pip(&player_starting_statblock, base, stat);
+        if (*skill >= 5) continue;
+        *skill += 1;
+        player_available_skill_points--;
+    }
+}
+
+static void last_stats_callback(int32_t _) {
+    debug("Last stats selected");
+    // todo this
+}
+
+static void play_game_callback(int32_t _) {
+    debug("Play games selected");
+    memcpy(&g_game.player.initial_statblock, &player_starting_statblock, sizeof(Statblock));
+    should_play_game = true;
+}
+
+static void back_from_stats_callback(int32_t _) {
+    debug("Back from stats selected");
+    menu_set_tab(&test_menu, tab_index_character);
+}
+
 
 /********************************* Actual menu logic *********************************/
 void menu_begin() {
@@ -497,6 +542,40 @@ void menu_begin() {
     menu_tab_add_option(tab_stats, &option_herbalism, 0,     (Position){1, 7});
     menu_tab_add_option(tab_stats, &option_tactics, 0,  (Position){1, 8});
     menu_tab_add_option(tab_stats, &option_cartography, 0,   (Position){1, 9});
+
+    const float fuck = 45;
+    const MenuOption option_last_stats = {
+            .name = "Use Last Run",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_SELECT,
+            .drawn_position = {83 - fuck, 200},
+            .change_callback = last_stats_callback,
+    };
+    const MenuOption option_randomize_stats = {
+            .name = "Randomize",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_SELECT,
+            .drawn_position = {235 - fuck, 200},
+            .change_callback = randomize_stats_callback,
+    };
+    const MenuOption option_back_from_stats_stats = {
+            .name = "Back",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_SELECT,
+            .drawn_position = {83 - fuck, 220},
+            .change_callback = randomize_stats_callback,
+    };
+    const MenuOption option_play_game = {
+            .name = "Play",
+            .max_index = 0,
+            .type = MENU_OPTION_TYPE_SELECT,
+            .drawn_position = {235 - fuck, 220},
+            .change_callback = play_game_callback,
+    };
+    menu_tab_add_option(tab_stats, &option_last_stats, 0,   (Position){0, 10});
+    menu_tab_add_option(tab_stats, &option_randomize_stats, 0,   (Position){1, 10});
+    menu_tab_add_option(tab_stats, &option_back_from_stats_stats, 0,   (Position){0, 11});
+    menu_tab_add_option(tab_stats, &option_play_game, 0,   (Position){1, 11});
 }
 
 static void draw_pips_big(Oct_Vec2 position, float direction, int32_t count) {
