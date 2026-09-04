@@ -1,4 +1,5 @@
 #include <string.h>
+#include <slog.h>
 #include <assert.h>
 #include "Game.h"
 #include "MenuSystem.h"
@@ -78,7 +79,7 @@ static int32_t next_vertical_spot(MenuSystemTab *tab, int32_t x_pos, int32_t mov
             new_index = MAX_MENU_HEIGHT - 1;
         new_option = get_menu_grid_pos(tab, (Position){x_pos, new_index});
         if (iterations++ >= max_iterations)
-            oct_Raise(OCT_STATUS_ERROR, true, "Menu was setup incorrectly");
+            slog_fatal("Menu was setup incorrectly");
     }
     return new_index;
 }
@@ -97,7 +98,7 @@ static int32_t next_horizontal_spot(MenuSystemTab *tab, int32_t y_pos, int32_t m
             new_index = MAX_MENU_WIDTH - 1;
         new_option = get_menu_grid_pos(tab, (Position){new_index, y_pos});
         if (iterations++ >= max_iterations)
-            oct_Raise(OCT_STATUS_ERROR, true, "Menu was setup incorrectly");
+            slog_fatal("Menu was setup incorrectly");
     }
     return new_index;
 }

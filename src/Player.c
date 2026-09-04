@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include <slog.h>
 #include "Game.h"
 #include "Character.h"
 #include "Util.h"
@@ -123,10 +124,10 @@ static bool player_moved_into_tile(TileContents *tile) {
     if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_WEAPON) {
         if (g_game.options.auto_pick_up_item && g_game.player.soul_bound_weapon.type == WEAPON_TYPE_NONE) {
             pickup_weapon();
-            debug("Player automatically picked up weapon");
+            slog_debug("Player automatically picked up weapon");
         } else {
             g_game.current_level.weapon_popup = popup_weapon_select(tile->weapon);
-            debug("Player hit weapon popup.");
+            slog_debug("Player hit weapon popup.");
         }
     } else if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_ITEM) {
         int32_t available_item_index = -1;
@@ -138,10 +139,10 @@ static bool player_moved_into_tile(TileContents *tile) {
         }
         if (g_game.options.auto_pick_up_item && available_item_index != -1) {
             pickup_item(available_item_index);
-            debug("Player automatically picked up weapon");
+            slog_debug("Player automatically picked up weapon");
         } else {
             g_game.current_level.item_popup = popup_item_select(tile->item);
-            debug("Player hit item popup.");
+            slog_debug("Player hit item popup.");
         }
     } else if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_STAIRS) {
         // Show a pop-up asking the player if they want to leave the room now
@@ -191,21 +192,21 @@ static bool player_interaction_state() {
 
     // Skip the turn if a popup just resolved
     if (popup_get_weapon(g_game.current_level.weapon_popup, &selected_the_weapon)) {
-        debug("Player completed weapon popup with result %s.", selected_the_weapon ? "true" : "false");
+        slog_debug("Player completed weapon popup with result %s.", selected_the_weapon ? "true" : "false");
         if (selected_the_weapon) {
             pickup_weapon();
         }
         return true;
     }
     if (popup_get_item(g_game.current_level.item_popup, &item_index)) {
-        debug("Player completed item popup with result %i.", item_index);
+        slog_debug("Player completed item popup with result %i.", item_index);
         if (item_index != -1) {
             pickup_item(item_index);
         }
         return true;
     }
     if (popup_get_confirm(g_game.current_level.confirm_go_to_next_floor_pointer, &confirmed_go_to_next_floor)) {
-        debug("Player completed next floor popup with result %s", confirmed_go_to_next_floor ? "true" : "false");
+        slog_debug("Player completed next floor popup with result %s", confirmed_go_to_next_floor ? "true" : "false");
         if (confirmed_go_to_next_floor) {
             level_begin_next_level();
         }

@@ -1,3 +1,6 @@
 [submodule "extern/Octarine"]
 	path = extern/Octarine
 	url = https://github.com/PaoloMazzon/Octarine.git
+[submodule "extern/slog"]
+	path = extern/slog
+	url = https://github.com/kala13x/slog

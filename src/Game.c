@@ -4,10 +4,12 @@
 #include <math.h>
 #include <string.h>
 #include <oct/cJSON.h>
+#include <slog.h>
 #include "Game.h"
 #include "Structs.h"
 
 Game g_game;
+static FILE *g_log_file = NULL;
 
 // Loads all the sprites in a given path using evil string manipulation
 // Always allocates 1 extra spot for a blank sprite
@@ -81,7 +83,7 @@ static void draw_level_transitions() {
                 oct_GetAsset(g_game.assets, "menu/fadeeffect.png"),
                 (Oct_Vec2){-368 + (percent_remaining * 368)});
     } else {
-        oct_Raise(OCT_STATUS_ERROR, false, "Unimplemented level transition %i", g_game.level_transitions.type);
+        slog_warn("Unimplemented level transition %i", g_game.level_transitions.type);
     }
 }
 
@@ -99,13 +101,13 @@ static void level_update_function(LevelIndex level) {
             level_update();
             break;
         default:
-            oct_Raise(OCT_STATUS_ERROR, true, "Unhandled level index %i.", level);
+            slog_fatal("Unhandled level index %i.", level);
     }
 }
 
 // Calls a level's end function
 static void level_end_function(LevelIndex level) {
-    debug("Calling level end function for %s", LEVEL_INDEX_NAMES[level]);
+    slog_debug("Calling level end function for %s", LEVEL_INDEX_NAMES[level]);
     switch (level) {
         case LEVEL_INDEX_MENU:
             menu_end();
@@ -118,13 +120,13 @@ static void level_end_function(LevelIndex level) {
             level_end();
             break;
         default:
-            oct_Raise(OCT_STATUS_ERROR, true, "Unhandled level index %i.", level);
+            slog_fatal("Unhandled level index %i.", level);
     }
 }
 
 // Calls a level's start function
 static void level_begin_function(LevelIndex level) {
-    debug("Calling level begin function for %s", LEVEL_INDEX_NAMES[level]);
+    slog_debug("Calling level begin function for %s", LEVEL_INDEX_NAMES[level]);
     switch (level) {
         case LEVEL_INDEX_MENU:
             menu_begin();
@@ -137,12 +139,68 @@ static void level_begin_function(LevelIndex level) {
             level_begin();
             break;
         default:
-            oct_Raise(OCT_STATUS_ERROR, true, "Unhandled level index %i.", level);
+            slog_fatal("Unhandled level index %i.", level);
     }
 }
 
+
+
+static size_t strip_ansi(const char *pIn, size_t nLen, char *pOut, size_t nOutSize)
+{
+    size_t i = 0, j = 0;
+    while (i < nLen && j + 1 < nOutSize)
+    {
+        if (pIn[i] == '\x1B' && i + 1 < nLen && pIn[i + 1] == '[')
+        {
+            i += 2;
+            while (i < nLen && pIn[i] != 'm') i++;
+            if (i < nLen) i++; /* skip the 'm' */
+            continue;
+        }
+        pOut[j++] = pIn[i++];
+    }
+    pOut[j] = '\0';
+    return j;
+}
+
+static int log_to_file_cb(const char *pLog, size_t nLength, slog_flag_t eFlag, void *pCtx)
+{
+    (void)eFlag; (void)pCtx;
+    if (g_log_file != NULL)
+    {
+        char sPlain[SLOG_MESSAGE_MAX];
+        strip_ansi(pLog, nLength, sPlain, sizeof(sPlain));
+        fputs(sPlain, g_log_file);
+        fflush(g_log_file);
+    }
+    return 1; /* 1 = let slog also print (colored) to screen as usual */
+}
+
+void setup_logging() {
+    uint16_t enabled_level = SLOG_FATAL | SLOG_ERROR | SLOG_WARN | SLOG_INFO | SLOG_NOTAG;
+#ifndef NDEBUG
+    const bool debug = true;
+#else
+    const bool debug = g_game.options.enable_debug_logs;
+#endif
+    if (debug)
+        enabled_level |= SLOG_DEBUG;
+    slog_init("bleeding_in_the_blur", enabled_level, false);
+    g_log_file = fopen("bleeding_in_the_blur.log", "a");
+    slog_callback_set(log_to_file_cb, NULL);
+    slog_config_t config;
+    slog_config_get(&config);
+    config.eDateControl = SLOG_DATE_FULL;
+    config.nKeepOpen = 1; // Keep file handle open for next file writes
+    config.nUseHeap = 1; // Use dynamic allocation
+    config.nToFile = 1; // Enable file logging
+    config.nRotate = 1; // Enable log rotation
+    config.nFlush = 1; // Flush stdout after screen log
+    slog_config_set(&config);
+}
+
 void *startup() {
-    debug("Starting the game.");
+    slog_debug("Starting the game.");
 
     // Octarine things
     g_game.backbuffer = oct_CreateSurface((Oct_Vec2){VIRTUAL_WIDTH, VIRTUAL_HEIGHT});
@@ -152,6 +210,7 @@ void *startup() {
     g_game.assets = oct_LoadAssetBundle("data");
     g_game.allocator = oct_CreateHeapAllocator();
     load_options();
+    setup_logging();
     oct_SetFullscreen(g_game.options.fullscreen);
 
     // Setup
@@ -304,18 +363,6 @@ void reset_draw_target() {
     oct_SetTextureCamerasEnabled(true);
 }
 
-void debug(const char *fmt, ...) {
-    va_list l;
-    va_start(l, fmt);
-#ifndef NDEBUG
-    printf("[\x1b[94mdebug\033[0m] ");
-    vprintf(fmt, l);
-    printf("\n");
-    fflush(stdout);
-#endif
-    va_end(l);
-}
-
 static const Options default_options_struct = {
     .music_volume = 1,
     .sfx_volume = 1,
@@ -324,6 +371,7 @@ static const Options default_options_struct = {
     .animate_enemy_movement = true,
     .scale_mode = SCALE_MODE_INTEGER,
     .fullscreen = true,
+    .enable_debug_logs = false,
 };
 
 // json should be a json object
@@ -344,7 +392,7 @@ void load_options() {
     uint32_t length;
     void *json_buffer = oct_ReadFile("save.json", g_game.allocator, &length);
     if (!json_buffer) {
-        oct_Raise(OCT_STATUS_ERROR, false, "Failed to open save file for reading");
+        slog_warn("Failed to open save file for reading");
         default_options();
         return;
     }
@@ -357,6 +405,7 @@ void load_options() {
     g_game.options.animate_enemy_movement = get_json_bool_with_default(json, "animate enemy movement", default_options_struct.animate_enemy_movement);
     g_game.options.fullscreen = get_json_bool_with_default(json, "fullscreen", default_options_struct.fullscreen);
     g_game.options.scale_mode = (ScaleMode)get_json_number_with_default(json, "scale mode", default_options_struct.scale_mode);
+    g_game.options.enable_debug_logs = (bool)get_json_bool_with_default(json, "debug logs", default_options_struct.enable_debug_logs);
 
     cJSON_Delete(json);
     oct_Free(g_game.allocator, json_buffer);
@@ -376,6 +425,7 @@ void save_options() {
     cJSON_AddBoolToObject(json, "animate enemy movement", g_game.options.animate_enemy_movement);
     cJSON_AddBoolToObject(json, "fullscreen", g_game.options.fullscreen);
     cJSON_AddNumberToObject(json, "scale mode", g_game.options.scale_mode);
+    cJSON_AddBoolToObject(json, "debug logs", g_game.options.enable_debug_logs);
 
     FILE *f = fopen("save.json", "w");
     if (f) {
@@ -384,7 +434,7 @@ void save_options() {
         free(text);
         fclose(f);
     } else {
-        oct_Raise(OCT_STATUS_ERROR, false, "Failed to open save file for writing");
+        slog_warn("Failed to open save file for writing");
     }
     cJSON_Delete(json);
 }
@@ -400,7 +450,7 @@ int32_t get_options_attack_duration() {
         case (ANIMATION_SPEED_NONE):
             return 1;
     }
-    oct_Raise(OCT_STATUS_ERROR, true, "Attack animation duration is invalid %i", g_game.options.animation_speed);
+    slog_fatal("Attack animation duration is invalid %i", g_game.options.animation_speed);
     return 0;
 }
 

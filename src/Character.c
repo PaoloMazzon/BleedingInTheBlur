@@ -1,5 +1,6 @@
 #include <string.h>
 #include <assert.h>
+#include <slog.h>
 #include <stdio.h>
 #include "Character.h"
 #include "Util.h"
@@ -97,7 +98,7 @@ void print_statblock(Statblock *s) {
     char skill_score[26] = "=========================";
     char skill_name_offset[13] = "            ";
     for (int base_stat = 0; base_stat < 4; base_stat++) {
-        debug("---------- %s: %i", BASE_STAT_NAMES[base_stat], s->base_stats[base_stat]);
+        slog_debug("---------- %s: %i", BASE_STAT_NAMES[base_stat], s->base_stats[base_stat]);
         for (int skill = 0; skill < 4; skill++) {
             const int32_t skill_pips = *get_skill_pip(s, base_stat, skill);
             const char *skill_name = get_skill_name(base_stat, skill);
@@ -105,12 +106,12 @@ void print_statblock(Statblock *s) {
             skill_name_offset[12 - strlen(skill_name)] = '\0'; // might cause problems on a rename
             // If this fails that means a name was changed without updating the skill_name_offset size
             assert(strlen(skill_name) <= 12);
-            debug("%s%s |%s", skill_name_offset, skill_name, skill_score);
+            slog_debug("%s%s |%s", skill_name_offset, skill_name, skill_score);
             skill_score[skill_pips] = '=';
             skill_name_offset[12 - strlen(skill_name)] = ' ';
         }
     }
-    debug("----------");
+    slog_debug("----------");
 }
 
 void info_set_texture(ObjectInfo *info, Oct_Texture tex) {
@@ -202,7 +203,7 @@ void draw_object(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) 
                 info->rotation, (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
         }
     } else {
-        oct_Raise(OCT_STATUS_ERROR, true, "Invalid drawn type %i", s->drawn_type);
+        slog_fatal("Invalid drawn type %i", s->drawn_type);
     }
 }
 
@@ -267,7 +268,7 @@ void draw_object_raw(ObjectInfo *info, Oct_Vec2 position, float scale, float alp
                 0, (Oct_Vec2){0, 0});
         }
     } else {
-        oct_Raise(OCT_STATUS_ERROR, true, "Invalid drawn type %i", s->drawn_type);
+        slog_fatal("Invalid drawn type %i", s->drawn_type);
     }
 }
 
@@ -306,7 +307,7 @@ void draw_object_raw_no_int(ObjectInfo *info, Oct_Vec2 position, float scale, fl
                     0, (Oct_Vec2){0, 0});
         }
     } else {
-        oct_Raise(OCT_STATUS_ERROR, true, "Invalid drawn type %i", s->drawn_type);
+        slog_fatal("Invalid drawn type %i", s->drawn_type);
     }
 }
 
@@ -331,7 +332,7 @@ void character_create(Statblock *starting_stats, Position position, Character *o
         tile->type = TILE_CONTENTS_TYPE_CHARACTER;
         tile->character = out;
     } else {
-        oct_Raise(OCT_STATUS_ERROR, true, "Character was attempted to be placed out of bounds.");
+        slog_fatal("Character was attempted to be placed out of bounds.");
     }
 }
 
@@ -582,7 +583,7 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
     else if (attack_traits->Attack.melee)
         setup_melee_animation(c, rcvr, attack_traits, passed, bonus_damage + base_attack_damage);
     else
-        oct_Raise(OCT_STATUS_ERROR, true, "Attempted to start an attack animation for a non-ranged, non-melee attack");
+        slog_fatal("Attempted to start an attack animation for a non-ranged, non-melee attack");
 
     // Make a dice label
     const Oct_Colour red = {

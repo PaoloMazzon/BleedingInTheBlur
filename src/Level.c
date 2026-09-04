@@ -1,5 +1,6 @@
 #include <oct/Octarine.h>
 #include <math.h>
+#include <slog.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
@@ -756,7 +757,7 @@ static void draw_level_menu() {
         oct_DrawTexture(oct_GetAsset(g_game.assets, "hud/menuoptionspage.png"), (Oct_Vec2) {start_x, start_y});
         // TODO: This
     } else {
-        oct_Raise(OCT_STATUS_ERROR, true, "Attempting to draw invalid menu tab %i", g_game.current_level.menu.tab);
+        slog_fatal("Attempting to draw invalid menu tab %i", g_game.current_level.menu.tab);
     }
 }
 
@@ -936,7 +937,7 @@ Character *level_get_character_slot() {
         if (!character_is_alive(&g_game.current_level.characters[i]))
             return &g_game.current_level.characters[i];
 
-    oct_Raise(OCT_STATUS_ERROR, true, "Ran out of character slots.");
+    slog_fatal("Ran out of character slots.");
     return nullptr;
 }
 

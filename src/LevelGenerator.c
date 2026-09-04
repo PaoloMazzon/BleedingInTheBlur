@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <slog.h>
 #include "LevelGenerator.h"
 #include "Util.h"
 #include "Game.h"
@@ -234,7 +234,7 @@ static void room_placement_pass(LevelGeneratingState *state) {
     ///   e) If that still doesn't work, stop placing rooms
     /// 3. Done
     int32_t room_pointer = 0;
-    debug("Starting room pass with count %i.", state->room_count);
+    slog_debug("Starting room pass with count %i.", state->room_count);
 
     const IntRange min_room_size = {
             state->params.room_min_size[0],
@@ -265,7 +265,7 @@ static void room_placement_pass(LevelGeneratingState *state) {
                 found_spot_for_a_room = true;
                 carve_out_space_for_room(state, &room);
                 memcpy(&state->rooms[room_pointer++], &room, sizeof(RoomSpace));
-                debug("Found room location.");
+                slog_debug("Found room location.");
             } else {
                 attempts_left -= 1;
             }
@@ -274,9 +274,9 @@ static void room_placement_pass(LevelGeneratingState *state) {
         if (!found_spot_for_a_room && !revert_to_lowest_size) {
             revert_to_lowest_size = true;
             i--;
-            debug("Ran out of space for room size [%i,%i] at room %i. Reverting to smallest room.", room_size[0], room_size[1], i);
+            slog_debug("Ran out of space for room size [%i,%i] at room %i. Reverting to smallest room.", room_size[0], room_size[1], i);
         } else if (!found_spot_for_a_room /* && revert_to_lowest_size */) {
-            debug("Ran out of space for more rooms at room %i", i);
+            slog_debug("Ran out of space for more rooms at room %i", i);
             break;
         }
     }
@@ -378,7 +378,7 @@ static void walk_cell_back(Position current, LevelGeneratingState *level_state) 
     if (!is_floor_tile(p4))
         set_wall_tile(level_state, p4, edge_tile || is_edge_tile(p4));
     set_floor_tile(level_state, current, false);
-    //debug("[%i,%i]", current[0], current[1]);
+    //slog_debug("[%i,%i]", current[0], current[1]);
 }
 
 /// Make a grid that stores h(x,y) and g(x,y) for each cell in the grid where h(x)
@@ -409,7 +409,7 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
     explore_cell(begin_cell, &pathfinding_state, state);
     PathfindCell *current_cell = find_next_cell(&pathfinding_state);
     if (!current_cell) {
-        oct_Raise(OCT_STATUS_ERROR, false, "Failed to start connecting a hallway from [%i,%i] to [%i,%i]", start[0], start[1], end[0], end[1]);
+        slog_warn("Failed to start connecting a hallway from [%i,%i] to [%i,%i]", start[0], start[1], end[0], end[1]);
         return false;
     }
     int32_t iterations = 0;
@@ -419,17 +419,17 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
         explore_cell(current_cell, &pathfinding_state, state);
         PathfindCell *next_cell = find_next_cell(&pathfinding_state);
         if (!next_cell) {
-            oct_Raise(OCT_STATUS_ERROR, false, "Failed to connect a hallway from [%i,%i] to [%i,%i]", start[0], start[1], end[0], end[1]);
+            slog_warn("Failed to connect a hallway from [%i,%i] to [%i,%i]", start[0], start[1], end[0], end[1]);
             return false;
         }
-        //debug("Cell f(%i,%i)=%i", current_cell->p[0], current_cell->p[1], f(current_cell));
+        //slog_debug("Cell f(%i,%i)=%i", current_cell->p[0], current_cell->p[1], f(current_cell));
         current_cell = next_cell;
         if (next_cell->p[0] == end[0] && next_cell->p[1] == end[1])
             break;
         iterations += 1;
     }
     if (iterations == max_iterations) {
-        oct_Raise(OCT_STATUS_ERROR, false, "Failed to find a path to the target after %i iterations.", max_iterations);
+        slog_warn("Failed to find a path to the target after %i iterations.", max_iterations);
         return false;
     }
 
@@ -443,7 +443,7 @@ static bool place_hallway(LevelGeneratingState *state, Position start, Position 
         iterations += 1;
     }
     if (iterations == max_iterations) {
-        oct_Raise(OCT_STATUS_ERROR, false, "Failed to find a path to the target after %i iterations.", max_iterations);
+        slog_warn("Failed to find a path to the target after %i iterations.", max_iterations);
         return false;
     }
     return true;
@@ -502,7 +502,7 @@ static bool hallway_placement_pass(LevelGeneratingState *state) {
 
         // If we fail to connect the rooms we may need to move the last room to the current room (or crash)
         if (hallway_placement_attempts == max_hallway_placement_attempts) {
-            oct_Raise(OCT_STATUS_ERROR, false, "Failed to connect two hallways from room %i to %i", room_index, room_index + 1);
+            slog_warn("Failed to connect two hallways from room %i to %i", room_index, room_index + 1);
             if (room_index == 0) {
                 oct_Free(g_game.allocator, cells);
                 return false;
@@ -518,7 +518,7 @@ static bool hallway_placement_pass(LevelGeneratingState *state) {
 
     // Make a number of random connections between rooms
     const int32_t extra_hallway_count = random_int(state->params.extra_hallways[0], state->params.extra_hallways[1] + 1);
-    debug("Placing %i extra hallways", extra_hallway_count);
+    slog_debug("Placing %i extra hallways", extra_hallway_count);
     for (int32_t i = 0; i < extra_hallway_count; i++) {
         int32_t hallway_placement_attempts = 0;
         while (hallway_placement_attempts < max_hallway_placement_attempts) {
@@ -526,11 +526,11 @@ static bool hallway_placement_pass(LevelGeneratingState *state) {
             get_random_door_position(current_room, start_pos);
             get_random_door_position(next_room, end_pos);
             if (place_hallway(state, start_pos, end_pos, cells)) {
-                debug("Successfully placed additional hallway");
+                slog_debug("Successfully placed additional hallway");
                 break;
             }
             hallway_placement_attempts += 1;
-            debug("Failed to place additional hallway");
+            slog_debug("Failed to place additional hallway");
         }
     }
 
@@ -625,7 +625,9 @@ static void place_stairs_pass(LevelGeneratingState *state, Position out_player_p
 
     // Register the stairs up as a proper tile in the tilemap
     TileContents *t = level_get_tile(stairs_up);
-    assert(t);
+    if (!t) {
+        slog_fatal("Failed to get a tile for the stairs up. Tile position = [%i,%i]", stairs_up[0], stairs_up[1]);
+    }
     t->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_STAIRS;
 }
 
@@ -694,12 +696,12 @@ static void place_props_in_room(LevelGeneratingState *state, RoomSpace *room, in
             if (!prop_already_at_location(spot))
                 props_placed += attempt_place_floor_prop(spot) ? 1 : 0;
         } else {
-            oct_Raise(OCT_STATUS_ERROR, true, "Unhandled prop type");
+            slog_fatal("Unhandled prop type");
         }
         iterations += 1;
     }
     if (iterations == max_iterations) {
-        oct_Raise(OCT_STATUS_ERROR, false, "Failed to place all props (placed %i/%i) in room [%i,%i,%i,%i]", props_placed, prop_count, room->top_left[0], room->top_left[1], room->size[0], room->size[1]);
+        slog_warn("Failed to place all props (placed %i/%i) in room [%i,%i,%i,%i]", props_placed, prop_count, room->top_left[0], room->top_left[1], room->size[0], room->size[1]);
     }
 }
 
@@ -713,12 +715,12 @@ static void place_props_pass(LevelGeneratingState *state) {
 void generate_level(Level *level, LevelGenerationParameters *params, Position out_player_pos) {
     const int32_t spawns_per_room = 5;
     current_prop_index = 0;
-    debug("Generating level with params: ");
-    debug("    level_size = {%i,%i}", params->level_size[0], params->level_size[1]);
-    debug("    room_min_size = {%i,%i}", params->room_min_size[0], params->room_min_size[1]);
-    debug("    room_max_size = {%i,%i}", params->room_max_size[0], params->room_max_size[1]);
-    debug("    room_count = {%i,%i}", params->room_count[0], params->room_count[1]);
-    debug("    extra_hallways = {%i,%i}", params->extra_hallways[0], params->extra_hallways[1]);
+    slog_debug("Generating level with params: ");
+    slog_debug("    level_size = {%i,%i}", params->level_size[0], params->level_size[1]);
+    slog_debug("    room_min_size = {%i,%i}", params->room_min_size[0], params->room_min_size[1]);
+    slog_debug("    room_max_size = {%i,%i}", params->room_max_size[0], params->room_max_size[1]);
+    slog_debug("    room_count = {%i,%i}", params->room_count[0], params->room_count[1]);
+    slog_debug("    extra_hallways = {%i,%i}", params->extra_hallways[0], params->extra_hallways[1]);
 
     // Level generation needs at least 3 rooms
     assert(params->room_count[0] > 2 && params->room_count[0] > 2);

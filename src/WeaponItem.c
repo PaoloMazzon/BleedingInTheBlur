@@ -1,4 +1,5 @@
 #include <string.h>
+#include <slog.h>
 #include "WeaponItem.h"
 #include "Game.h"
 #include "Util.h"
@@ -79,7 +80,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->info.traits.Attack.improvised = true;
         out->info.traits.Attack.melee = true;
     } else {
-        oct_Raise(OCT_STATUS_ERROR, true, "Weapon type %i hasn't been implemented.", weapon_type);
+        slog_fatal("Weapon type %i hasn't been implemented.", weapon_type);
     }
 }
 

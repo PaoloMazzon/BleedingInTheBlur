@@ -1,4 +1,5 @@
 #include <string.h>
+#include <slog.h>
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
@@ -257,7 +258,7 @@ void draw_and_update_popups() {
         } else if (g_game.current_level.popup_stack[top_of_stack].type == POPUP_TYPE_TEXT_CONFIRM) {
             pop_stack = draw_and_update_confirm_popup(&g_game.current_level.popup_stack[top_of_stack]);
         } else {
-            oct_Raise(OCT_STATUS_ERROR, true, "Unimplemented popup type %i.", g_game.current_level.popup_stack[top_of_stack].type);
+            slog_fatal("Unimplemented popup type %i.", g_game.current_level.popup_stack[top_of_stack].type);
         }
         if (pop_stack) {
             g_game.current_level.popup_stack_pointer -= 1;
@@ -267,7 +268,7 @@ void draw_and_update_popups() {
 
 void popup_message(const char *text, bool needs_to_be_freed) {
     if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
-        oct_Raise(OCT_STATUS_ERROR, true, "Message popup was created on a full stack.");
+        slog_fatal("Message popup was created on a full stack.");
     Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
     pop->type = POPUP_TYPE_MESSAGE;
     pop->Message.needs_to_be_freed = needs_to_be_freed;
@@ -276,7 +277,7 @@ void popup_message(const char *text, bool needs_to_be_freed) {
 
 PopupInputPointer popup_input(const char *text, bool needs_to_be_freed) {
     if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
-        oct_Raise(OCT_STATUS_ERROR, true, "Input popup was created on a full stack.");
+        slog_fatal("Input popup was created on a full stack.");
     Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
     pop->type = POPUP_TYPE_TEXT_INPUT;
     pop->TextInput.needs_to_be_freed = needs_to_be_freed;
@@ -289,7 +290,7 @@ PopupInputPointer popup_input(const char *text, bool needs_to_be_freed) {
 
 PopupWeaponSelectPointer popup_weapon_select(Weapon *weapon) {
     if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
-        oct_Raise(OCT_STATUS_ERROR, true, "Input popup was created on a full stack.");
+        slog_fatal("Input popup was created on a full stack.");
     Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
     const uint32_t gen = pop->generation;
     memset(pop, 0, sizeof(Popup));
@@ -304,7 +305,7 @@ PopupWeaponSelectPointer popup_weapon_select(Weapon *weapon) {
 
 PopupConfirmPointer popup_confirm(const char *text) {
     if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
-        oct_Raise(OCT_STATUS_ERROR, true, "Input popup was created on a full stack.");
+        slog_fatal("Input popup was created on a full stack.");
     Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
     const uint32_t gen = pop->generation;
     memset(pop, 0, sizeof(Popup));
@@ -320,7 +321,7 @@ PopupConfirmPointer popup_confirm(const char *text) {
 
 PopupItemSelectPointer popup_item_select(Item *item) {
     if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
-            oct_Raise(OCT_STATUS_ERROR, true, "Input popup was created on a full stack.");
+            slog_fatal("Input popup was created on a full stack.");
     Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
     const uint32_t gen = pop->generation;
     memset(pop, 0, sizeof(Popup));

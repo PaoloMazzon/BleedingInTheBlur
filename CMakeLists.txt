@@ -5,7 +5,8 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(extern/Octarine/OctarineEngine)
-include_directories(extern/Octarine/OctarineEngine/include include/)
+add_subdirectory(extern/slog)
+include_directories(extern/Octarine/OctarineEngine/include include/ extern/slog/src/)
 
 add_executable(${PROJECT_NAME}
         main.c
@@ -26,4 +27,4 @@ add_executable(${PROJECT_NAME}
         src/MenuSystem.c
         src/MenuDetails.c
 )
-target_link_libraries(${PROJECT_NAME} OctarineEngine)
+target_link_libraries(${PROJECT_NAME} OctarineEngine slog)

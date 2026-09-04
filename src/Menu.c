@@ -1,6 +1,7 @@
 #include <string.h>
 #include <math.h>
 #include <oct/Octarine.h>
+#include <slog.h>
 #include <assert.h>
 
 #include "Character.h"
@@ -32,27 +33,27 @@ static float background_pos_y = 0;
 /********************************* Top-level menu/shared *********************************/
 
 static void play_change_callback(int32_t _) {
-    debug("Pressed play");
+    slog_debug("Pressed play");
     menu_set_tab(&test_menu, tab_index_character);
 }
 
 static void settings_change_callback(int32_t index) {
-    debug("Went to settings screen");
+    slog_debug("Went to settings screen");
     menu_set_tab(&test_menu, tab_index_options);
 }
 
 static void exit_change_callback(int32_t _) {
-    oct_Log("Quit game from main menu.");
+    slog_info("Quit game from main menu.");
     exit(0);
 }
 
 static void back_change_callback(int32_t _) {
-    debug("Returned to main screen");
+    slog_debug("Returned to main screen");
     menu_set_tab(&test_menu, tab_index_start);
 }
 
 static void back_to_character_change_callback(int32_t _) {
-    debug("Returned to main screen");
+    slog_debug("Returned to main screen");
     menu_set_tab(&test_menu, tab_index_character);
 }
 
@@ -173,18 +174,18 @@ static void randomize_stats_callback(int32_t _) {
 }
 
 static void last_stats_callback(int32_t _) {
-    debug("Last stats selected");
+    slog_debug("Last stats selected");
     // todo this
 }
 
 static void play_game_callback(int32_t _) {
-    debug("Play games selected");
+    slog_debug("Play games selected");
     memcpy(&g_game.player.initial_statblock, &player_starting_statblock, sizeof(Statblock));
     should_play_game = true;
 }
 
 static void back_from_stats_callback(int32_t _) {
-    debug("Back from stats selected");
+    slog_debug("Back from stats selected");
     menu_set_tab(&test_menu, tab_index_character);
 }
 

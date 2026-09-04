@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <slog.h>
 #include "Structs.h"
 #include "Util.h"
 #include "Game.h"
@@ -114,7 +115,7 @@ void draw_attack_animation() {
             draw_ranged_animation();
             break;
         default:
-            oct_Raise(OCT_STATUS_ERROR, true, "Unimplemented attack animation %i", g_game.current_level.Attack.attack_animation_type);
+            slog_fatal("Unimplemented attack animation %i", g_game.current_level.Attack.attack_animation_type);
     }
 }
 
@@ -180,7 +181,7 @@ void complete_attack_animation() {
             complete_melee_or_ranged_attack();
             break;
         default:
-            oct_Raise(OCT_STATUS_ERROR, true, "Unimplemented attack animation %i", g_game.current_level.Attack.attack_animation_type);
+            slog_fatal("Unimplemented attack animation %i", g_game.current_level.Attack.attack_animation_type);
     }
 }
 

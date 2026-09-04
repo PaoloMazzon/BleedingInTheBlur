@@ -445,6 +445,7 @@ typedef struct Options_s {
     bool animate_enemy_movement; // should the camera look at enemies when they are close by
     bool fullscreen;
     ScaleMode scale_mode;
+    bool enable_debug_logs;
 } Options;
 
 // Things that can be on a tile in the dungeon
