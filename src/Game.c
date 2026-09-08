@@ -193,7 +193,6 @@ void setup_logging() {
     config.eDateControl = SLOG_DATE_FULL;
     config.nKeepOpen = 1; // Keep file handle open for next file writes
     config.nUseHeap = 1; // Use dynamic allocation
-    config.nToFile = 1; // Enable file logging
     config.nRotate = 1; // Enable log rotation
     config.nFlush = 1; // Flush stdout after screen log
     slog_config_set(&config);
