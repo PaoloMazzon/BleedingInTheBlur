@@ -15,6 +15,13 @@ typedef enum {
     PROP_LOCATION_MAX = 3,
 } PropLocation;
 
+typedef enum {
+    DECORATION_NONE = 0,
+    DECORATION_COLUMNS = 1,
+    DECORATION_PIT = 2,
+    DECORATION_MAX = 2,
+} RoomDecoration;
+
 // For keeping tracks of room in the dungeon while level generating
 typedef struct RoomSpace_s {
     Position top_left;
@@ -58,6 +65,8 @@ static void debug_print_level(LevelGeneratingState *state) {
                 printf("░░");
             else if (t->type == TILE_CONTENTS_TYPE_WALL && !t->tile.room_edge)
                 printf("▓▓");
+            else if (t->type == TILE_CONTENTS_TYPE_LOW_WALL && !t->tile.room_edge)
+                printf("##");
             else if (t->type == TILE_CONTENTS_TYPE_NONE)
                 printf("  ");
         }
@@ -507,8 +516,13 @@ static bool hallway_placement_pass(LevelGeneratingState *state) {
                 oct_Free(g_game.allocator, cells);
                 return false;
             }
-            if (state->last_room == state->room_count - 1)
+            if (state->last_room == state->room_count - 1) {
                 state->last_room = room_index;
+                if (state->last_room == state->room_count) {
+                    slog_warn("Last room was set to room count, decrementing.");
+                    state->last_room -= 1;
+                }
+            }
         }
 
         room_index += 1;
@@ -551,6 +565,80 @@ static bool spot_exists_in_room(Position pos, Position *spots, int32_t count) {
             return !is_wall_tile(pos);
     }
     return false;
+}
+
+static void decorations_attempt_place_columns(LevelGeneratingState *state, RoomSpace *r) {
+    if (r->size[0] < 7 || r->size[1] < 9) {
+        slog_debug("Room size [%i,%i] was not large enough for columns", r->size[0], r->size[1]);
+        return;
+    }
+    const int x1 = r->top_left[0] + 2;
+    const int y1 = r->top_left[1] + 2;
+    const int x2 = r->top_left[0] + r->size[0] - 3;
+    const int y2 = r->top_left[1] + r->size[1] - 4;
+    const int32_t top_tile = 51;
+    const int32_t bottom_tile = 59;
+    oct_SetTilemap(state->base_tilemap, x1, y1, top_tile);
+    oct_SetTilemap(state->base_tilemap, x1, y1 + 1, bottom_tile);
+    level_get_tile((Position){x1, y1})->type = TILE_CONTENTS_TYPE_WALL;
+    level_get_tile((Position){x1, y1 + 1})->type = TILE_CONTENTS_TYPE_WALL;
+
+    oct_SetTilemap(state->base_tilemap, x1, y2, top_tile);
+    oct_SetTilemap(state->base_tilemap, x1, y2 + 1, bottom_tile);
+    level_get_tile((Position){x1, y2})->type = TILE_CONTENTS_TYPE_WALL;
+    level_get_tile((Position){x1, y2 + 1})->type = TILE_CONTENTS_TYPE_WALL;
+
+    oct_SetTilemap(state->base_tilemap, x2, y1, top_tile);
+    oct_SetTilemap(state->base_tilemap, x2, y1 + 1, bottom_tile);
+    level_get_tile((Position){x2, y1})->type = TILE_CONTENTS_TYPE_WALL;
+    level_get_tile((Position){x2, y1 + 1})->type = TILE_CONTENTS_TYPE_WALL;
+
+    oct_SetTilemap(state->base_tilemap, x2, y2, top_tile);
+    oct_SetTilemap(state->base_tilemap, x2, y2 + 1, bottom_tile);
+    level_get_tile((Position){x2, y2})->type = TILE_CONTENTS_TYPE_WALL;
+    level_get_tile((Position){x2, y2 + 1})->type = TILE_CONTENTS_TYPE_WALL;
+}
+
+static void decorations_attempt_place_pit(LevelGeneratingState *state, RoomSpace *r) {
+    if (r->size[0] < 7 || r->size[1] < 6) {
+        slog_debug("Room size [%i,%i] was not large enough for columns", r->size[0], r->size[1]);
+        return;
+    }
+    const int x1 = r->top_left[0] + 3;
+    const int y1 = r->top_left[1] + 3;
+    const int x2 = r->top_left[0] + r->size[0] - 4;
+    const int y2 = r->top_left[1] + r->size[1] - 4;
+    const int32_t top_tile = 54;
+    const int32_t bottom_tile = 55;
+
+    for (int32_t y = y1; y <= y2; y++) {
+        for (int32_t x = x1; x <= x2; x++) {
+            const int32_t tile_to_use = y == y1 ? top_tile : bottom_tile;
+            oct_SetTilemap(state->base_tilemap, x, y, tile_to_use);
+            level_get_tile((Position){x, y})->type = TILE_CONTENTS_TYPE_LOW_WALL;
+        }
+    }
+}
+
+// Finds places to put random decorations like columns or pits in the floor
+static void decoration_placing_pass(LevelGeneratingState *state) {
+    for (int32_t i = 1; i < state->room_count; i++) {
+        if (i == state->last_room) continue;
+        const RoomDecoration room_decoration = random_int(0, DECORATION_MAX);
+        switch (room_decoration) {
+            case DECORATION_COLUMNS:
+                slog_debug("Room [%i] attempting column decorations", i);
+                decorations_attempt_place_columns(state, &state->rooms[i]);
+                break;
+            case DECORATION_PIT:
+                slog_debug("Room [%i] attempting pit decorations", i);
+                decorations_attempt_place_pit(state, &state->rooms[i]);
+                break;
+            case DECORATION_NONE:
+                slog_debug("Room [%i] got no decorations", i);
+                break;
+        }
+    }
 }
 
 // Finds a large amount of possible spawn points for things like items and characters
@@ -769,6 +857,7 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     }
 
     // Once we have the hallway everything else is guaranteed to succeed
+    decoration_placing_pass(&state);
     spawn_locating_pass(&state);
     aesthetics_pass(&state);
     place_props_pass(&state);
