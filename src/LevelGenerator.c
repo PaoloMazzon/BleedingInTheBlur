@@ -591,22 +591,22 @@ static void decorations_attempt_place_columns(LevelGeneratingState *state, RoomS
     const int32_t bottom_tile = 59;
     oct_SetTilemap(state->base_tilemap, x1, y1, top_tile);
     oct_SetTilemap(state->base_tilemap, x1, y1 + 1, bottom_tile);
-    level_get_tile((Position){x1, y1})->type = TILE_CONTENTS_TYPE_WALL;
+    level_get_tile((Position){x1, y1})->type = TILE_CONTENTS_TYPE_LOW_WALL;
     level_get_tile((Position){x1, y1 + 1})->type = TILE_CONTENTS_TYPE_WALL;
 
     oct_SetTilemap(state->base_tilemap, x1, y2, top_tile);
     oct_SetTilemap(state->base_tilemap, x1, y2 + 1, bottom_tile);
-    level_get_tile((Position){x1, y2})->type = TILE_CONTENTS_TYPE_WALL;
+    level_get_tile((Position){x1, y2})->type = TILE_CONTENTS_TYPE_LOW_WALL;
     level_get_tile((Position){x1, y2 + 1})->type = TILE_CONTENTS_TYPE_WALL;
 
     oct_SetTilemap(state->base_tilemap, x2, y1, top_tile);
     oct_SetTilemap(state->base_tilemap, x2, y1 + 1, bottom_tile);
-    level_get_tile((Position){x2, y1})->type = TILE_CONTENTS_TYPE_WALL;
+    level_get_tile((Position){x2, y1})->type = TILE_CONTENTS_TYPE_LOW_WALL;
     level_get_tile((Position){x2, y1 + 1})->type = TILE_CONTENTS_TYPE_WALL;
 
     oct_SetTilemap(state->base_tilemap, x2, y2, top_tile);
     oct_SetTilemap(state->base_tilemap, x2, y2 + 1, bottom_tile);
-    level_get_tile((Position){x2, y2})->type = TILE_CONTENTS_TYPE_WALL;
+    level_get_tile((Position){x2, y2})->type = TILE_CONTENTS_TYPE_LOW_WALL;
     level_get_tile((Position){x2, y2 + 1})->type = TILE_CONTENTS_TYPE_WALL;
 }
 
@@ -903,8 +903,12 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
         room_placement_pass(&state);
         successfully_generated_level = hallway_placement_pass(&state);
         iterations += 1;
-        if (!successfully_generated_level)
-            oct_Raise(OCT_STATUS_ERROR, iterations == max_iterations, "Failed to create level on attempt #%i", iterations);
+        if (!successfully_generated_level) {
+            slog_error("Failed to create level on attempt #%i", iterations);
+            if (iterations == max_iterations) abort();
+        } else if (state.last_room >= state.room_count) {
+            state.last_room = state.room_count - 1;
+        }
     }
 
     // Once we have the hallway everything else is guaranteed to succeed
