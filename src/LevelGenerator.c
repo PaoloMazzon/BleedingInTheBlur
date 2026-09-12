@@ -19,7 +19,7 @@ typedef enum {
     DECORATION_NONE = 0,
     DECORATION_COLUMNS = 1,
     DECORATION_PIT = 2,
-    DECORATION_MAX = 2,
+    DECORATION_MAX = 3,
 } RoomDecoration;
 
 // For keeping tracks of room in the dungeon while level generating
@@ -552,10 +552,21 @@ static bool hallway_placement_pass(LevelGeneratingState *state) {
     return true;
 }
 
-// Finds a place something can be spawned in a room
-static void find_spawn_in_room(RoomSpace *r, Position out_pos) {
-    out_pos[0] = random_int(r->top_left[0] + 2, r->top_left[0] + r->size[0] - 4);
-    out_pos[1] = random_int(r->top_left[1] + 2, r->top_left[1] + r->size[1] - 4);
+// Finds a place something can be spawned in a room, can fail (returns false if fails)
+static bool find_spawn_in_room(RoomSpace *r, Position out_pos) {
+    const int max_attempts = 10;
+    for (int i = 0; i < max_attempts; i++) {
+        out_pos[0] = random_int(r->top_left[0] + 2, r->top_left[0] + r->size[0] - 4);
+        out_pos[1] = random_int(r->top_left[1] + 2, r->top_left[1] + r->size[1] - 4);
+        TileContents *t = level_get_tile(out_pos);
+        if (!t) {
+            slog_fatal("Tile at position [%i,%i] did not exist while trying to find spawn point!", out_pos[0], out_pos[1]);
+            abort();
+        }
+        if (t->type == TILE_CONTENTS_TYPE_NONE)
+            return true;
+    }
+    return false;
 }
 
 // checks if a spot found in find_spawn_in_room already exists in the spawn list
@@ -608,13 +619,36 @@ static void decorations_attempt_place_pit(LevelGeneratingState *state, RoomSpace
     const int y1 = r->top_left[1] + 3;
     const int x2 = r->top_left[0] + r->size[0] - 4;
     const int y2 = r->top_left[1] + r->size[1] - 4;
-    const int32_t top_tile = 54;
-    const int32_t bottom_tile = 55;
+    const int32_t top_left      = 54;
+    const int32_t top_center    = 55;
+    const int32_t top_right     = 56;
+    const int32_t center_left   = 62;
+    const int32_t center        = 63;
+    const int32_t center_right  = 64;
+    const int32_t bottom_left   = 70;
+    const int32_t bottom_center = 71;
+    const int32_t bottom_right  = 72;
 
     for (int32_t y = y1; y <= y2; y++) {
         for (int32_t x = x1; x <= x2; x++) {
-            const int32_t tile_to_use = y == y1 ? top_tile : bottom_tile;
-            oct_SetTilemap(state->base_tilemap, x, y, tile_to_use);
+            const bool left_edge   = x == x1;
+            const bool right_edge  = x == x2;
+            const bool top_edge    = y == y1;
+            const bool bottom_edge = y == y2;
+            int32_t tile_to_use = 0;
+            if (left_edge && right_edge && top_edge && bottom_edge) tile_to_use = center;
+            else if (left_edge && top_edge) tile_to_use = top_left;
+            else if (right_edge && top_edge) tile_to_use = top_right;
+            else if (top_edge) tile_to_use = top_center;
+
+            else if (left_edge && bottom_edge) tile_to_use = bottom_left;
+            else if (right_edge && bottom_edge) tile_to_use = bottom_right;
+            else if (bottom_edge) tile_to_use = bottom_center;
+
+            else if (left_edge) tile_to_use = center_left;
+            else if (right_edge) tile_to_use = center_right;
+            else tile_to_use = center;
+            oct_SetTilemap(state->shading_tilemap, x, y, tile_to_use);
             level_get_tile((Position){x, y})->type = TILE_CONTENTS_TYPE_LOW_WALL;
         }
     }
@@ -651,14 +685,19 @@ static void spawn_locating_pass(LevelGeneratingState *state) {
     for (int32_t room_index = 1; room_index < state->room_count; room_index++) {
         for (int32_t i = 0; i < spawns_per_room; i++) {
             Position pos;
-            find_spawn_in_room(&state->rooms[room_index], pos);
-            if (!spot_exists_in_room(pos, level->spawn_points, spawn_point_counter)) {
-                level->spawn_points[spawn_point_counter][0] = pos[0];
-                level->spawn_points[spawn_point_counter][1] = pos[1];
-                spawn_point_counter += 1;
+            if (find_spawn_in_room(&state->rooms[room_index], pos)) {
+                if (!spot_exists_in_room(pos, level->spawn_points, spawn_point_counter)) {
+                    level->spawn_points[spawn_point_counter][0] = pos[0];
+                    level->spawn_points[spawn_point_counter][1] = pos[1];
+                    spawn_point_counter += 1;
+                }
+            } else {
+                slog_warn("Ran out of spawn points in room %i.", room_index);
+                goto no_more_spawns;
             }
         }
     }
+    no_more_spawns:
     level->spawn_points_count = spawn_point_counter;
 }
 
@@ -720,9 +759,20 @@ static void place_stairs_pass(LevelGeneratingState *state, Position out_player_p
 }
 
 // Gets a random position in a room, will be floor
-static void get_random_position_in_room_on_floor(RoomSpace *r, Position out_pos) {
-    out_pos[0] = random_int(r->top_left[0] + 1, r->top_left[0] + r->size[0] - 3);
-    out_pos[1] = random_int(r->top_left[1] + 1, r->top_left[1] + r->size[1] - 3);
+static bool get_random_position_in_room_on_floor(RoomSpace *r, Position out_pos) {
+    const int max_attempts = 10;
+    for (int i = 0; i < max_attempts; i++) {
+        out_pos[0] = random_int(r->top_left[0] + 2, r->top_left[0] + r->size[0] - 4);
+        out_pos[1] = random_int(r->top_left[1] + 2, r->top_left[1] + r->size[1] - 4);
+        TileContents *t = level_get_tile(out_pos);
+        if (!t) {
+            slog_fatal("Tile at position [%i,%i] did not exist while trying to find spawn point!", out_pos[0], out_pos[1]);
+            abort();
+        }
+        if (t->type == TILE_CONTENTS_TYPE_NONE)
+            return true;
+    }
+    return false;
 }
 
 // gets a random position on the top wall of a room
@@ -780,9 +830,10 @@ static void place_props_in_room(LevelGeneratingState *state, RoomSpace *room, in
             if (!prop_already_at_location(spot))
                 props_placed += attempt_place_edge_prop(spot) ? 1 : 0;
         } else if (type == 1) {
-            get_random_position_in_room_on_floor(room, spot);
-            if (!prop_already_at_location(spot))
-                props_placed += attempt_place_floor_prop(spot) ? 1 : 0;
+            if (get_random_position_in_room_on_floor(room, spot)) {
+                if (!prop_already_at_location(spot))
+                    props_placed += attempt_place_floor_prop(spot) ? 1 : 0;
+            }
         } else {
             slog_fatal("Unhandled prop type");
         }

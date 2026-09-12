@@ -779,10 +779,10 @@ void level_begin() {
 
     // Generate level
     LevelGenerationParameters params = {
-        .level_size = {40, 40},
-        .room_count = {4, 7},
-        .room_min_size = {5, 5},
-        .room_max_size = {8, 8},
+        .level_size = {50, 50},
+        .room_count = {5, 8},
+        .room_min_size = {6, 6},
+        .room_max_size = {12, 12},
         .extra_hallways = {1, 2},
     };
     Position player_start_pos;
