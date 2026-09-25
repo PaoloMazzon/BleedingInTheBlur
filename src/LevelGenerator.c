@@ -677,7 +677,7 @@ static void decoration_placing_pass(LevelGeneratingState *state) {
 
 // Finds a large amount of possible spawn points for things like items and characters
 static void spawn_locating_pass(LevelGeneratingState *state) {
-    const int32_t spawns_per_room = 5;
+    const int32_t spawns_per_room = 10;
     Level *level = &g_game.current_level;
     level->spawn_points = oct_Zalloc(g_game.allocator, spawns_per_room * sizeof(Position) * (state->room_count - 1));
     level->spawn_points_count = (state->room_count - 1) * spawns_per_room;

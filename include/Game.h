@@ -30,7 +30,7 @@ TileContents *level_get_tile(Position pos);
 TileContentsType level_get_tile_type(int32_t x, int32_t y); // returns TILE_CONTENTS_TYPE_NONE if out of bounds
 bool level_in_attack_animation();
 bool level_attack_animation_complete();
-void level_get_spawn_point(Position out_tile);
+bool level_get_spawn_point(Position out_tile); // can fail
 // For player remembering out-of-sight parts of the level
 int32_t level_get_tile_memory(Position pos); // get the visibility rating
 void level_set_tile_memory(Position pos, int32_t visibility); // set the visibility rating

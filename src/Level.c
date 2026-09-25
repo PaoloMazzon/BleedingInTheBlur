@@ -799,22 +799,24 @@ void level_begin() {
     for (int32_t i = 0; i < 5; i++) {
         Position slime_spawn;
         const int32_t choice = random_int(0, 3);
-        level_get_spawn_point(slime_spawn);
-        if (choice == 0)
-            create_slime(level_get_character_slot(), slime_spawn);
-        else if (choice == 1)
-            create_zombie(level_get_character_slot(), slime_spawn);
-        else if (choice == 2)
-            create_skeleton(level_get_character_slot(), slime_spawn);
+        if (level_get_spawn_point(slime_spawn)) {
+            if (choice == 0)
+                create_slime(level_get_character_slot(), slime_spawn);
+            else if (choice == 1)
+                create_zombie(level_get_character_slot(), slime_spawn);
+            else if (choice == 2)
+                create_skeleton(level_get_character_slot(), slime_spawn);
+        }
     }
 
     for (int i = 0; i < 5; i++) {
         Position weapon_spawn;
         get_starting_weapon(WEAPON_TYPE_SWORD, &g_game.current_level.weapons[i]);
-        level_get_spawn_point(weapon_spawn);
-        TileContents *tile = level_get_tile(weapon_spawn);
-        tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_WEAPON;
-        tile->weapon = &g_game.current_level.weapons[i];
+        if (level_get_spawn_point(weapon_spawn)) {
+            TileContents *tile = level_get_tile(weapon_spawn);
+            tile->extra_contents_type = TILE_EXTRA_CONTENTS_TYPE_WEAPON;
+            tile->weapon = &g_game.current_level.weapons[i];
+        }
     }
 
     Position item_spawn = {
@@ -961,7 +963,12 @@ bool level_attack_animation_complete() {
     return timer_is_done(&g_game.current_level.Attack.animation_timer);
 }
 
-void level_get_spawn_point(Position out_tile) {
+bool level_get_spawn_point(Position out_tile) {
+    if (g_game.current_level.spawn_points_count <= 0) {
+        slog_error("Ran out of spawn points.");
+        return false;
+    }
+
     const int32_t index = random_int(0, g_game.current_level.spawn_points_count);
     out_tile[0] = g_game.current_level.spawn_points[index][0];
     out_tile[1] = g_game.current_level.spawn_points[index][1];
@@ -971,6 +978,7 @@ void level_get_spawn_point(Position out_tile) {
     g_game.current_level.spawn_points[index][0] = g_game.current_level.spawn_points[last_spot][0];
     g_game.current_level.spawn_points[index][1] = g_game.current_level.spawn_points[last_spot][1];
     g_game.current_level.spawn_points_count--;
+    return true;
 }
 
 int32_t level_get_tile_memory(Position pos) {
