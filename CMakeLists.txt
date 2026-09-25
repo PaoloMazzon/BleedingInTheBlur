@@ -26,5 +26,6 @@ add_executable(${PROJECT_NAME}
         src/PersistentEffects.c
         src/MenuSystem.c
         src/MenuDetails.c
+        src/Input.c
 )
 target_link_libraries(${PROJECT_NAME} OctarineEngine slog)

@@ -112,12 +112,13 @@ const int32_t TIMESTAMP_NOT_IN_USE        = 0;
 const int32_t MINIMUM_PIPS_PER_SKILL      = 2;
 const int32_t MINIMUM_PIPS_PER_BASE_SKILL = 3;
 
-const float CELL_WIDTH       = 8;
-const float CELL_HEIGHT      = 8;
-const float VIRTUAL_WIDTH    = 320;
-const float VIRTUAL_HEIGHT   = 256;
-const float GAME_VIEW_WIDTH  = 160;
-const float GAME_VIEW_HEIGHT = 128;
+const float CELL_WIDTH            = 8;
+const float CELL_HEIGHT           = 8;
+const float VIRTUAL_WIDTH         = 320;
+const float VIRTUAL_HEIGHT        = 256;
+const float GAME_VIEW_WIDTH       = 160;
+const float GAME_VIEW_HEIGHT      = 128;
+const float GAME_INPUT_HOLD_DELAY = 0.5;
 
 const int32_t TILE_DOOR_CLOSED                   = 22 + 8;
 const int32_t TILE_DOOR_OPEN                     = 23 + 8;

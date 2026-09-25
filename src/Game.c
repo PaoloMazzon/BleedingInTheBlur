@@ -7,6 +7,7 @@
 #include <slog.h>
 #include "Game.h"
 #include "Structs.h"
+#include "Input.h"
 
 Game g_game;
 static FILE *g_log_file = NULL;
@@ -242,6 +243,8 @@ void *update(void *ptr) {
     oct_DrawClear(&(Oct_Colour){.r = 0.0f, .g = 0.0f, .b = 0.0f, .a = 1.0f});
     oct_SetTextureCamerasEnabled(true);
 
+    input_update();
+
     // Update current level
     level_update_function(g_game.level_index);
 
@@ -348,6 +351,7 @@ void *update(void *ptr) {
 
 void shutdown(void *ptr) {
     save_options();
+    input_quit();
     oct_FreeAssetBundle(g_game.assets);
     oct_FreeAllocator(g_game.allocator);
 }
@@ -406,6 +410,8 @@ void load_options() {
     g_game.options.scale_mode = (ScaleMode)get_json_number_with_default(json, "scale mode", default_options_struct.scale_mode);
     g_game.options.enable_debug_logs = (bool)get_json_bool_with_default(json, "debug logs", default_options_struct.enable_debug_logs);
 
+    input_init(cJSON_GetObjectItem(json, "input"));
+
     cJSON_Delete(json);
     oct_Free(g_game.allocator, json_buffer);
 }
@@ -425,6 +431,7 @@ void save_options() {
     cJSON_AddBoolToObject(json, "fullscreen", g_game.options.fullscreen);
     cJSON_AddNumberToObject(json, "scale mode", g_game.options.scale_mode);
     cJSON_AddBoolToObject(json, "debug logs", g_game.options.enable_debug_logs);
+    input_save(json);
 
     FILE *f = fopen("save.json", "w");
     if (f) {

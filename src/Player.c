@@ -5,6 +5,7 @@
 #include "Character.h"
 #include "Util.h"
 #include "WeaponItem.h"
+#include "Input.h"
 
 void player_init(Position start_pos) {
     Statblock sb;
@@ -43,10 +44,10 @@ static bool player_attack_view_state() {
     }
 
     if (!level_in_attack_animation()) {
-        if (oct_KeyPressed(BUTTON_LEFT)) movement_direction[0] = -1;
-        else if (oct_KeyPressed(BUTTON_RIGHT)) movement_direction[0] = 1;
-        else if (oct_KeyPressed(BUTTON_UP)) movement_direction[1] = -1;
-        else if (oct_KeyPressed(BUTTON_DOWN)) movement_direction[1] = 1;
+        if (input_get(INPUT_LEFT)) movement_direction[0] = -1;
+        else if (input_get(INPUT_RIGHT)) movement_direction[0] = 1;
+        else if (input_get(INPUT_UP)) movement_direction[1] = -1;
+        else if (input_get(INPUT_DOWN)) movement_direction[1] = 1;
     }
 
     g_game.current_level.attack_view.attack_cursor[0] += movement_direction[0];
@@ -215,10 +216,10 @@ static bool player_interaction_state() {
 
     bool player_has_taken_actions = false;
     Position movement_direction = {0};
-    if (oct_KeyPressed(BUTTON_LEFT)) movement_direction[0] = -1;
-    else if (oct_KeyPressed(BUTTON_RIGHT)) movement_direction[0] = 1;
-    else if (oct_KeyPressed(BUTTON_UP)) movement_direction[1] = -1;
-    else if (oct_KeyPressed(BUTTON_DOWN)) movement_direction[1] = 1;
+    if (input_get(INPUT_LEFT)) movement_direction[0] = -1;
+    else if (input_get(INPUT_RIGHT)) movement_direction[0] = 1;
+    else if (input_get(INPUT_UP)) movement_direction[1] = -1;
+    else if (input_get(INPUT_DOWN)) movement_direction[1] = 1;
 
     if (oct_KeyPressed(BUTTON_ATTACK_VIEW)) {
         g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;

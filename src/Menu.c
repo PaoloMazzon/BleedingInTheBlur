@@ -202,6 +202,8 @@ void menu_begin() {
         player_starting_statblock.base_stats[base_stat] = MINIMUM_PIPS_PER_BASE_SKILL;
     }
 
+    randomize_stats_callback(0);
+
     // Setup the player to be able to be drawn without properly initializing the full character
     info_set_random_sprite_layers(&g_game.player.info);
     g_game.player.info.scale_x = 1;
@@ -564,7 +566,7 @@ void menu_begin() {
             .max_index = 0,
             .type = MENU_OPTION_TYPE_SELECT,
             .drawn_position = {83 - fuck, 220},
-            .change_callback = randomize_stats_callback,
+            .change_callback = back_from_stats_callback,
     };
     const MenuOption option_play_game = {
             .name = "Play",

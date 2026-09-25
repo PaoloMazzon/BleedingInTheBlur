@@ -387,6 +387,7 @@ typedef struct LevelGenerationParameters_s {
     IntRange level_size;
     IntRange room_min_size;
     IntRange room_max_size;
+    IntRange start_room_size;
     IntRange room_count;
     IntRange extra_hallways;
 } LevelGenerationParameters;
@@ -472,6 +473,26 @@ typedef struct Label_s {
     Oct_Colour colour;
     bool dice_font;
 } Label;
+
+typedef enum {
+    INPUT_LEFT  = 1,
+    INPUT_RIGHT = 2,
+    INPUT_UP    = 3,
+    INPUT_DOWN  = 4,
+    INPUT_MAX   = 5,
+} Input;
+
+typedef struct InputIndividualState_s {
+    Oct_Key key_bind;
+    Oct_GamepadButton button_bind;
+    bool active;
+    float last_press;
+} InputIndividualState;
+
+typedef struct InputState_s {
+    InputIndividualState *inputs;
+    float hold_delay;
+} InputState;
 
 typedef enum {
     POPUP_TYPE_WEAPON_SELECT = 0,
@@ -689,6 +710,7 @@ typedef struct Game_s {
     Oct_Camera ui_camera; // ui camera (it'll be virtual screen size)
     Oct_Camera render_camera; // for the final backbuffer
     Options options;
+    InputState input_state;
     TransitionState level_transitions;
 
     // Level in the dungeon

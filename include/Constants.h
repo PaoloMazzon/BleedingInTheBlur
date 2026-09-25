@@ -44,6 +44,7 @@ extern const float VIRTUAL_WIDTH;
 extern const float VIRTUAL_HEIGHT;
 extern const float GAME_VIEW_WIDTH;
 extern const float GAME_VIEW_HEIGHT;
+extern const float GAME_INPUT_HOLD_DELAY;
 
 // Tiles
 extern const int32_t TILE_DOOR_OPEN;

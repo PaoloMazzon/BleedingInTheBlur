@@ -255,6 +255,10 @@ static void room_placement_pass(LevelGeneratingState *state) {
                 random_int(state->params.room_min_size[0], state->params.room_max_size[0] + 1),
                 random_int(state->params.room_min_size[1], state->params.room_max_size[1] + 1),
         };
+        if (i == 0) {
+            room_size[0] = state->params.start_room_size[0];
+            room_size[1] = state->params.start_room_size[1];
+        }
         if (revert_to_lowest_size) {
             room_size[0] = min_room_size[0];
             room_size[1] = min_room_size[1];
