@@ -4,6 +4,7 @@
 #include "Game.h"
 #include "MenuSystem.h"
 #include "Util.h"
+#include "Input.h"
 
 #define sign(x) (x > 0.0f ? 1.0f : -1.0f)
 
@@ -104,8 +105,8 @@ static int32_t next_horizontal_spot(MenuSystemTab *tab, int32_t y_pos, int32_t m
 }
 
 void menu_system_process_and_draw(MenuSystem *system) {
-    const int32_t move_horizontal = (int32_t)oct_KeyPressed(BUTTON_RIGHT) - (int32_t)oct_KeyPressed(BUTTON_LEFT);
-    const int32_t move_vertical = (int32_t)oct_KeyPressed(BUTTON_DOWN) - (int32_t)oct_KeyPressed(BUTTON_UP);
+    const int32_t move_horizontal = (int32_t)input_get(INPUT_RIGHT) - (int32_t)input_get(INPUT_LEFT);
+    const int32_t move_vertical = (int32_t)input_get(INPUT_DOWN) - (int32_t)input_get(INPUT_UP);
     MenuSystemTab *tab = &system->tabs[system->current_tab];
     MenuOption *option = get_menu_grid_pos(tab, tab->cursor_pos);
     assert(option); // if this fails then next_x_spot is failing probably
