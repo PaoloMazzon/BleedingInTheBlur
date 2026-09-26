@@ -139,6 +139,11 @@ void info_set_random_sprite_layers(ObjectInfo *info) {
     oct_InitSpriteInstance(&info->sprite.layers_instance, oct_GetAsset(g_game.assets, "characterpantslayer/option_0.json"), true);
 }
 
+void info_setup_sprite_layers(ObjectInfo *info) {
+    info->sprite.drawn_type = DRAWN_TYPE_CHARACTER;
+    oct_InitSpriteInstance(&info->sprite.layers_instance, oct_GetAsset(g_game.assets, "characterpantslayer/option_0.json"), true);
+}
+
 int32_t *get_skill_pip(Statblock *s, int32_t base_stat_index, int32_t skill_index) {
     if (base_stat_index == BASE_STAT_TYPE_GRIT) {
         return &s->grit_stats[skill_index];

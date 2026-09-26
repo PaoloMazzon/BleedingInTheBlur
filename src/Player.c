@@ -9,10 +9,13 @@
 
 void player_init(Position start_pos) {
     Statblock sb;
+    Sprite sprite;
+    info_setup_sprite_layers(&g_game.player.info);
     memcpy(&sb, &g_game.player.initial_statblock, sizeof(Statblock));
+    memcpy(&sprite, &g_game.player.info.sprite, sizeof(Sprite));
     print_statblock(&sb);
     character_create(&sb, (Position){start_pos[0], start_pos[1]}, &g_game.player);
-    info_set_random_sprite_layers(&g_game.player.info);
+    memcpy(&g_game.player.info.sprite, &sprite, sizeof(Sprite));
     g_game.player.info.traits.Character.friendly = true;
     get_starting_weapon(WEAPON_TYPE_SPEAR, &g_game.player.starting_weapon);
 }

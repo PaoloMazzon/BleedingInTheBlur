@@ -19,6 +19,7 @@ void info_set_sprite(ObjectInfo *info, Oct_Sprite sprite);
 
 // Does the boilerplatey stuff setting up a layered sprite
 void info_set_random_sprite_layers(ObjectInfo *info);
+void info_setup_sprite_layers(ObjectInfo *info);
 
 // Draws trait icons for each trait specified (holy and occult are always drawn)
 void traits_draw(Traits *traits, const Oct_Vec2 position, bool attack_traits, bool character_traits);
