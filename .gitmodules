@@ -3,4 +3,4 @@
 	url = https://github.com/PaoloMazzon/Octarine.git
 [submodule "extern/slog"]
 	path = extern/slog
-	url = https://github.com/kala13x/slog
+	url = https://github.com/PaoloMazzon/slog
