@@ -1,8 +1,11 @@
 #include "Input.h"
 #include "Game.h"
+#include "slog.h"
 
 void input_init(cJSON *load_from) {
     g_game.input_state.inputs = oct_Zalloc(g_game.allocator, sizeof(InputIndividualState) * INPUT_MAX);
+    if (!g_game.input_state.inputs)
+        slog_fatal("Failed to allocate inputs.");
     g_game.input_state.hold_delay = GAME_INPUT_HOLD_DELAY;
 
     // set inputs
@@ -20,6 +23,7 @@ void input_init(cJSON *load_from) {
     if (delay && cJSON_IsNumber(delay)) {
         g_game.input_state.hold_delay = (float) cJSON_GetNumberValue(delay);
     }
+    slog_info("Initialized input state");
 }
 
 void input_save(cJSON *serialize_into) {
