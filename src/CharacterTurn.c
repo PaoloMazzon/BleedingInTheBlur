@@ -81,7 +81,7 @@ static void move_away_from(Character *c, Position p) {
 
 // Top-level function for a character to show aggression to another; ie move towards them and attack once its possible to
 static void general_aggression(Character *c, Character *other, int32_t range, Traits *damage_traits, int32_t base_damage) {
-    const bool line_of_sight = !tiles_have_walls_between(c->pos, other->pos) || !tiles_have_walls_between(other, c->pos);
+    const bool line_of_sight = !tiles_have_walls_between(c->pos, other->pos) || !tiles_have_walls_between(other->pos, c->pos);
     if (can_attack_character(c, other, line_of_sight, range)) {
         attack_character(c, other, damage_traits, base_damage);
     } else {
