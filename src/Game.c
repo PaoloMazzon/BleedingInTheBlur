@@ -397,6 +397,7 @@ void load_options() {
     if (!json_buffer) {
         slog_warn("Failed to open save file for reading");
         default_options();
+        input_init(NULL);
         return;
     }
     cJSON *json = cJSON_ParseWithLength(json_buffer, length);
