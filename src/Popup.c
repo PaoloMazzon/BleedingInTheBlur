@@ -58,11 +58,19 @@ bool draw_and_update_confirm_popup(Popup *confirm_popup) {
     oct_GetTextSize(pretty_font, text_size, 1, "%s", confirm_popup->Confirm.message);
     oct_DrawTextColour(pretty_font, (Oct_Vec2){start_x + 87 - roundf(text_size[0] / 2), start_y + 15}, &c, 1, "%s", confirm_popup->Confirm.message);
 
-    // Popup logic
+    // Cycle left/right
     if ((oct_KeyPressed(BUTTON_LEFT) || oct_KeyPressed(BUTTON_RIGHT)) && confirm_popup->alpha > 0.05)
         confirm_popup->Confirm.yes = !confirm_popup->Confirm.yes;
-    if (oct_KeyPressed(BUTTON_CONFIRM) && confirm_popup->alpha > 0.5) {
+
+    // Works if player presses actual confirm or space or enter since players will press one of the three usually, understanding all are "yes"
+    if ((oct_KeyPressed(BUTTON_CONFIRM) || oct_KeyPressed(OCT_KEY_RETURN) || oct_KeyPressed(OCT_KEY_SPACE)) && confirm_popup->alpha > 0.5) {
         confirm_popup->value_available = true;
+    }
+
+    // Pressing escape auto-selects no and leaves, typical intended behaviour from a player
+    if ((oct_KeyPressed(OCT_KEY_ESCAPE) || oct_GamepadButtonPressed(0, OCT_GAMEPAD_BUTTON_B)) && confirm_popup->alpha > 0.5) {
+        confirm_popup->value_available = true;
+        confirm_popup->Confirm.yes = false;
     }
     return confirm_popup->value_available && confirm_popup->alpha < 0.05;
 }
@@ -156,8 +164,12 @@ bool draw_and_update_weapon_popup(Popup *weapon_popup) {
     // Handle the controls
     if (oct_KeyPressed(BUTTON_LEFT) || oct_KeyPressed(BUTTON_RIGHT))
         weapon_popup->Weapon.selected_yes = !weapon_popup->Weapon.selected_yes;
-    if (oct_KeyPressed(BUTTON_CONFIRM)) {
+    if (oct_KeyPressed(BUTTON_CONFIRM) || oct_KeyPressed(OCT_KEY_RETURN) || oct_KeyPressed(OCT_KEY_SPACE)) {
         weapon_popup->value_available = true;
+    }
+    if (oct_KeyPressed(OCT_KEY_ESCAPE) || oct_GamepadButtonPressed(0, OCT_GAMEPAD_BUTTON_B)) {
+        weapon_popup->value_available = true;
+        weapon_popup->Weapon.selected_yes = false;
     }
     return weapon_popup->value_available && weapon_popup->alpha < 0.05;
 }
@@ -236,12 +248,16 @@ bool draw_and_update_item_popup(Popup *item_popup) {
         item_popup->Item.index = item_popup->Item.index == -1 ? 3 : item_popup->Item.index - 1;
     if (oct_KeyPressed(BUTTON_RIGHT) && item_popup->alpha >= 0.5)
         item_popup->Item.index = item_popup->Item.index == 3 ? -1 : item_popup->Item.index + 1;
-    if (oct_KeyPressed(BUTTON_CONFIRM) && item_popup->alpha >= 0.5) {
+    if ((oct_KeyPressed(BUTTON_CONFIRM) || oct_KeyPressed(OCT_KEY_RETURN) || oct_KeyPressed(OCT_KEY_SPACE)) && item_popup->alpha >= 0.5) {
         if (g_game.player.items[item_popup->Item.index].type != ITEM_TYPE_NONE) {
             item_popup->Item.confirm_pointer = popup_confirm("Drop previously\n    held item?");
         } else {
             item_popup->value_available = true;
         }
+    }
+    if (oct_KeyPressed(OCT_KEY_ESCAPE) || oct_GamepadButtonPressed(0, OCT_GAMEPAD_BUTTON_B)) {
+        item_popup->value_available = true;
+        item_popup->Item.index = -1;
     }
 
     return item_popup->value_available && item_popup->alpha < 0.05;
