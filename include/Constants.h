@@ -37,6 +37,9 @@ extern const int32_t MINIMUM_PIPS_PER_BASE_SKILL;
 // Constant that defines a timestamp as being not in use
 extern const int32_t TIMESTAMP_NOT_IN_USE;
 
+// How close (proportionally) melee attacks get to the defender
+extern const float ATTACKER_PROXIMITY_NORMALIZED;
+
 // Cell width/height for the rendered game
 extern const float CELL_WIDTH;
 extern const float CELL_HEIGHT;

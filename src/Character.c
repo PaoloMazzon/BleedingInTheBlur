@@ -76,6 +76,7 @@ void base_statblock(Statblock *sb) {
 
 void random_statblock(Statblock *sb) {
     base_statblock(sb);
+    slog_trace("Randomized stat block for statblock %p", sb);
 
     // Pick base stats first
     for (int i = 0; i < STARTING_BASE_STAT_POINTS;) {
@@ -117,8 +118,11 @@ void print_statblock(Statblock *s) {
 void info_set_texture(ObjectInfo *info, Oct_Texture tex) {
     assert(info);
     assert(tex != OCT_NO_ASSET);
+    slog_trace("Set texture %i for info %p", tex, info);
     info->sprite.drawn_type = DRAWN_TYPE_TEXTURE;
     info->sprite.texture = tex;
+    info->facing_direction = 1;
+    info->scale_x = 1;
 }
 
 void info_set_sprite(ObjectInfo *info, Oct_Sprite sprite) {
@@ -136,10 +140,12 @@ void info_set_random_sprite_layers(ObjectInfo *info) {
         info->sprite.layers[i] = random_int(lower_bound, g_game.layer_sprite_counts[i]);
         info->sprite.layer_colours[i] = random_int(0, MAX_COLOURS);
     }
+    slog_trace("Randomized sprite layers for info %p", info);
     oct_InitSpriteInstance(&info->sprite.layers_instance, oct_GetAsset(g_game.assets, "characterpantslayer/option_0.json"), true);
 }
 
 void info_setup_sprite_layers(ObjectInfo *info) {
+    slog_trace("Setup sprite layers for info %p", info);
     info->sprite.drawn_type = DRAWN_TYPE_CHARACTER;
     oct_InitSpriteInstance(&info->sprite.layers_instance, oct_GetAsset(g_game.assets, "characterpantslayer/option_0.json"), true);
 }

@@ -21,6 +21,8 @@ void get_starting_weapon(WeaponType weapon_type, Weapon *out) {
 
 void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
     memset(out, 0, sizeof(Weapon));
+    out->info.id = new_oct_id();
+
     // TODO: Do something with rarity
     if (weapon_type == WEAPON_TYPE_SWORD) {
         out->type = WEAPON_TYPE_SWORD;

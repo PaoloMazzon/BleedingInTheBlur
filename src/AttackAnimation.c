@@ -90,10 +90,15 @@ static void draw_melee_animation() {
 
     // Interpolate target position and effects for attacker
     ObjectInfo *atk_info = &level->Attack.attacker->info;
+    Weapon *weapon = &level->Attack.attacker->weapons[level->Attack.attacker->active_weapon];
     ObjectInfo *rcvr_info = &level->Attack.receiver->info;
-    atk_info->actual_position[0] = atk_info->actual_position[0] + (((float)attacker_target_tile[0] * CELL_WIDTH) - atk_info->actual_position[0]) * interpolation;
-    atk_info->actual_position[1] = atk_info->actual_position[1] + (((float)attacker_target_tile[1] * CELL_HEIGHT) - atk_info->actual_position[1]) * interpolation;
     atk_info->rotation = interpolation * atk_info->facing_direction * 0.5f;
+
+    // Attacker moves a little towards the opponent, but the weapon moves right up to them
+    atk_info->actual_position[0] = atk_info->actual_position[0] + ((float)attacker_target_tile[0] * CELL_WIDTH - atk_info->actual_position[0]) * interpolation * ATTACKER_PROXIMITY_NORMALIZED;
+    atk_info->actual_position[1] = atk_info->actual_position[1] + ((float)attacker_target_tile[1] * CELL_HEIGHT - atk_info->actual_position[1]) * interpolation * ATTACKER_PROXIMITY_NORMALIZED;
+    weapon->info.actual_position[0] = atk_info->actual_position[0] + ((float)attacker_target_tile[0] * CELL_WIDTH - atk_info->actual_position[0]) * interpolation;
+    weapon->info.actual_position[1] = atk_info->actual_position[1] + ((float)attacker_target_tile[1] * CELL_HEIGHT - atk_info->actual_position[1]) * interpolation;
 
     // Account for facing the wrong way
     atk_info->facing_direction = (level->Attack.attacker->pos[0] <= level->Attack.receiver->pos[0]) ? 1 : -1;
@@ -106,13 +111,39 @@ static void draw_melee_animation() {
     rcvr_info->rotation = interpolation * -rcvr_info->facing_direction * 0.5f;
 }
 
+static void draw_melee_weapon() {
+    Level *level = &g_game.current_level;
+    Character *attacker = level->Attack.attacker;
+    Weapon *weapon = &attacker->weapons[attacker->active_weapon];
+
+    // If the attacker has no weapon, skip drawing
+    if (weapon->type == WEAPON_TYPE_NONE || (weapon->info.sprite.drawn_type == DRAWN_TYPE_TEXTURE && weapon->info.sprite.texture == 0))
+        return;
+
+    weapon->info.scale_x = attacker->info.scale_x;
+    draw_object(
+        &weapon->info,
+        (Oct_Vec2){
+            weapon->info.actual_position[0],
+            weapon->info.actual_position[1]
+        },
+        1.3,
+        1);
+}
+
+static void draw_ranged_weapon() {
+    // TODO: This
+}
+
 void draw_attack_animation() {
     switch (g_game.current_level.Attack.attack_animation_type) {
         case ATTACK_ANIMATION_TYPE_MELEE:
             draw_melee_animation();
+            draw_melee_weapon();
             break;
         case ATTACK_ANIMATION_TYPE_RANGED:
             draw_ranged_animation();
+            draw_ranged_weapon();
             break;
         default:
             slog_fatal("Unimplemented attack animation %i", g_game.current_level.Attack.attack_animation_type);
