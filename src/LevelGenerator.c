@@ -12,7 +12,8 @@ typedef enum {
     PROP_LOCATION_FLOOR = 0,
     PROP_LOCATION_AGAINST_WALL = 1,
     PROP_LOCATION_ON_WALL = 2,
-    PROP_LOCATION_MAX = 3,
+    PROP_LARGE = 3,
+    PROP_LOCATION_MAX = 4,
 } PropLocation;
 
 typedef enum {
@@ -829,15 +830,19 @@ static void place_props_in_room(LevelGeneratingState *state, RoomSpace *room, in
     while (iterations < max_iterations && props_placed < prop_count) {
         Position spot;
         const int32_t type = random_int(0, 2);
-        if (type == 0) {
+        if (type == PROP_LOCATION_FLOOR) {
             get_random_position_in_room_on_top_wall(room, spot);
             if (!prop_already_at_location(spot))
                 props_placed += attempt_place_edge_prop(spot) ? 1 : 0;
-        } else if (type == 1) {
+        } else if (type == PROP_LOCATION_AGAINST_WALL) {
             if (get_random_position_in_room_on_floor(room, spot)) {
                 if (!prop_already_at_location(spot))
                     props_placed += attempt_place_floor_prop(spot) ? 1 : 0;
             }
+        } else if (type == PROP_LOCATION_ON_WALL) {
+            // TODO: Unimplemented
+        } else if (type == PROP_LARGE) {
+            // TODO: Unimplemented - large props need extra logic to check what's around it
         } else {
             slog_fatal("Unhandled prop type");
         }

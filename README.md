@@ -3,7 +3,7 @@ Roguelike game
 
 HEAVILY WIP
 
-![BleedingInTheBlur_iA8PQPm7Xh](https://github.com/user-attachments/assets/96379b09-ed0a-4ecc-8bdd-2fbd184a90fe)
+![BleedingInTheBlur_iA8PQPm7Xh](https://paolomazzon.dev/bitb.gif)
 
 ## Tech
 I wrote this game in C because I really like the C language. Is it a good idea
