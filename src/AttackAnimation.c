@@ -36,44 +36,44 @@ static void rotate_by_theta(Oct_Vec2 base, float theta) {
 static void draw_ranged_animation() {
     // If it is a success, the projectile bounces off the target.
     // If it fails, the projectile flies past the target and fades out.
-    Level *level = &g_game.current_level;
+    Level *level = get_level();
     const float normalized_time = 1.0f - timer_get_normalized(&level->Attack.animation_timer);
-    const float drawn_rotation = g_game.current_level.Attack.projectile_rotation;
-    const bool is_it_fadeout_time = normalized_time > g_game.current_level.Attack.percent_time_before_fadeout;
+    const float drawn_rotation = get_level()->Attack.projectile_rotation;
+    const bool is_it_fadeout_time = normalized_time > get_level()->Attack.percent_time_before_fadeout;
     Oct_Colour colour = {
             .r = 1.0f,
             .g = 1.0f,
             .b = 1.0f,
-            .a = is_it_fadeout_time ? 1 - ((normalized_time - g_game.current_level.Attack.percent_time_before_fadeout) / (1 - g_game.current_level.Attack.percent_time_before_fadeout)) : 1.0f
+            .a = is_it_fadeout_time ? 1 - ((normalized_time - get_level()->Attack.percent_time_before_fadeout) / (1 - get_level()->Attack.percent_time_before_fadeout)) : 1.0f
     };
 
     // If we have hit the other character in the case of a successful attack
-    if (is_it_fadeout_time && g_game.current_level.Attack.successful) {
+    if (is_it_fadeout_time && get_level()->Attack.successful) {
         Oct_Vec2 current_velocity = {
-                g_game.current_level.Attack.projectile_velocity[0],
-                g_game.current_level.Attack.projectile_velocity[1]
+                get_level()->Attack.projectile_velocity[0],
+                get_level()->Attack.projectile_velocity[1]
         };
         rotate_by_theta(current_velocity, PI / 4);
-        g_game.current_level.Attack.projectile_position[0] += current_velocity[0];
-        g_game.current_level.Attack.projectile_position[1] += current_velocity[1];
-        g_game.current_level.Attack.projectile_rotation += 0.2f;
+        get_level()->Attack.projectile_position[0] += current_velocity[0];
+        get_level()->Attack.projectile_position[1] += current_velocity[1];
+        get_level()->Attack.projectile_rotation += 0.2f;
     } else {
-        g_game.current_level.Attack.projectile_position[0] += g_game.current_level.Attack.projectile_velocity[0];
-        g_game.current_level.Attack.projectile_position[1] += g_game.current_level.Attack.projectile_velocity[1];
+        get_level()->Attack.projectile_position[0] += get_level()->Attack.projectile_velocity[0];
+        get_level()->Attack.projectile_position[1] += get_level()->Attack.projectile_velocity[1];
     }
 
     oct_DrawTextureIntColourExt(
             OCT_INTERPOLATE_ALL, PROJECTILE_ID,
             level->Attack.tex,
             &colour,
-            g_game.current_level.Attack.projectile_position,
+            get_level()->Attack.projectile_position,
             (Oct_Vec2){1, 1},
             drawn_rotation,
             (Oct_Vec2){OCT_ORIGIN_MIDDLE, OCT_ORIGIN_MIDDLE});
 }
 
 static void draw_melee_animation() {
-    Level *level = &g_game.current_level;
+    Level *level = get_level();
     Position rcvr_target_tile = {
             level->Attack.receiver->pos[0] + 1,
             level->Attack.receiver->pos[1],
@@ -112,7 +112,7 @@ static void draw_melee_animation() {
 }
 
 static void draw_melee_weapon() {
-    Level *level = &g_game.current_level;
+    Level *level = get_level();
     Character *attacker = level->Attack.attacker;
     Weapon *weapon = &attacker->weapons[attacker->active_weapon];
 
@@ -136,7 +136,7 @@ static void draw_ranged_weapon() {
 }
 
 void draw_attack_animation() {
-    switch (g_game.current_level.Attack.attack_animation_type) {
+    switch (get_level()->Attack.attack_animation_type) {
         case ATTACK_ANIMATION_TYPE_MELEE:
             draw_melee_animation();
             draw_melee_weapon();
@@ -146,15 +146,15 @@ void draw_attack_animation() {
             draw_ranged_weapon();
             break;
         default:
-            slog_fatal("Unimplemented attack animation %i", g_game.current_level.Attack.attack_animation_type);
+            slog_fatal("Unimplemented attack animation %i", get_level()->Attack.attack_animation_type);
     }
 }
 
 // Handles more general traits like blur that have effects on
 static void process_attack_traits(bool successful_attack) {
-    Character *attacker = g_game.current_level.Attack.attacker;
-    Character *defender = g_game.current_level.Attack.receiver;
-    Traits *attack_traits = &g_game.current_level.Attack.traits;
+    Character *attacker = get_level()->Attack.attacker;
+    Character *defender = get_level()->Attack.receiver;
+    Traits *attack_traits = &get_level()->Attack.traits;
     Traits *defender_traits = &defender->info.traits;
     Position text_pos = { defender->pos[0], defender->pos[1] - 1 };
 
@@ -176,21 +176,21 @@ static void process_attack_traits(bool successful_attack) {
 
 static void complete_melee_or_ranged_attack() {
     // Some traits need to be applied regardless of attack success, but the rest doesn't need to happen
-    process_attack_traits(g_game.current_level.Attack.successful);
-    if (!g_game.current_level.Attack.successful) return;
+    process_attack_traits(get_level()->Attack.successful);
+    if (!get_level()->Attack.successful) return;
 
-    const bool crit = random_int(1, 101) <= character_crit_chance(g_game.current_level.Attack.attacker);
+    const bool crit = random_int(1, 101) <= character_crit_chance(get_level()->Attack.attacker);
     const int32_t multiplier = crit ? 2 : 1;
     const int32_t actual_damage = character_take_damage(
-            g_game.current_level.Attack.receiver,
-            g_game.current_level.Attack.damage * multiplier,
-            &g_game.current_level.Attack.traits,
-            g_game.current_level.Attack.attacker);
+            get_level()->Attack.receiver,
+            get_level()->Attack.damage * multiplier,
+            &get_level()->Attack.traits,
+            get_level()->Attack.attacker);
     if (actual_damage != 0) {
         if (!crit)
-            snprintf(g_game.current_level.Attack.buffer, MAX_BUFFER_LENGTH - 1, "%i dmg", actual_damage);
+            snprintf(get_level()->Attack.buffer, MAX_BUFFER_LENGTH - 1, "%i dmg", actual_damage);
         else
-            snprintf(g_game.current_level.Attack.buffer, MAX_BUFFER_LENGTH - 1, "CRIT %i!", actual_damage);
+            snprintf(get_level()->Attack.buffer, MAX_BUFFER_LENGTH - 1, "CRIT %i!", actual_damage);
         Oct_Colour c = {
                 .r = 1.0,
                 .g = 1.0,
@@ -198,45 +198,45 @@ static void complete_melee_or_ranged_attack() {
                 .a = 1.0,
         };
         create_label(
-                g_game.current_level.Attack.buffer,
-                g_game.current_level.Attack.receiver->pos,
+                get_level()->Attack.buffer,
+                get_level()->Attack.receiver->pos,
                 c,
                 false);
     }
 }
 
 void complete_attack_animation() {
-    switch (g_game.current_level.Attack.attack_animation_type) {
+    switch (get_level()->Attack.attack_animation_type) {
         case ATTACK_ANIMATION_TYPE_RANGED:
         case ATTACK_ANIMATION_TYPE_MELEE:
             complete_melee_or_ranged_attack();
             break;
         default:
-            slog_fatal("Unimplemented attack animation %i", g_game.current_level.Attack.attack_animation_type);
+            slog_fatal("Unimplemented attack animation %i", get_level()->Attack.attack_animation_type);
     }
 }
 
 void setup_melee_animation(Character *attacker, Character *receiver, const Traits *attack_traits, bool passed, int32_t damage) {
-    g_game.current_level.Attack.attack_animation_type = ATTACK_ANIMATION_TYPE_MELEE;
-    g_game.current_level.Attack.damage = damage;
-    g_game.current_level.Attack.successful = passed;
-    timer_start(&g_game.current_level.Attack.animation_timer, get_options_attack_duration());
-    g_game.current_level.Attack.tex = OCT_NO_ASSET;
-    g_game.current_level.Attack.attacker = attacker;
-    g_game.current_level.Attack.receiver = receiver;
-    g_game.current_level.Attack.traits = *attack_traits;
+    get_level()->Attack.attack_animation_type = ATTACK_ANIMATION_TYPE_MELEE;
+    get_level()->Attack.damage = damage;
+    get_level()->Attack.successful = passed;
+    timer_start(&get_level()->Attack.animation_timer, get_options_attack_duration());
+    get_level()->Attack.tex = OCT_NO_ASSET;
+    get_level()->Attack.attacker = attacker;
+    get_level()->Attack.receiver = receiver;
+    get_level()->Attack.traits = *attack_traits;
 }
 
 void setup_ranged_animation(Character *attacker, Character *receiver, const Traits *attack_traits, bool passed, int32_t damage, Oct_Texture projectile) {
-    g_game.current_level.Attack.attack_animation_type = ATTACK_ANIMATION_TYPE_RANGED;
-    g_game.current_level.Attack.damage = damage;
-    g_game.current_level.Attack.successful = passed;
-    timer_start(&g_game.current_level.Attack.animation_timer, get_options_attack_duration());
-    g_game.current_level.Attack.tex = projectile;
-    g_game.current_level.Attack.attacker = attacker;
-    g_game.current_level.Attack.receiver = receiver;
-    g_game.current_level.Attack.traits = *attack_traits;
-    g_game.current_level.Attack.percent_time_before_fadeout = 0.6f;
+    get_level()->Attack.attack_animation_type = ATTACK_ANIMATION_TYPE_RANGED;
+    get_level()->Attack.damage = damage;
+    get_level()->Attack.successful = passed;
+    timer_start(&get_level()->Attack.animation_timer, get_options_attack_duration());
+    get_level()->Attack.tex = projectile;
+    get_level()->Attack.attacker = attacker;
+    get_level()->Attack.receiver = receiver;
+    get_level()->Attack.traits = *attack_traits;
+    get_level()->Attack.percent_time_before_fadeout = 0.6f;
     const float attacker_x = (float)attacker->pos[0] * CELL_WIDTH;
     const float attacker_y = (float)attacker->pos[1] * CELL_HEIGHT;
     const float receiver_x = (float)receiver->pos[0] * CELL_WIDTH;
@@ -244,13 +244,13 @@ void setup_ranged_animation(Character *attacker, Character *receiver, const Trai
     const float angle = oct_PointAngle(
             (Oct_Vec2){(float)attacker->pos[0] * CELL_WIDTH, (float)attacker->pos[1] * CELL_HEIGHT},
             (Oct_Vec2){(float)receiver->pos[0] * CELL_WIDTH, (float)receiver->pos[1] * CELL_HEIGHT});
-    const float frames_before_fadeout = ((float)get_options_attack_duration() * g_game.current_level.Attack.percent_time_before_fadeout);
-    g_game.current_level.Attack.projectile_velocity[0] = (receiver_x - attacker_x) / frames_before_fadeout;
-    g_game.current_level.Attack.projectile_velocity[1] = (receiver_y - attacker_y) / frames_before_fadeout;
+    const float frames_before_fadeout = ((float)get_options_attack_duration() * get_level()->Attack.percent_time_before_fadeout);
+    get_level()->Attack.projectile_velocity[0] = (receiver_x - attacker_x) / frames_before_fadeout;
+    get_level()->Attack.projectile_velocity[1] = (receiver_y - attacker_y) / frames_before_fadeout;
     if (!passed) {
-        rotate_by_theta(g_game.current_level.Attack.projectile_velocity, PI / 4);
+        rotate_by_theta(get_level()->Attack.projectile_velocity, PI / 4);
     }
-    g_game.current_level.Attack.projectile_position[0] = ((float)attacker->pos[0] * CELL_WIDTH) + 4;
-    g_game.current_level.Attack.projectile_position[1] = ((float)attacker->pos[1] * CELL_HEIGHT) + 4;
-    g_game.current_level.Attack.projectile_rotation = angle;
+    get_level()->Attack.projectile_position[0] = ((float)attacker->pos[0] * CELL_WIDTH) + 4;
+    get_level()->Attack.projectile_position[1] = ((float)attacker->pos[1] * CELL_HEIGHT) + 4;
+    get_level()->Attack.projectile_rotation = angle;
 }

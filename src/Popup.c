@@ -13,7 +13,7 @@
 #define UNPACK_INDEX(pointer) (pointer & 0xffffffff)
 
 bool popups_are_active() {
-    return g_game.current_level.popup_stack_pointer > 0;
+    return get_level()->popup_stack_pointer > 0;
 }
 
 bool draw_and_update_confirm_popup(Popup *confirm_popup) {
@@ -47,11 +47,11 @@ bool draw_and_update_confirm_popup(Popup *confirm_popup) {
     confirm_popup->Confirm.cursor_position[1] += (target_position[1] - confirm_popup->Confirm.cursor_position[1]) * 0.4f;
 
     // Draw the popup
-    const Oct_FontAtlas pretty_font = oct_GetAsset(g_game.assets, "fnt_pixel");
-    oct_DrawTextureColour(oct_GetAsset(g_game.assets, "hud/confirmpopup.png"), &c, (Oct_Vec2){start_x, start_y});
+    const Oct_FontAtlas pretty_font = oct_GetAsset(get_assets(), "fnt_pixel");
+    oct_DrawTextureColour(oct_GetAsset(get_assets(), "hud/confirmpopup.png"), &c, (Oct_Vec2){start_x, start_y});
     oct_DrawTextureIntColour(
             OCT_INTERPOLATE_ALL, CONFIRM_POPUP_SELECT_ID,
-            oct_GetAsset(g_game.assets, "hud/confirmselect.png"),
+            oct_GetAsset(get_assets(), "hud/confirmselect.png"),
             &confirm_popup->Confirm.c,
             confirm_popup->Confirm.cursor_position);
     Oct_Vec2 text_size;
@@ -101,12 +101,12 @@ bool draw_and_update_weapon_popup(Popup *weapon_popup) {
     weapon_popup->Weapon.actual_pointer_rotation += (target_rotation - weapon_popup->Weapon.actual_pointer_rotation) * 0.4f;
     Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = weapon_popup->alpha};
 
-    oct_DrawTextureColour(oct_GetAsset(g_game.assets, "hud/newweaponpopup.png"), &c, (Oct_Vec2){start_x, start_y});
+    oct_DrawTextureColour(oct_GetAsset(get_assets(), "hud/newweaponpopup.png"), &c, (Oct_Vec2){start_x, start_y});
 
     // Draw pointer
     oct_DrawTextureIntColourExt(
             OCT_INTERPOLATE_ALL, POPUP_POINTER_ID,
-            oct_GetAsset(g_game.assets, "hud/selectionarrow.png"),
+            oct_GetAsset(get_assets(), "hud/selectionarrow.png"),
             &c,
             weapon_popup->Weapon.actual_pointer_pos,
             (Oct_Vec2){1, 1},
@@ -117,16 +117,16 @@ bool draw_and_update_weapon_popup(Popup *weapon_popup) {
     Oct_Vec2 new_weapon_name_size;
     Oct_Vec2 old_weapon_name_size;
     int32_t old_weapon_dc, new_weapon_dc, old_weapon_pips, new_weapon_pips;
-    character_get_attack_base_stats(&g_game.player, &weapon_popup->Weapon.weapon->info.traits, &new_weapon_pips, &new_weapon_dc);
-    character_get_attack_base_stats(&g_game.player, &g_game.player.soul_bound_weapon.info.traits, &old_weapon_pips, &old_weapon_dc);
+    character_get_attack_base_stats(get_player(), &weapon_popup->Weapon.weapon->info.traits, &new_weapon_pips, &new_weapon_dc);
+    character_get_attack_base_stats(get_player(), &get_player()->soul_bound_weapon.info.traits, &old_weapon_pips, &old_weapon_dc);
     snprintf(new_weapon_buffer, buffer_size, "1%s%i%s%s%i", GLYPH_D8, new_weapon_pips, GLYPH_D6, GLYPH_ARROW, new_weapon_dc);
     snprintf(old_weapon_buffer, buffer_size, "1%s%i%s%s%i", GLYPH_D8, old_weapon_pips, GLYPH_D6, GLYPH_ARROW, old_weapon_dc);
     float new_weapon_stats_size = (float)strlen(new_weapon_buffer) * 12.0f;
     float old_weapon_stats_size = (float)strlen(old_weapon_buffer) * 12.0f;
-    const Oct_FontAtlas pretty_font = oct_GetAsset(g_game.assets, "fnt_pixel");
-    const Oct_FontAtlas dice_font = oct_GetAsset(g_game.assets, "fnt_dice");
+    const Oct_FontAtlas pretty_font = oct_GetAsset(get_assets(), "fnt_pixel");
+    const Oct_FontAtlas dice_font = oct_GetAsset(get_assets(), "fnt_dice");
     oct_GetTextSize(pretty_font, new_weapon_name_size, 1, "%s", weapon_popup->Weapon.weapon->info.name);
-    oct_GetTextSize(pretty_font, old_weapon_name_size, 1, "%s", g_game.player.soul_bound_weapon.info.name);
+    oct_GetTextSize(pretty_font, old_weapon_name_size, 1, "%s", get_player()->soul_bound_weapon.info.name);
 
     // Actually draw the text
     oct_DrawTextColour(pretty_font,
@@ -138,7 +138,7 @@ bool draw_and_update_weapon_popup(Popup *weapon_popup) {
                  (Oct_Vec2){start_x + 43 - (new_weapon_name_size[0] / 2), start_y + 21 - (new_weapon_name_size[1] / 2)},
                  &c,
                  1,
-                 g_game.player.soul_bound_weapon.info.name);
+                 get_player()->soul_bound_weapon.info.name);
     oct_DrawTextColour(dice_font,
                  (Oct_Vec2){start_x + 137 - (new_weapon_stats_size / 2), start_y + 67},
                  &c,
@@ -155,9 +155,9 @@ bool draw_and_update_weapon_popup(Popup *weapon_popup) {
             weapon_popup->Weapon.weapon->icon,
             &c,
             (Oct_Vec2){start_x + 132, start_y + 41});
-    if (g_game.player.soul_bound_weapon.type != WEAPON_TYPE_NONE)
+    if (get_player()->soul_bound_weapon.type != WEAPON_TYPE_NONE)
         oct_DrawTextureColour(
-                g_game.player.soul_bound_weapon.icon,
+                get_player()->soul_bound_weapon.icon,
                 &c,
                 (Oct_Vec2){start_x + 36, start_y + 41});
 
@@ -195,11 +195,11 @@ bool draw_and_update_item_popup(Popup *item_popup) {
     item_popup->Item.actual_pointer_x += (target_x - item_popup->Item.actual_pointer_x) * 0.4f;
     Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = item_popup->alpha};
 
-    oct_DrawTextureColour(oct_GetAsset(g_game.assets, "hud/itempopup.png"), &c, (Oct_Vec2){start_x, start_y});
+    oct_DrawTextureColour(oct_GetAsset(get_assets(), "hud/itempopup.png"), &c, (Oct_Vec2){start_x, start_y});
 
     // We are going to draw 4 pieces of text, so get all their metrics now
     Oct_Vec2 item_name_size;
-    const Oct_FontAtlas pretty_font = oct_GetAsset(g_game.assets, "fnt_pixel");
+    const Oct_FontAtlas pretty_font = oct_GetAsset(get_assets(), "fnt_pixel");
     oct_GetTextSize(pretty_font, item_name_size, 1, "%s", item_popup->Item.item->info.name);
 
     // Actually draw the text
@@ -212,19 +212,19 @@ bool draw_and_update_item_popup(Popup *item_popup) {
     // Draw the weapon icons
     draw_item(item_popup->Item.item, (Oct_Vec2){start_x + 128, start_y + 16}, item_popup->alpha);
     for (int32_t i = 0; i < INVENTORY_SIZE; i++) { // 16, 64
-        if (g_game.player.items[i].type == ITEM_TYPE_NONE) continue;
-        draw_item(&g_game.player.items[i], (Oct_Vec2){start_x + 16 + (32 * (float)(i + 1)), start_y + 64}, item_popup->alpha);
+        if (get_player()->items[i].type == ITEM_TYPE_NONE) continue;
+        draw_item(&get_player()->items[i], (Oct_Vec2){start_x + 16 + (32 * (float)(i + 1)), start_y + 64}, item_popup->alpha);
     }
 
     // Draw the selection thing
     oct_DrawTextureIntColour(
             OCT_INTERPOLATE_ALL, POPUP_POINTER_ID,
-            oct_GetAsset(g_game.assets, "hud/weaponselect.png"),
+            oct_GetAsset(get_assets(), "hud/weaponselect.png"),
             &c,
             (Oct_Vec2){start_x + item_popup->Item.actual_pointer_x, start_y + 59});
 
     // Draw the inventory item's name
-    Item *old_item = item_popup->Item.index != -1 ? &g_game.player.items[item_popup->Item.index] : nullptr;
+    Item *old_item = item_popup->Item.index != -1 ? &get_player()->items[item_popup->Item.index] : nullptr;
     if (old_item && old_item->type != ITEM_TYPE_NONE) {
         Oct_Vec2 old_item_name_size;
         oct_GetTextSize(pretty_font, old_item_name_size, 1, "%s", old_item->info.name);
@@ -249,7 +249,7 @@ bool draw_and_update_item_popup(Popup *item_popup) {
     if (oct_KeyPressed(BUTTON_RIGHT) && item_popup->alpha >= 0.5)
         item_popup->Item.index = item_popup->Item.index == 3 ? -1 : item_popup->Item.index + 1;
     if ((oct_KeyPressed(BUTTON_CONFIRM) || oct_KeyPressed(OCT_KEY_RETURN) || oct_KeyPressed(OCT_KEY_SPACE)) && item_popup->alpha >= 0.5) {
-        if (g_game.player.items[item_popup->Item.index].type != ITEM_TYPE_NONE) {
+        if (get_player()->items[item_popup->Item.index].type != ITEM_TYPE_NONE) {
             item_popup->Item.confirm_pointer = popup_confirm("Drop previously\n    held item?");
         } else {
             item_popup->value_available = true;
@@ -264,50 +264,50 @@ bool draw_and_update_item_popup(Popup *item_popup) {
 }
 
 void draw_and_update_popups() {
-    const int32_t top_of_stack = g_game.current_level.popup_stack_pointer - 1;
+    const int32_t top_of_stack = get_level()->popup_stack_pointer - 1;
     if (top_of_stack >= 0) {
         bool pop_stack = false;
-        if (g_game.current_level.popup_stack[top_of_stack].type == POPUP_TYPE_WEAPON_SELECT) {
-            pop_stack = draw_and_update_weapon_popup(&g_game.current_level.popup_stack[top_of_stack]);
-        } else if (g_game.current_level.popup_stack[top_of_stack].type == POPUP_TYPE_ITEM_SELECT) {
-            pop_stack = draw_and_update_item_popup(&g_game.current_level.popup_stack[top_of_stack]);
-        } else if (g_game.current_level.popup_stack[top_of_stack].type == POPUP_TYPE_TEXT_CONFIRM) {
-            pop_stack = draw_and_update_confirm_popup(&g_game.current_level.popup_stack[top_of_stack]);
+        if (get_level()->popup_stack[top_of_stack].type == POPUP_TYPE_WEAPON_SELECT) {
+            pop_stack = draw_and_update_weapon_popup(&get_level()->popup_stack[top_of_stack]);
+        } else if (get_level()->popup_stack[top_of_stack].type == POPUP_TYPE_ITEM_SELECT) {
+            pop_stack = draw_and_update_item_popup(&get_level()->popup_stack[top_of_stack]);
+        } else if (get_level()->popup_stack[top_of_stack].type == POPUP_TYPE_TEXT_CONFIRM) {
+            pop_stack = draw_and_update_confirm_popup(&get_level()->popup_stack[top_of_stack]);
         } else {
-            slog_fatal("Unimplemented popup type %i.", g_game.current_level.popup_stack[top_of_stack].type);
+            slog_fatal("Unimplemented popup type %i.", get_level()->popup_stack[top_of_stack].type);
         }
         if (pop_stack) {
-            g_game.current_level.popup_stack_pointer -= 1;
+            get_level()->popup_stack_pointer -= 1;
         }
     }
 }
 
 void popup_message(const char *text, bool needs_to_be_freed) {
-    if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
+    if (get_level()->popup_stack_pointer == MAX_POPUP_STACK)
         slog_fatal("Message popup was created on a full stack.");
-    Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
+    Popup *pop = &get_level()->popup_stack[get_level()->popup_stack_pointer++];
     pop->type = POPUP_TYPE_MESSAGE;
     pop->Message.needs_to_be_freed = needs_to_be_freed;
     pop->Message.message = text;
 }
 
 PopupInputPointer popup_input(const char *text, bool needs_to_be_freed) {
-    if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
+    if (get_level()->popup_stack_pointer == MAX_POPUP_STACK)
         slog_fatal("Input popup was created on a full stack.");
-    Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
+    Popup *pop = &get_level()->popup_stack[get_level()->popup_stack_pointer++];
     pop->type = POPUP_TYPE_TEXT_INPUT;
     pop->TextInput.needs_to_be_freed = needs_to_be_freed;
     pop->TextInput.message = text;
     pop->generation += 1;
     memset(pop->TextInput.user_input, 0, MAX_USER_INPUT_SIZE);
 
-    return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
+    return PACK_POPUP_POINTER(pop->generation, get_level()->popup_stack_pointer - 1);
 }
 
 PopupWeaponSelectPointer popup_weapon_select(Weapon *weapon) {
-    if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
+    if (get_level()->popup_stack_pointer == MAX_POPUP_STACK)
         slog_fatal("Input popup was created on a full stack.");
-    Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
+    Popup *pop = &get_level()->popup_stack[get_level()->popup_stack_pointer++];
     const uint32_t gen = pop->generation;
     memset(pop, 0, sizeof(Popup));
     pop->generation = gen + 1;
@@ -316,13 +316,13 @@ PopupWeaponSelectPointer popup_weapon_select(Weapon *weapon) {
     pop->Weapon.actual_pointer_pos[0] = 69 + 68;
     pop->Weapon.actual_pointer_pos[1] = 49 + 79;
 
-    return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
+    return PACK_POPUP_POINTER(pop->generation, get_level()->popup_stack_pointer - 1);
 }
 
 PopupConfirmPointer popup_confirm(const char *text) {
-    if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
+    if (get_level()->popup_stack_pointer == MAX_POPUP_STACK)
         slog_fatal("Input popup was created on a full stack.");
-    Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
+    Popup *pop = &get_level()->popup_stack[get_level()->popup_stack_pointer++];
     const uint32_t gen = pop->generation;
     memset(pop, 0, sizeof(Popup));
     pop->generation = gen + 1;
@@ -332,20 +332,20 @@ PopupConfirmPointer popup_confirm(const char *text) {
     pop->Confirm.cursor_position[0] = 69 + 68;
     pop->Confirm.cursor_position[1] = 49 + 79;
 
-    return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
+    return PACK_POPUP_POINTER(pop->generation, get_level()->popup_stack_pointer - 1);
 }
 
 PopupItemSelectPointer popup_item_select(Item *item) {
-    if (g_game.current_level.popup_stack_pointer == MAX_POPUP_STACK)
+    if (get_level()->popup_stack_pointer == MAX_POPUP_STACK)
             slog_fatal("Input popup was created on a full stack.");
-    Popup *pop = &g_game.current_level.popup_stack[g_game.current_level.popup_stack_pointer++];
+    Popup *pop = &get_level()->popup_stack[get_level()->popup_stack_pointer++];
     const uint32_t gen = pop->generation;
     memset(pop, 0, sizeof(Popup));
     pop->generation = gen + 1;
     pop->type = POPUP_TYPE_ITEM_SELECT;
     pop->Item.item = item;
 
-    return PACK_POPUP_POINTER(pop->generation, g_game.current_level.popup_stack_pointer - 1);
+    return PACK_POPUP_POINTER(pop->generation, get_level()->popup_stack_pointer - 1);
 }
 
 bool popup_get_input(PopupInputPointer input_pointer, const char *out) {
@@ -357,10 +357,10 @@ bool popup_get_weapon(PopupWeaponSelectPointer weapon_pointer, bool *selected) {
     const uint64_t generation = UNPACK_GENERATION(weapon_pointer);
     assert(index >= 0);
     assert(index < MAX_POPUP_STACK);
-    if (generation == g_game.current_level.popup_stack[index].generation && g_game.current_level.popup_stack[index].value_available) {
-        g_game.current_level.popup_stack[index].generation++;
-        g_game.current_level.popup_stack[index].value_available = false;
-        *selected = g_game.current_level.popup_stack[index].Weapon.selected_yes;
+    if (generation == get_level()->popup_stack[index].generation && get_level()->popup_stack[index].value_available) {
+        get_level()->popup_stack[index].generation++;
+        get_level()->popup_stack[index].value_available = false;
+        *selected = get_level()->popup_stack[index].Weapon.selected_yes;
         return true;
     }
     return false;
@@ -371,10 +371,10 @@ bool popup_get_item(PopupItemSelectPointer item_pointer, int32_t *index) {
     const uint64_t generation = UNPACK_GENERATION(item_pointer);
     assert(popup_index >= 0);
     assert(popup_index < MAX_POPUP_STACK);
-    if (generation == g_game.current_level.popup_stack[popup_index].generation && g_game.current_level.popup_stack[popup_index].value_available) {
-        g_game.current_level.popup_stack[popup_index].generation++;
-        g_game.current_level.popup_stack[popup_index].value_available = false;
-        *index = g_game.current_level.popup_stack[popup_index].Item.index;
+    if (generation == get_level()->popup_stack[popup_index].generation && get_level()->popup_stack[popup_index].value_available) {
+        get_level()->popup_stack[popup_index].generation++;
+        get_level()->popup_stack[popup_index].value_available = false;
+        *index = get_level()->popup_stack[popup_index].Item.index;
         return true;
     }
     return false;
@@ -385,12 +385,11 @@ bool popup_get_confirm(PopupConfirmPointer confirm_pointer, bool *selected) {
     const uint64_t generation = UNPACK_GENERATION(confirm_pointer);
     assert(index >= 0);
     assert(index < MAX_POPUP_STACK);
-    if (generation == g_game.current_level.popup_stack[index].generation && g_game.current_level.popup_stack[index].value_available) {
-        g_game.current_level.popup_stack[index].generation++;
-        g_game.current_level.popup_stack[index].value_available = false;
-        *selected = g_game.current_level.popup_stack[index].Confirm.yes;
+    if (generation == get_level()->popup_stack[index].generation && get_level()->popup_stack[index].value_available) {
+        get_level()->popup_stack[index].generation++;
+        get_level()->popup_stack[index].value_available = false;
+        *selected = get_level()->popup_stack[index].Confirm.yes;
         return true;
     }
     return false;
 }
-

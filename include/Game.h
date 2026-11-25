@@ -3,7 +3,10 @@
 #include "Structs.h"
 
 // Global game state
-extern Game g_game;
+Game *get_game();
+Level *get_level();
+Character *get_player();
+Oct_AssetBundle get_assets();
 
 void menu_begin();
 void menu_update(); // return value is where to go

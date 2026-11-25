@@ -96,14 +96,14 @@ Character *find_nearest_character_with_trait(Character *c, bool hostile, bool fr
     for (int32_t i = 0; i < MAX_CHARACTERS + 1; i++) {
         Character *current = nullptr;
         if (i == MAX_CHARACTERS)
-            current = &g_game.player;
+            current = get_player();
         else
-            current = &g_game.current_level.characters[i];
+            current = &get_level()->characters[i];
         const int32_t distance = tile_distance(c->pos, current->pos);
         if (character_is_alive(current)
             && distance < max_distance
             && ((!hostile && !friendly) || (current->info.traits.Character.hostile && hostile) || (current->info.traits.Character.friendly && friendly))
-            && ((non_player && current != &g_game.player) || !non_player)
+            && ((non_player && current != get_player()) || !non_player)
             && character_is_aware_of_other_character(c, current, true)) {
             max_distance = tile_distance(c->pos, current->pos);
             found = current;
@@ -119,7 +119,7 @@ static void handle_snoozer(Character *c) {
     const bool my_opps_are_the_friendlies = c->info.traits.Character.hostile ||c->info.traits.Character.berserker;
     // Search only the nearby grid
     for (int32_t i = 0; i < MAX_CHARACTERS; i++) {
-        const Character *current = &g_game.current_level.characters[i];
+        const Character *current = &get_level()->characters[i];
         if (character_is_alive(current) && tile_distance(c->pos, current->pos) <= sleeping_hearing_distance) {
             Statblock sb;
             character_get_current_stats(current, &sb);

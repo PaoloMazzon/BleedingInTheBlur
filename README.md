@@ -17,7 +17,7 @@ single character and a single item or weapon.
 
 The game is turn based, so barring tweening/animation logic, the player takes
 their turn then each other character in the level 
-(`g_game.current_level.characters`) takes their turn. Every 
+(`get_level()->characters`) takes their turn. Every 
 item/weapon/character in the game has a `Traits` struct and that struct is
 basically that object's fingerprint. NPCs behaviour is completely determined by
 their traits, meaning there is no enemy-specific logic and instead a universal

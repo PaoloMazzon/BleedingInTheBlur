@@ -39,7 +39,7 @@ void apply_crushed_hand_status_effect(Character *c) {
     apply_alarm(c,
                 UNDO_STATUS_EFFECT(crushed_hand),
                 nullptr,
-                oct_GetAsset(g_game.assets, "icons/crushedhand.png"),
+                oct_GetAsset(get_assets(), "icons/crushedhand.png"),
                 3);
 }
 //////////////////////////////////////////////////////////////////////
@@ -54,7 +54,7 @@ void apply_withered_status_effect(Character *c) {
     apply_alarm(c,
                 UNDO_STATUS_EFFECT(withered),
                 nullptr,
-                oct_GetAsset(g_game.assets, "icons/crushedhand.png"),
+                oct_GetAsset(get_assets(), "icons/crushedhand.png"),
                 10);
 }
 //////////////////////////////////////////////////////////////////////

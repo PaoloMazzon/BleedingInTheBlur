@@ -500,7 +500,7 @@ static bool hallway_placement_pass(LevelGeneratingState *state) {
     RoomSpace *current_room = &state->rooms[room_index];
     RoomSpace *next_room = &state->rooms[room_index + 1];
     const int32_t max_hallway_placement_attempts = 4;
-    PathfindCell *cells = oct_Zalloc(g_game.allocator, sizeof(PathfindCell) * state->params.level_size[0] * state->params.level_size[1]);
+    PathfindCell *cells = oct_Zalloc(get_game()->allocator, sizeof(PathfindCell) * state->params.level_size[0] * state->params.level_size[1]);
 
     // Connect each room end-to-end
     while (room_index < state->room_count - 2) {
@@ -518,7 +518,7 @@ static bool hallway_placement_pass(LevelGeneratingState *state) {
         if (hallway_placement_attempts == max_hallway_placement_attempts) {
             slog_warn("Failed to connect two hallways from room %i to %i", room_index, room_index + 1);
             if (room_index == 0) {
-                oct_Free(g_game.allocator, cells);
+                oct_Free(get_game()->allocator, cells);
                 return false;
             }
             if (state->last_room == state->room_count - 1) {
@@ -553,7 +553,7 @@ static bool hallway_placement_pass(LevelGeneratingState *state) {
         }
     }
 
-    oct_Free(g_game.allocator, cells);
+    oct_Free(get_game()->allocator, cells);
     return true;
 }
 
@@ -683,8 +683,8 @@ static void decoration_placing_pass(LevelGeneratingState *state) {
 // Finds a large amount of possible spawn points for things like items and characters
 static void spawn_locating_pass(LevelGeneratingState *state) {
     const int32_t spawns_per_room = 10;
-    Level *level = &g_game.current_level;
-    level->spawn_points = oct_Zalloc(g_game.allocator, spawns_per_room * sizeof(Position) * (state->room_count - 1));
+    Level *level = get_level();
+    level->spawn_points = oct_Zalloc(get_game()->allocator, spawns_per_room * sizeof(Position) * (state->room_count - 1));
     level->spawn_points_count = (state->room_count - 1) * spawns_per_room;
     int32_t spawn_point_counter = 0;
     for (int32_t room_index = 1; room_index < state->room_count; room_index++) {
@@ -788,7 +788,7 @@ static void get_random_position_in_room_on_top_wall(RoomSpace *r, Position out_p
 
 static bool prop_already_at_location(Position p) {
     for (int32_t i = 0; i < MAX_PROPS; i++) {
-        if (g_game.current_level.props[i].pos[0] == p[0] && g_game.current_level.props[i].pos[1] == p[1])
+        if (get_level()->props[i].pos[0] == p[0] && get_level()->props[i].pos[1] == p[1])
             return true;
     }
     return false;
@@ -799,7 +799,7 @@ static bool attempt_place_edge_prop(Position p) {
     if (current_prop_index >= MAX_PROPS) return false;
     int32_t props[] = {0, 1, 2, 3, 9};
     const int32_t prop_index = props[random_int(0, 5)];
-    Prop *prop = &g_game.current_level.props[current_prop_index++];
+    Prop *prop = &get_level()->props[current_prop_index++];
     prop->pos[0] = p[0];
     prop->pos[1] = p[1];
     prop->active = true;
@@ -813,7 +813,7 @@ static bool attempt_place_floor_prop(Position p) {
     if (current_prop_index >= MAX_PROPS) return false;
     int32_t props[] = {4, 5, 6, 7, 8};
     const int32_t prop_index = props[random_int(0, 5)];
-    Prop *prop = &g_game.current_level.props[current_prop_index++];
+    Prop *prop = &get_level()->props[current_prop_index++];
     prop->pos[0] = p[0];
     prop->pos[1] = p[1];
     prop->active = true;
@@ -882,19 +882,19 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
 
     // Create resources and pick a room count
     TileContents *level_tiles = oct_Zalloc(
-        g_game.allocator,
+        get_game()->allocator,
         sizeof(TileContents) * params->level_size[0] * params->level_size[1]);
     LevelGeneratingState state;
     state.base_tilemap = oct_CreateTilemap(
-            oct_GetAsset(g_game.assets, "tileset.png"),
+            oct_GetAsset(get_assets(), "tileset.png"),
             params->level_size[0], params->level_size[1],
             (Oct_Vec2){CELL_WIDTH, CELL_HEIGHT});
     state.shading_tilemap = oct_CreateTilemap(
-            oct_GetAsset(g_game.assets, "tileset.png"),
+            oct_GetAsset(get_assets(), "tileset.png"),
             params->level_size[0], params->level_size[1],
             (Oct_Vec2){CELL_WIDTH, CELL_HEIGHT});
     state.room_count = random_int(params->room_count[0], params->room_count[1] + 1);
-    state.rooms = oct_Malloc(g_game.allocator, sizeof(RoomSpace) * state.room_count);
+    state.rooms = oct_Malloc(get_game()->allocator, sizeof(RoomSpace) * state.room_count);
     level->tiles = level_tiles;
     level->tilemap = state.base_tilemap;
     level->decorations = state.shading_tilemap;
@@ -931,15 +931,15 @@ void generate_level(Level *level, LevelGenerationParameters *params, Position ou
     // Draw the entire level to a texture
     level->level_tex = oct_CreateSurface((Oct_Vec2){(float)level->level_width * CELL_WIDTH, (float)level->level_height * CELL_HEIGHT});
     assert(level->level_tex);
-    oct_Free(g_game.allocator, state.rooms);
+    oct_Free(get_game()->allocator, state.rooms);
 }
 
 void cleanup_level(Level *level) {
-    oct_Free(g_game.allocator, level->spawn_points);
+    oct_Free(get_game()->allocator, level->spawn_points);
     level->spawn_points = nullptr;
     oct_FreeAsset(level->level_tex);
     level->level_tex = OCT_NO_ASSET;
-    oct_Free(g_game.allocator, level->tiles);
+    oct_Free(get_game()->allocator, level->tiles);
     level->tiles = nullptr;
     oct_DestroyTilemap(level->tilemap);
     level->tilemap = nullptr;

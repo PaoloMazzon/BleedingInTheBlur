@@ -301,8 +301,8 @@ typedef struct Sprite_s {
             Oct_SpriteInstance sprite_instance;
         };
         struct {
-            int32_t layers[MAX_SPRITE_LAYERS]; // indexes into g_game.layers
-            int32_t layer_colours[MAX_SPRITE_LAYERS]; // indexes into g_game.layer_colours
+            int32_t layers[MAX_SPRITE_LAYERS]; // indexes into get_game()->layers
+            int32_t layer_colours[MAX_SPRITE_LAYERS]; // indexes into get_game()->layer_colours
             Oct_SpriteInstance layers_instance; // they should all have identical frame counts and sizes and all that
         };
         Oct_Texture texture;

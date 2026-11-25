@@ -25,7 +25,7 @@ static const SpellAttackProfile EVIL_ROCK_ATTACK_PROFILE = {
 
 // dynamically allocates a string for a potion label
 static const char *get_hp_string(int32_t base_healing, int32_t bonus_healing) {
-    char *buf = oct_Malloc(g_game.allocator, 20);
+    char *buf = oct_Malloc(get_game()->allocator, 20);
     if (bonus_healing == 0)
         snprintf(buf, 19, "+%i hp", base_healing);
     else
@@ -48,7 +48,7 @@ ITEM_USE_CALLBACK(small_potion_use_callback) {
 }
 
 ITEM_USE_CALLBACK(evil_rock_use_callback) {
-    TileContents *t = level_get_tile(g_game.current_level.attack_view.attack_cursor);
+    TileContents *t = level_get_tile(get_level()->attack_view.attack_cursor);
     assert(t && t->type == TILE_CONTENTS_TYPE_CHARACTER);
     character_attempt_attack(c, &EVIL_ROCK_ATTACK_PROFILE.traits, t->character, 1);
     return true;

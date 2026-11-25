@@ -60,46 +60,46 @@ static void back_to_character_change_callback(int32_t _) {
 /********************************* Character creation *********************************/
 
 static void body_change_callback(int32_t index) {
-    g_game.player.info.sprite.layers[SPRITE_LAYER_BODY] = index;
+    get_player()->info.sprite.layers[SPRITE_LAYER_BODY] = index;
 }
 static void shoes_change_callback(int32_t index) {
-    g_game.player.info.sprite.layers[SPRITE_LAYER_SHOES] = index;
+    get_player()->info.sprite.layers[SPRITE_LAYER_SHOES] = index;
 }
 static void pants_change_callback(int32_t index) {
-    g_game.player.info.sprite.layers[SPRITE_LAYER_PANTS] = index;
+    get_player()->info.sprite.layers[SPRITE_LAYER_PANTS] = index;
 }
 static void shirt_change_callback(int32_t index) {
-    g_game.player.info.sprite.layers[SPRITE_LAYER_SHIRT] = index;
+    get_player()->info.sprite.layers[SPRITE_LAYER_SHIRT] = index;
 }
 static void head_change_callback(int32_t index) {
-    g_game.player.info.sprite.layers[SPRITE_LAYER_HEAD] = index;
+    get_player()->info.sprite.layers[SPRITE_LAYER_HEAD] = index;
 }
 static void accessory_change_callback(int32_t index) {
-    g_game.player.info.sprite.layers[SPRITE_LAYER_ACCESSORY] = index;
+    get_player()->info.sprite.layers[SPRITE_LAYER_ACCESSORY] = index;
 }
 static void body_colour_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_BODY] = index;
+    get_player()->info.sprite.layer_colours[SPRITE_LAYER_BODY] = index;
 }
 static void shoes_colour_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_SHOES] = index;
+    get_player()->info.sprite.layer_colours[SPRITE_LAYER_SHOES] = index;
 }
 static void pants_colour_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_PANTS] = index;
+    get_player()->info.sprite.layer_colours[SPRITE_LAYER_PANTS] = index;
 }
 static void shirt_colour_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_SHIRT] = index;
+    get_player()->info.sprite.layer_colours[SPRITE_LAYER_SHIRT] = index;
 }
 static void head_colour_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_HEAD] = index;
+    get_player()->info.sprite.layer_colours[SPRITE_LAYER_HEAD] = index;
 }
 static void accessory_colour_change_callback(int32_t index) {
-    g_game.player.info.sprite.layer_colours[SPRITE_LAYER_ACCESSORY] = index;
+    get_player()->info.sprite.layer_colours[SPRITE_LAYER_ACCESSORY] = index;
 }
 static void next_change_callback(int32_t _) {
     menu_set_tab(&test_menu, tab_index_stats);
 }
 static void random_character_callback(int32_t _) {
-    info_set_random_sprite_layers(&g_game.player.info);
+    info_set_random_sprite_layers(&get_player()->info);
 }
 
 /********************************* Stat allocation *********************************/
@@ -180,7 +180,7 @@ static void last_stats_callback(int32_t _) {
 
 static void play_game_callback(int32_t _) {
     slog_debug("Play games selected");
-    memcpy(&g_game.player.initial_statblock, &player_starting_statblock, sizeof(Statblock));
+    memcpy(&get_player()->initial_statblock, &player_starting_statblock, sizeof(Statblock));
     should_play_game = true;
 }
 
@@ -205,8 +205,8 @@ void menu_begin() {
     randomize_stats_callback(0);
 
     // Setup the player to be able to be drawn without properly initializing the full character
-    info_set_random_sprite_layers(&g_game.player.info);
-    g_game.player.info.scale_x = 1;
+    info_set_random_sprite_layers(&get_player()->info);
+    get_player()->info.scale_x = 1;
 
     menu_system_initialize(&test_menu, 4);
     tab_start = menu_get_tab(&test_menu, tab_index_start);
@@ -245,13 +245,13 @@ void menu_begin() {
     menu_tab_add_option(tab_start, &option_cycle, 0, (Position){0, 1});
     menu_tab_add_option(tab_start, &option_exit, 0, (Position){0, 2});
 
-    menu_tab_add_option(tab_options, &music_volume_option, (int32_t)g_game.options.music_volume * 10, (Position){0, 0});
-    menu_tab_add_option(tab_options, &sfx_volume_option, (int32_t)g_game.options.music_volume * 10, (Position){0, 1});
-    menu_tab_add_option(tab_options, &animation_speed_option, g_game.options.animation_speed, (Position){0, 2});
+    menu_tab_add_option(tab_options, &music_volume_option, (int32_t)get_game()->options.music_volume * 10, (Position){0, 0});
+    menu_tab_add_option(tab_options, &sfx_volume_option, (int32_t)get_game()->options.music_volume * 10, (Position){0, 1});
+    menu_tab_add_option(tab_options, &animation_speed_option, get_game()->options.animation_speed, (Position){0, 2});
     menu_tab_add_option(tab_options, &auto_pick_up_item_option, 0, (Position){0, 3});
     menu_tab_add_option(tab_options, &animate_enemy_movement_option, 0, (Position){0, 4});
     menu_tab_add_option(tab_options, &fullscreen_option, 0, (Position){0, 5});
-    menu_tab_add_option(tab_options, &scale_mode_option, g_game.options.scale_mode, (Position){0, 6});
+    menu_tab_add_option(tab_options, &scale_mode_option, get_game()->options.scale_mode, (Position){0, 6});
     menu_tab_add_option(tab_options, &option_back, 0, (Position){0, 7});
 
 
@@ -566,7 +566,7 @@ void menu_begin() {
 static void draw_pips_big(Oct_Vec2 position, float direction, int32_t count) {
     const float y = position[1];
     const float pip_horizontal_jump = direction * 6;
-    const Oct_Asset pip_tex = oct_GetAsset(g_game.assets, "hud/skillpip.png");
+    const Oct_Asset pip_tex = oct_GetAsset(get_assets(), "hud/skillpip.png");
     float x = position[0];
     Oct_Colour base_colour = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f};
     for (int32_t i = 0; i < count; i++) {
@@ -582,7 +582,7 @@ static void draw_pips_big(Oct_Vec2 position, float direction, int32_t count) {
 static void draw_pips(Oct_Vec2 position, float direction, int32_t count) {
     const float y = position[1];
     const float pip_horizontal_jump = direction * 4;
-    const Oct_Asset pip_tex = oct_GetAsset(g_game.assets, "hud/ingamepip.png");
+    const Oct_Asset pip_tex = oct_GetAsset(get_assets(), "hud/ingamepip.png");
     float x = position[0];
     Oct_Colour base_colour = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f};
     for (int32_t i = 0; i < count; i++) {
@@ -596,13 +596,13 @@ static void draw_pips(Oct_Vec2 position, float direction, int32_t count) {
 }
 
 void menu_update() {
-    oct_LockCameras(g_game.ui_camera);
+    oct_LockCameras(get_game()->ui_camera);
     oct_SetTextureCamerasEnabled(false);
 
     // Draw the menu background
     const float menu_background_width = 200;
     const float menu_background_height = 200;
-    Oct_Asset menu_background = oct_GetAsset(g_game.assets, "menubackground.png");
+    Oct_Asset menu_background = oct_GetAsset(get_assets(), "menubackground.png");
     const float count_horizontal = ceilf(VIRTUAL_WIDTH / menu_background_width) + 1;
     const float count_vertical = ceilf(VIRTUAL_HEIGHT / menu_background_height) + 1;
     for (int32_t y = -1; y < count_vertical; y++) {
@@ -611,12 +611,12 @@ void menu_update() {
                             (Oct_Vec2){background_pos_x + (x * menu_background_width), background_pos_y + (y * menu_background_height)});
         }
     }
-    background_pos_x += cosf((float)(g_game.frame) * 0.005f) * 0.5f;
-    background_pos_y += sinf((float)(g_game.frame) * 0.005f) * 0.5f;
+    background_pos_x += cosf((float)(get_game()->frame) * 0.005f) * 0.5f;
+    background_pos_y += sinf((float)(get_game()->frame) * 0.005f) * 0.5f;
 
     // Draw some title stuff
     oct_DrawTexture(
-        oct_GetAsset(g_game.assets, "menu/title.png"),
+        oct_GetAsset(get_assets(), "menu/title.png"),
         (Oct_Vec2){(320 - 298) / 2, 10});
 
     // Menu system
@@ -625,12 +625,12 @@ void menu_update() {
     // Draw the player's preview if we are customizing their appearence atm
     if (menu_get_current_tab(&test_menu) == tab_index_character) {
         draw_object(
-            &g_game.player.info,
+            &get_player()->info,
             (Oct_Vec2){(VIRTUAL_WIDTH / 2) - 10, (VIRTUAL_HEIGHT / 2)},
             4,
             1);
     } else if (menu_get_current_tab(&test_menu) == tab_index_stats) {
-        oct_DrawTexture(oct_GetAsset(g_game.assets, "menu/statsscreen.png"), (Oct_Vec2){0, 0});
+        oct_DrawTexture(oct_GetAsset(get_assets(), "menu/statsscreen.png"), (Oct_Vec2){0, 0});
 
         // Draw pips in each skill
         draw_pips_big((Oct_Vec2){92, 74}, 1, player_starting_statblock.wits);
@@ -661,7 +661,7 @@ void menu_update() {
 
         // Draw the remaining skill and base points
         Oct_Vec2 size = {0};
-        Oct_FontAtlas font = oct_GetAsset(g_game.assets, "fnt_pixel");
+        Oct_FontAtlas font = oct_GetAsset(get_assets(), "fnt_pixel");
         oct_GetTextSize(font, size, 1, "Skill Points: %i / Base Points: %i", player_available_skill_points, player_available_base_points);
         oct_DrawText(font, (Oct_Vec2){roundf((VIRTUAL_WIDTH / 2) - (size[0] / 2)), 50}, 1, "Skill Points: %i / Base Points: %i", player_available_skill_points, player_available_base_points);
     }

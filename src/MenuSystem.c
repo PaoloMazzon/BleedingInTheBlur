@@ -23,7 +23,7 @@ static MenuOption *get_menu_grid_pos(MenuSystemTab *tab, Position p) {
 
 void menu_system_initialize(MenuSystem *menu_system, int32_t tab_count) {
     memset(menu_system, 0, sizeof(MenuSystem));
-    menu_system->tabs = oct_Zalloc(g_game.allocator, sizeof(MenuSystemTab) * tab_count);
+    menu_system->tabs = oct_Zalloc(get_game()->allocator, sizeof(MenuSystemTab) * tab_count);
     menu_system->tab_count = tab_count;
     for (int32_t i = 0; i < tab_count; i++)
         for (int32_t j = 0; j < MAX_MENU_ELEMENTS; j++)
@@ -31,7 +31,7 @@ void menu_system_initialize(MenuSystem *menu_system, int32_t tab_count) {
 }
 
 void menu_system_destroy(MenuSystem *menu_system) {
-    oct_Free(g_game.allocator, menu_system->tabs);
+    oct_Free(get_game()->allocator, menu_system->tabs);
 }
 
 MenuSystemTab *menu_get_tab(MenuSystem *system, int32_t index) {
@@ -164,7 +164,7 @@ void menu_system_process_and_draw(MenuSystem *system) {
         if (current_option->type != MENU_OPTION_TYPE_CYCLE_INFINITE) {
             oct_DrawTextInt(
                     OCT_INTERPOLATE_ALL, current_option->id,
-                    oct_GetAsset(g_game.assets, "fnt_pixel"),
+                    oct_GetAsset(get_assets(), "fnt_pixel"),
                     (Oct_Vec2) {current_option->tween_position[0] + current_option->bounce_amount,
                                 current_option->tween_position[1]}, 1,
                     "%s", current_option->name);
@@ -178,36 +178,36 @@ void menu_system_process_and_draw(MenuSystem *system) {
             if (current_option->type != MENU_OPTION_TYPE_CYCLE_INFINITE) {
                 Oct_Vec2 text_size;
                 oct_GetTextSize(
-                        oct_GetAsset(g_game.assets, "fnt_pixel"),
+                        oct_GetAsset(get_assets(), "fnt_pixel"),
                         text_size, 1,
                         "%s", current_option->name);
                 oct_DrawTexture(
-                        oct_GetAsset(g_game.assets, "menu/arrow_left.png"),
+                        oct_GetAsset(get_assets(), "menu/arrow_left.png"),
                         (Oct_Vec2) {current_option->tween_position[0] - 12, current_option->tween_position[1] + 1});
                 oct_DrawTexture(
-                        oct_GetAsset(g_game.assets, "menu/arrow_right.png"),
+                        oct_GetAsset(get_assets(), "menu/arrow_right.png"),
                         (Oct_Vec2) {current_option->tween_position[0] + text_size[0] + 3,
                                     current_option->tween_position[1] + 1});
             } else {
                 oct_DrawTextureInt(
                         OCT_INTERPOLATE_ALL, current_option->id,
-                        oct_GetAsset(g_game.assets, "menu/movementbar.png"),
+                        oct_GetAsset(get_assets(), "menu/movementbar.png"),
                         (Oct_Vec2) {current_option->tween_position[0] - 12, current_option->tween_position[1]});
             }
         } else if (current_option == option) {
             if (current_option->type != MENU_OPTION_TYPE_CYCLE_INFINITE) {
                 oct_DrawTexture(
-                        oct_GetAsset(g_game.assets, "menu/pointer.png"),
+                        oct_GetAsset(get_assets(), "menu/pointer.png"),
                         (Oct_Vec2) {current_option->tween_position[0] - 20, current_option->tween_position[1] + 1});
             } else {
                 // hacky pile of shit
                 if (system->tabs[system->current_tab].cursor_pos[0] == 0)
                     oct_DrawTexture(
-                            oct_GetAsset(g_game.assets, "menu/pointer_small.png"),
+                            oct_GetAsset(get_assets(), "menu/pointer_small.png"),
                             (Oct_Vec2) {current_option->tween_position[0] - 22, current_option->tween_position[1]});
                 else
                     oct_DrawTexture(
-                            oct_GetAsset(g_game.assets, "menu/pointer_small_left.png"),
+                            oct_GetAsset(get_assets(), "menu/pointer_small_left.png"),
                             (Oct_Vec2) {current_option->tween_position[0] - 22 + 12, current_option->tween_position[1]});
             }
         }

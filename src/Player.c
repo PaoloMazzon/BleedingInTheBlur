@@ -10,14 +10,14 @@
 void player_init(Position start_pos) {
     Statblock sb;
     Sprite sprite;
-    info_setup_sprite_layers(&g_game.player.info);
-    memcpy(&sb, &g_game.player.initial_statblock, sizeof(Statblock));
-    memcpy(&sprite, &g_game.player.info.sprite, sizeof(Sprite));
+    info_setup_sprite_layers(&get_player()->info);
+    memcpy(&sb, &get_player()->initial_statblock, sizeof(Statblock));
+    memcpy(&sprite, &get_player()->info.sprite, sizeof(Sprite));
     print_statblock(&sb);
-    character_create(&sb, (Position){start_pos[0], start_pos[1]}, &g_game.player);
-    memcpy(&g_game.player.info.sprite, &sprite, sizeof(Sprite));
-    g_game.player.info.traits.Character.friendly = true;
-    get_starting_weapon(WEAPON_TYPE_SPEAR, &g_game.player.starting_weapon);
+    character_create(&sb, (Position){start_pos[0], start_pos[1]}, get_player());
+    memcpy(&get_player()->info.sprite, &sprite, sizeof(Sprite));
+    get_player()->info.traits.Character.friendly = true;
+    get_starting_weapon(WEAPON_TYPE_SPEAR, &get_player()->starting_weapon);
 }
 
 static void player_menu_state() {
@@ -26,20 +26,20 @@ static void player_menu_state() {
         tab_mover += 1;
     if (oct_KeyPressed(BUTTON_PREVIOUS_TAB))
         tab_mover -= 1;
-    g_game.current_level.menu.tab += tab_mover;
-    if (g_game.current_level.menu.tab == MENU_TAB_MAX)
-        g_game.current_level.menu.tab = 0;
-    if (g_game.current_level.menu.tab == -1)
-        g_game.current_level.menu.tab = MENU_TAB_MAX - 1;
+    get_level()->menu.tab += tab_mover;
+    if (get_level()->menu.tab == MENU_TAB_MAX)
+        get_level()->menu.tab = 0;
+    if (get_level()->menu.tab == -1)
+        get_level()->menu.tab = MENU_TAB_MAX - 1;
 
     if (oct_KeyPressed(BUTTON_MENU_TOGGLE))
-        g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
+        get_level()->state = LEVEL_STATE_PLAYER_INTERACTION;
 
     // TODO: Move cursor for future menus
 }
 
 static bool player_attack_view_state() {
-    Character *player = &g_game.player;
+    Character *player = get_player();
     Position movement_direction = {0};
 
     if (level_attack_animation_complete()) {
@@ -53,84 +53,84 @@ static bool player_attack_view_state() {
         else if (input_get(INPUT_DOWN)) movement_direction[1] = 1;
     }
 
-    g_game.current_level.attack_view.attack_cursor[0] += movement_direction[0];
-    g_game.current_level.attack_view.attack_cursor[1] += movement_direction[1];
-    g_game.current_level.attack_view.attack_cursor[0] = oct_Clampi(
+    get_level()->attack_view.attack_cursor[0] += movement_direction[0];
+    get_level()->attack_view.attack_cursor[1] += movement_direction[1];
+    get_level()->attack_view.attack_cursor[0] = oct_Clampi(
             player->pos[0] - 5,
             player->pos[0] + 5,
-            g_game.current_level.attack_view.attack_cursor[0]);
-    g_game.current_level.attack_view.attack_cursor[1] = oct_Clampi(
+            get_level()->attack_view.attack_cursor[0]);
+    get_level()->attack_view.attack_cursor[1] = oct_Clampi(
             player->pos[1] - 5,
             player->pos[1] + 5,
-            g_game.current_level.attack_view.attack_cursor[1]);
+            get_level()->attack_view.attack_cursor[1]);
 
     // Let player cancel attack selection
-    if (!level_in_attack_animation() && (oct_KeyPressed(BUTTON_ATTACK_VIEW) || (oct_KeyPressed(BUTTON_ITEM_USE) && g_game.current_level.attack_view.spell))) {
-        g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
+    if (!level_in_attack_animation() && (oct_KeyPressed(BUTTON_ATTACK_VIEW) || (oct_KeyPressed(BUTTON_ITEM_USE) && get_level()->attack_view.spell))) {
+        get_level()->state = LEVEL_STATE_PLAYER_INTERACTION;
     }
 
     // Attack things at target
-    const TileContents *tile = level_get_tile(g_game.current_level.attack_view.attack_cursor);
-    if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_CONFIRM) && tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile->character != &g_game.player) {
+    const TileContents *tile = level_get_tile(get_level()->attack_view.attack_cursor);
+    if (!level_in_attack_animation() && oct_KeyPressed(BUTTON_CONFIRM) && tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile->character != get_player()) {
         // Check mana in the case that it's a spell
-        if (g_game.current_level.attack_view.spell && g_game.player.current_mana < g_game.current_level.attack_view.spell->mana_requirement) {
-            create_label("Not enough mana!", g_game.player.pos, (Oct_Colour){.r = 1, .g = 1, .b = 1, .a = 1}, false);
+        if (get_level()->attack_view.spell && get_player()->current_mana < get_level()->attack_view.spell->mana_requirement) {
+            create_label("Not enough mana!", get_player()->pos, (Oct_Colour){.r = 1, .g = 1, .b = 1, .a = 1}, false);
         } else {
-            if (g_game.current_level.attack_view.spell)
-                g_game.player.current_mana -= g_game.current_level.attack_view.spell->mana_requirement;
+            if (get_level()->attack_view.spell)
+                get_player()->current_mana -= get_level()->attack_view.spell->mana_requirement;
             if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER &&
-                tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <=
+                tile_distance(get_level()->attack_view.attack_cursor, player->pos) <=
                 get_player_current_attack_range()) {
-                if (!g_game.current_level.attack_view.spell) {
+                if (!get_level()->attack_view.spell) {
                     character_attempt_attack(player,
                                              &player->weapons[player->active_weapon].info.traits,
                                              tile->character,
                                              player->weapons[player->active_weapon].damage);
                 } else {
-                    if (!use_item(g_game.current_level.attack_view.spell, &g_game.player))
-                        g_game.player.items[g_game.player.selected_item].type = ITEM_TYPE_NONE;
+                    if (!use_item(get_level()->attack_view.spell, get_player()))
+                        get_player()->items[get_player()->selected_item].type = ITEM_TYPE_NONE;
                 }
             }
         }
     }
 
     // Focus on enemies the player is looking directly at
-    if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(g_game.current_level.attack_view.attack_cursor, player->pos) <= get_player_current_attack_range() && &g_game.player != tile->character) {
+    if (tile && tile->type == TILE_CONTENTS_TYPE_CHARACTER && tile_distance(get_level()->attack_view.attack_cursor, player->pos) <= get_player_current_attack_range() && get_player() != tile->character) {
         level_set_displayed_enemy(tile->character);
     }
 
     // Look at attack cursor
-    look_at(g_game.current_level.attack_view.attack_cursor, 0.8f);
+    look_at(get_level()->attack_view.attack_cursor, 0.8f);
     return false;
 }
 
 // Places an item into player inventory at given index -- must be an item at the tile location where the player is
 static void pickup_item(int32_t item_index) {
     // Call the old item's exit inventory callback
-    if (g_game.player.items[item_index].exit_inventory_callback)
-        g_game.player.items[item_index].exit_inventory_callback(&g_game.player);
-    level_extract_tile_item(g_game.player.pos, &g_game.player.items[item_index]);
+    if (get_player()->items[item_index].exit_inventory_callback)
+        get_player()->items[item_index].exit_inventory_callback(get_player());
+    level_extract_tile_item(get_player()->pos, &get_player()->items[item_index]);
     // Call the new item's enter inventory callback
-    if (g_game.player.items[item_index].enter_inventory_callback)
-        g_game.player.items[item_index].enter_inventory_callback(&g_game.player);
+    if (get_player()->items[item_index].enter_inventory_callback)
+        get_player()->items[item_index].enter_inventory_callback(get_player());
 }
 
 // Replaces player's current soul-bound weapon with whatever is on the ground -- must be an item at the tile location where the player is
 static void pickup_weapon() {
-    level_extract_tile_weapon(g_game.player.pos, &g_game.player.soul_bound_weapon);
+    level_extract_tile_weapon(get_player()->pos, &get_player()->soul_bound_weapon);
 }
 
 // Called when the player first moves into a tile this turn -- returns true if the player's turn is done
 static bool player_moved_into_tile(TileContents *tile) {
-    Character *player = &g_game.player;
+    Character *player = get_player();
 
     // If we moved onto a weapon/item, we should show the popup to pick it up before passing turn
     if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_WEAPON) {
-        if (g_game.options.auto_pick_up_item && g_game.player.soul_bound_weapon.type == WEAPON_TYPE_NONE) {
+        if (get_game()->options.auto_pick_up_item && get_player()->soul_bound_weapon.type == WEAPON_TYPE_NONE) {
             pickup_weapon();
             slog_debug("Player automatically picked up weapon");
         } else {
-            g_game.current_level.weapon_popup = popup_weapon_select(tile->weapon);
+            get_level()->weapon_popup = popup_weapon_select(tile->weapon);
             slog_debug("Player hit weapon popup.");
         }
     } else if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_ITEM) {
@@ -141,16 +141,16 @@ static bool player_moved_into_tile(TileContents *tile) {
                 break;
             }
         }
-        if (g_game.options.auto_pick_up_item && available_item_index != -1) {
+        if (get_game()->options.auto_pick_up_item && available_item_index != -1) {
             pickup_item(available_item_index);
             slog_debug("Player automatically picked up weapon");
         } else {
-            g_game.current_level.item_popup = popup_item_select(tile->item);
+            get_level()->item_popup = popup_item_select(tile->item);
             slog_debug("Player hit item popup.");
         }
     } else if (tile->extra_contents_type == TILE_EXTRA_CONTENTS_TYPE_STAIRS) {
         // Show a pop-up asking the player if they want to leave the room now
-        g_game.current_level.confirm_go_to_next_floor_pointer = popup_confirm("Proceed to next floor?");
+        get_level()->confirm_go_to_next_floor_pointer = popup_confirm("Proceed to next floor?");
     } else {
         return true;
     }
@@ -158,7 +158,7 @@ static bool player_moved_into_tile(TileContents *tile) {
 }
 
 static void auto_attack_tile(const Position target_position) {
-    Character *player = &g_game.player;
+    Character *player = get_player();
     TileContents *t = level_get_tile(target_position);
     assert(t);
 
@@ -168,48 +168,48 @@ static void auto_attack_tile(const Position target_position) {
                              t->character,
                              player->weapons[player->active_weapon].damage);
     level_set_displayed_enemy(t->character);
-    g_game.current_level.attack_view.attack_cursor[0] = target_position[0];
-    g_game.current_level.attack_view.attack_cursor[1] = target_position[1];
-    g_game.current_level.attack_view.spell = nullptr;
-    g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
+    get_level()->attack_view.attack_cursor[0] = target_position[0];
+    get_level()->attack_view.attack_cursor[1] = target_position[1];
+    get_level()->attack_view.spell = nullptr;
+    get_level()->state = LEVEL_STATE_PLAYER_ATTACK;
 }
 
 static void player_use_current_item() {
-    Character *player = &g_game.player;
+    Character *player = get_player();
     if (player->items[player->selected_item].type == ITEM_TYPE_ATTACK_SPELL) {
-        g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
-        g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
-        g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
-        g_game.current_level.attack_view.cursor_real_pos[0] = (float)g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH;
-        g_game.current_level.attack_view.cursor_real_pos[1] = (float)g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT;
-        g_game.current_level.attack_view.spell = &player->items[player->selected_item];
+        get_level()->state = LEVEL_STATE_PLAYER_ATTACK;
+        get_level()->attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
+        get_level()->attack_view.attack_cursor[1] = player->pos[1];
+        get_level()->attack_view.cursor_real_pos[0] = (float)get_level()->attack_view.attack_cursor[0] * CELL_WIDTH;
+        get_level()->attack_view.cursor_real_pos[1] = (float)get_level()->attack_view.attack_cursor[1] * CELL_HEIGHT;
+        get_level()->attack_view.spell = &player->items[player->selected_item];
     } else if (!use_item(&player->items[player->selected_item], player)) {
         player->items[player->selected_item].type = ITEM_TYPE_NONE;
     }
 }
 
 static bool player_interaction_state() {
-    Character *player = &g_game.player;
+    Character *player = get_player();
     int32_t item_index;
     bool selected_the_weapon;
     bool confirmed_go_to_next_floor;
 
     // Skip the turn if a popup just resolved
-    if (popup_get_weapon(g_game.current_level.weapon_popup, &selected_the_weapon)) {
+    if (popup_get_weapon(get_level()->weapon_popup, &selected_the_weapon)) {
         slog_debug("Player completed weapon popup with result %s.", selected_the_weapon ? "true" : "false");
         if (selected_the_weapon) {
             pickup_weapon();
         }
         return true;
     }
-    if (popup_get_item(g_game.current_level.item_popup, &item_index)) {
+    if (popup_get_item(get_level()->item_popup, &item_index)) {
         slog_debug("Player completed item popup with result %i.", item_index);
         if (item_index != -1) {
             pickup_item(item_index);
         }
         return true;
     }
-    if (popup_get_confirm(g_game.current_level.confirm_go_to_next_floor_pointer, &confirmed_go_to_next_floor)) {
+    if (popup_get_confirm(get_level()->confirm_go_to_next_floor_pointer, &confirmed_go_to_next_floor)) {
         slog_debug("Player completed next floor popup with result %s", confirmed_go_to_next_floor ? "true" : "false");
         if (confirmed_go_to_next_floor) {
             level_begin_next_level();
@@ -225,12 +225,12 @@ static bool player_interaction_state() {
     else if (input_get(INPUT_DOWN)) movement_direction[1] = 1;
 
     if (oct_KeyPressed(BUTTON_ATTACK_VIEW)) {
-        g_game.current_level.state = LEVEL_STATE_PLAYER_ATTACK;
-        g_game.current_level.attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
-        g_game.current_level.attack_view.attack_cursor[1] = player->pos[1];
-        g_game.current_level.attack_view.cursor_real_pos[0] = (float)g_game.current_level.attack_view.attack_cursor[0] * CELL_WIDTH;
-        g_game.current_level.attack_view.cursor_real_pos[1] = (float)g_game.current_level.attack_view.attack_cursor[1] * CELL_HEIGHT;
-        g_game.current_level.attack_view.spell = nullptr;
+        get_level()->state = LEVEL_STATE_PLAYER_ATTACK;
+        get_level()->attack_view.attack_cursor[0] = player->pos[0] + (int32_t)player->info.facing_direction;
+        get_level()->attack_view.attack_cursor[1] = player->pos[1];
+        get_level()->attack_view.cursor_real_pos[0] = (float)get_level()->attack_view.attack_cursor[0] * CELL_WIDTH;
+        get_level()->attack_view.cursor_real_pos[1] = (float)get_level()->attack_view.attack_cursor[1] * CELL_HEIGHT;
+        get_level()->attack_view.spell = nullptr;
     }
 
     if (oct_KeyPressed(BUTTON_SWAP_WEAPON)) {
@@ -238,12 +238,12 @@ static bool player_interaction_state() {
     }
 
     if (oct_KeyPressed(BUTTON_MENU_TOGGLE)) {
-        g_game.current_level.state = LEVEL_STATE_PLAYER_MENU;
+        get_level()->state = LEVEL_STATE_PLAYER_MENU;
     }
 
     if (oct_KeyPressed(BUTTON_ITEM_SWAP)) {
-        timer_start(&g_game.current_level.player_item_bar_popup_timer, 30 * 3);
-        g_game.player.selected_item = (g_game.player.selected_item + 1) % INVENTORY_SIZE;
+        timer_start(&get_level()->player_item_bar_popup_timer, 30 * 3);
+        get_player()->selected_item = (get_player()->selected_item + 1) % INVENTORY_SIZE;
     }
 
     if (oct_KeyPressed(BUTTON_ITEM_USE) && player->items[player->selected_item].type != ITEM_TYPE_NONE) {
@@ -253,14 +253,14 @@ static bool player_interaction_state() {
     // Process movement
     if (movement_direction[0] != 0 || movement_direction[1] != 0) {
         const Position target_position = {
-                g_game.player.pos[0] + movement_direction[0],
-                g_game.player.pos[1] + movement_direction[1],
+                get_player()->pos[0] + movement_direction[0],
+                get_player()->pos[1] + movement_direction[1],
         };
 
         // The player can move into open tiles and possible trigger a pickup if there is an item there or whatever
         // or the player might move onto a tile with a character, in which case they will attack them
         TileContents *t = level_get_tile(target_position);
-        if (character_move(&g_game.player, target_position)) {
+        if (character_move(get_player(), target_position)) {
             if (player_moved_into_tile(t)) {
                 player_has_taken_actions = true;
             }
@@ -276,26 +276,26 @@ static bool player_interaction_state() {
 }
 
 void player_update() {
-    Character *player = &g_game.player;
+    Character *player = get_player();
 
     // Should only be 1/-1 in both directions
     bool player_has_taken_actions = false;
-    if (g_game.current_level.state == LEVEL_STATE_PLAYER_ATTACK) {
+    if (get_level()->state == LEVEL_STATE_PLAYER_ATTACK) {
         player_has_taken_actions = player_attack_view_state();
-    } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_INTERACTION) {
+    } else if (get_level()->state == LEVEL_STATE_PLAYER_INTERACTION) {
         player_has_taken_actions = player_interaction_state();
-    } else if (g_game.current_level.state == LEVEL_STATE_PLAYER_MENU) {
+    } else if (get_level()->state == LEVEL_STATE_PLAYER_MENU) {
         player_menu_state();
     }
 
     // Player can toggle the stat view anytime
     if (oct_KeyPressed(BUTTON_MENU_TOGGLE)) {
-        g_game.current_level.stats_toggle = !g_game.current_level.stats_toggle;
+        get_level()->stats_toggle = !get_level()->stats_toggle;
     }
 
     // DEBUG
     if (oct_KeyPressed(OCT_KEY_P)) {
-        info_set_random_sprite_layers(&g_game.player.info);
+        info_set_random_sprite_layers(&get_player()->info);
     }
     if (oct_KeyPressed(OCT_KEY_O)) {
         popup_confirm("sixty seven?");
@@ -306,25 +306,25 @@ void player_update() {
     if (player_has_taken_actions) {
         // World gets to take a turn unless player has accumulated enough movement to get
         // an extra turn
-        if (g_game.player.cumulative_movement == 100) {
-            g_game.player.cumulative_movement = 0;
-            g_game.current_level.state = LEVEL_STATE_PLAYER_INTERACTION;
+        if (get_player()->cumulative_movement == 100) {
+            get_player()->cumulative_movement = 0;
+            get_level()->state = LEVEL_STATE_PLAYER_INTERACTION;
         } else {
-            character_process_alarms(&g_game.player);
+            character_process_alarms(get_player());
             level_transition_to_enemy_turns();
         }
-        g_game.player.cumulative_movement = oct_Clampi(0, 100, g_game.player.cumulative_movement + character_movement(&g_game.player));
+        get_player()->cumulative_movement = oct_Clampi(0, 100, get_player()->cumulative_movement + character_movement(get_player()));
     }
 }
 
 int32_t get_player_current_attack_range() {
-    if (g_game.current_level.attack_view.spell) {
+    if (get_level()->attack_view.spell) {
         int32_t range;
-        assert(g_game.current_level.attack_view.spell->get_traits_callback); // if this is triggered that means an attack was started with a non-spell item
-        g_game.current_level.attack_view.spell->get_traits_callback(&g_game.player, nullptr, &range);
+        assert(get_level()->attack_view.spell->get_traits_callback); // if this is triggered that means an attack was started with a non-spell item
+        get_level()->attack_view.spell->get_traits_callback(get_player(), nullptr, &range);
         return range;
     } else {
-        return g_game.player.weapons[g_game.player.active_weapon].range;
+        return get_player()->weapons[get_player()->active_weapon].range;
     }
     assert(false); // unreachable
 }

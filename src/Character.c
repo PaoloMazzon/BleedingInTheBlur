@@ -56,7 +56,7 @@ void traits_draw(Traits *traits, const Oct_Vec2 position, bool attack_traits, bo
     }
 
     oct_DrawText(
-            oct_GetAsset(g_game.assets, "fnt_traiticons"),
+            oct_GetAsset(get_assets(), "fnt_traiticons"),
             position,
             1,
             "%s", trait_string);
@@ -137,17 +137,17 @@ void info_set_random_sprite_layers(ObjectInfo *info) {
     info->sprite.drawn_type = DRAWN_TYPE_CHARACTER;
     for (int32_t i = 0; i < MAX_SPRITE_LAYERS; i++) {
         const int32_t lower_bound = i == SPRITE_LAYER_BODY ? 1 : 0;
-        info->sprite.layers[i] = random_int(lower_bound, g_game.layer_sprite_counts[i]);
+        info->sprite.layers[i] = random_int(lower_bound, get_game()->layer_sprite_counts[i]);
         info->sprite.layer_colours[i] = random_int(0, MAX_COLOURS);
     }
     slog_trace("Randomized sprite layers for info %p", info);
-    oct_InitSpriteInstance(&info->sprite.layers_instance, oct_GetAsset(g_game.assets, "characterpantslayer/option_0.json"), true);
+    oct_InitSpriteInstance(&info->sprite.layers_instance, oct_GetAsset(get_assets(), "characterpantslayer/option_0.json"), true);
 }
 
 void info_setup_sprite_layers(ObjectInfo *info) {
     slog_trace("Setup sprite layers for info %p", info);
     info->sprite.drawn_type = DRAWN_TYPE_CHARACTER;
-    oct_InitSpriteInstance(&info->sprite.layers_instance, oct_GetAsset(g_game.assets, "characterpantslayer/option_0.json"), true);
+    oct_InitSpriteInstance(&info->sprite.layers_instance, oct_GetAsset(get_assets(), "characterpantslayer/option_0.json"), true);
 }
 
 int32_t *get_skill_pip(Statblock *s, int32_t base_stat_index, int32_t skill_index) {
@@ -201,13 +201,13 @@ void draw_object(ObjectInfo *info, Oct_Vec2 position, float scale, float alpha) 
             if (s->layers[i] == 0 || s->layers[i] == OCT_NO_ASSET) continue;
             Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha};
             if (i != SPRITE_LAYER_BODY) {
-                c.r = g_game.layer_colours[s->layer_colours[i]].r;
-                c.g = g_game.layer_colours[s->layer_colours[i]].g;
-                c.b = g_game.layer_colours[s->layer_colours[i]].b;
+                c.r = get_game()->layer_colours[s->layer_colours[i]].r;
+                c.g = get_game()->layer_colours[s->layer_colours[i]].g;
+                c.b = get_game()->layer_colours[s->layer_colours[i]].b;
             }
             oct_DrawSpriteIntColourExt(
                 OCT_INTERPOLATE_POSITION | OCT_INTERPOLATE_ROTATION, info->id,
-                g_game.layers_sprites[i][s->layers[i]], &s->layers_instance,
+                get_game()->layers_sprites[i][s->layers[i]], &s->layers_instance,
                 &c,
                 (Oct_Vec2){position[0] + 4, position[1] + 4},
                 (Oct_Vec2){info->scale_x * scale, scale},
@@ -225,7 +225,7 @@ static void draw_item_charges(Item *item, const Oct_Vec2 position, bool interpol
     for (int32_t i = 0; i < item->charges_remaining; i++) {
         oct_DrawTextureInt(
                 interpolate ? OCT_INTERPOLATE_ALL : 0, (item->info.id * OBJECT_ID_RESERVED_MULTIPLIER) + i,
-                oct_GetAsset(g_game.assets, "hud/itemchargepip.png"),
+                oct_GetAsset(get_assets(), "hud/itemchargepip.png"),
                 (Oct_Vec2){x, y});
         y += 2;
     }
@@ -266,9 +266,9 @@ void draw_object_raw(ObjectInfo *info, Oct_Vec2 position, float scale, float alp
             if (s->layers[i] == 0 || s->layers[i] == OCT_NO_ASSET) continue;
             Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha};
             if (i != SPRITE_LAYER_BODY) {
-                c.r = g_game.layer_colours[s->layer_colours[i]].r;
-                c.g = g_game.layer_colours[s->layer_colours[i]].g;
-                c.b = g_game.layer_colours[s->layer_colours[i]].b;
+                c.r = get_game()->layer_colours[s->layer_colours[i]].r;
+                c.g = get_game()->layer_colours[s->layer_colours[i]].g;
+                c.b = get_game()->layer_colours[s->layer_colours[i]].b;
             }
             oct_DrawSpriteIntColourExt(
                 OCT_INTERPOLATE_ALL, info->id,
@@ -306,9 +306,9 @@ void draw_object_raw_no_int(ObjectInfo *info, Oct_Vec2 position, float scale, fl
             if (s->layers[i] == 0 || s->layers[i] == OCT_NO_ASSET) continue;
             Oct_Colour c = {.r = 1.0f, .g = 1.0f, .b = 1.0f, .a = alpha};
             if (i != SPRITE_LAYER_BODY) {
-                c.r = g_game.layer_colours[s->layer_colours[i]].r;
-                c.g = g_game.layer_colours[s->layer_colours[i]].g;
-                c.b = g_game.layer_colours[s->layer_colours[i]].b;
+                c.r = get_game()->layer_colours[s->layer_colours[i]].r;
+                c.g = get_game()->layer_colours[s->layer_colours[i]].g;
+                c.b = get_game()->layer_colours[s->layer_colours[i]].b;
             }
                 oct_DrawSpriteColourExt(
                     s->layers[i], &s->layers_instance,
@@ -497,7 +497,7 @@ bool character_move(Character *c, const Position new_position) {
         return false;
     } else if (next_tile->type == TILE_CONTENTS_TYPE_WALL && next_tile->tile.door && !next_tile->tile.door_open) {
         next_tile->type = TILE_CONTENTS_TYPE_NONE;
-        oct_SetTilemap(g_game.current_level.decorations, new_position[0], new_position[1], TILE_DOOR_OPEN);
+        oct_SetTilemap(get_level()->decorations, new_position[0], new_position[1], TILE_DOOR_OPEN);
         return true;
     }
 
@@ -590,7 +590,7 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
     const int32_t bonus_damage = passed ? result - dc : 0;
 
     if (attack_traits->Attack.ranged)
-        setup_ranged_animation(c, rcvr, attack_traits, passed, bonus_damage + base_attack_damage, oct_GetAsset(g_game.assets, "items/rock.png"));
+        setup_ranged_animation(c, rcvr, attack_traits, passed, bonus_damage + base_attack_damage, oct_GetAsset(get_assets(), "items/rock.png"));
     else if (attack_traits->Attack.melee)
         setup_melee_animation(c, rcvr, attack_traits, passed, bonus_damage + base_attack_damage);
     else
@@ -610,7 +610,7 @@ bool character_attempt_attack(Character *c, const Traits *attack_traits, Charact
             .a = 1.0f
     };
     const int32_t max_text_len = 49;
-    char *buffer = oct_Malloc(g_game.allocator, max_text_len + 1);
+    char *buffer = oct_Malloc(get_game()->allocator, max_text_len + 1);
     snprintf(buffer, max_text_len, "1%s%i%s%s%i%s%i", GLYPH_D8, pips, GLYPH_D6, GLYPH_ARROW, result, GLYPH_OUT_OF, dc);
     create_dice_label(buffer,
                       (Position){target_position[0], target_position[1] + 2},
@@ -638,7 +638,7 @@ void character_process_alarms(Character *c) {
 
 bool character_is_aware_of_other_character(Character *c, Character *other, bool consider_aggro_range) {
     const int32_t distance = tile_distance(c->pos, other->pos);
-    const int32_t target_distance = c == &g_game.player ? 8 : 5;
+    const int32_t target_distance = c == get_player() ? 8 : 5;
     const bool heightened_senses = c->info.traits.Character.sharp;
     const bool within_aggro_range = !consider_aggro_range || (distance <= c->aggro_range);
     const bool line_of_sight = !tiles_have_walls_between(c->pos, other->pos) || !tiles_have_walls_between(other->pos, c->pos);

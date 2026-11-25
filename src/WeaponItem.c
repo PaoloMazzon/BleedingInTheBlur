@@ -26,8 +26,8 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
     // TODO: Do something with rarity
     if (weapon_type == WEAPON_TYPE_SWORD) {
         out->type = WEAPON_TYPE_SWORD;
-        out->icon = oct_GetAsset(g_game.assets, "attacks/sword_icon.png");
-        info_set_texture(&out->info, oct_GetAsset(g_game.assets, "attacks/sword.png"));
+        out->icon = oct_GetAsset(get_assets(), "attacks/sword_icon.png");
+        info_set_texture(&out->info, oct_GetAsset(get_assets(), "attacks/sword.png"));
         out->info.name = "Sword";
         out->damage = 5;
         out->range = 1;
@@ -36,8 +36,8 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->info.traits.Attack.blade = true;
     } else if (weapon_type == WEAPON_TYPE_SPEAR) {
         out->type = WEAPON_TYPE_SPEAR;
-        out->icon = oct_GetAsset(g_game.assets, "attacks/spear_icon.png");
-        info_set_texture(&out->info, oct_GetAsset(g_game.assets, "attacks/spear.png"));
+        out->icon = oct_GetAsset(get_assets(), "attacks/spear_icon.png");
+        info_set_texture(&out->info, oct_GetAsset(get_assets(), "attacks/spear.png"));
         out->info.name = "Spear";
         out->damage = 4;
         out->range = 2;
@@ -47,14 +47,14 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->info.traits.Attack.blade = true;
     } else if (weapon_type == WEAPON_TYPE_BOW) {
         out->type = WEAPON_TYPE_BOW;
-        out->icon = oct_GetAsset(g_game.assets, "attacks/bow_icon.png");
+        out->icon = oct_GetAsset(get_assets(), "attacks/bow_icon.png");
         out->info.name = "Bow";
         out->damage = 2;
         out->range = 4;
         out->info.traits.Attack.ranged = true;
     } else if (weapon_type == WEAPON_TYPE_CROSSBOW) {
         out->type = WEAPON_TYPE_CROSSBOW;
-        out->icon = oct_GetAsset(g_game.assets, "attacks/crossbow_icon.png");
+        out->icon = oct_GetAsset(get_assets(), "attacks/crossbow_icon.png");
         out->info.name = "Crossbow";
         out->damage = 3;
         out->range = 4;
@@ -64,7 +64,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->info.traits.Attack.heavy = true;
     } else if (weapon_type == WEAPON_TYPE_DAGGER) {
         out->type = WEAPON_TYPE_DAGGER;
-        out->icon = oct_GetAsset(g_game.assets, "attacks/dagger.png");
+        out->icon = oct_GetAsset(get_assets(), "attacks/dagger.png");
         out->info.name = "Dagger";
         out->damage = 2;
         out->range = 1;
@@ -75,7 +75,7 @@ void get_weapon(WeaponType weapon_type, Rarity rarity, Weapon *out) {
         out->info.traits.Attack.melee = true;
     } else if (weapon_type == WEAPON_TYPE_OTHER) {
         out->type = WEAPON_TYPE_OTHER;
-        out->icon = oct_GetAsset(g_game.assets, "");
+        out->icon = oct_GetAsset(get_assets(), "");
         out->info.name = "Claw";
         out->damage = 2;
         out->range = 1;
@@ -109,7 +109,7 @@ static void prep_item(Item *out, const char *name, const char *extended_name, in
 // Attempts to identify an item based on a few factors
 static void attempt_identification(Item *item, IdentificationBitmask type) {
     Statblock sb;
-    character_get_current_stats(&g_game.player, &sb);
+    character_get_current_stats(get_player(), &sb);
     int32_t pips = 0;
     const int32_t dc = statblock_get_dc(sb.learning);
     if (type & IDENTIFICATION_BITMASK_OCCULT || type & IDENTIFICATION_BITMASK_SPELL)
@@ -125,7 +125,7 @@ void get_small_health_potion(Item *out) {
             "Potion",
             "Small heal",
             1,
-            oct_GetAsset(g_game.assets, "items/healthpotion.png"));
+            oct_GetAsset(get_assets(), "items/healthpotion.png"));
 
     out->type = ITEM_TYPE_POTION;
     out->use_callback = small_potion_use_callback;
@@ -139,7 +139,7 @@ void get_evil_rock(Item *out) {
             "Evil Rock",
             "Occult weapon",
             5,
-            oct_GetAsset(g_game.assets, "items/rock.png"));
+            oct_GetAsset(get_assets(), "items/rock.png"));
 
     out->type = ITEM_TYPE_ATTACK_SPELL;
     out->use_callback = evil_rock_use_callback;

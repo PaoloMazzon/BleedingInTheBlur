@@ -83,13 +83,13 @@ float hyperbolic_x(float normalized_x) {
 }
 
 void timer_start(Timer *timer, int32_t duration_in_frames) {
-    timer->start_frame = g_game.frame;
-    timer->end_frame = g_game.frame + duration_in_frames;
+    timer->start_frame = get_game()->frame;
+    timer->end_frame = get_game()->frame + duration_in_frames;
 }
 
 bool timer_tick(Timer *timer) {
     if (!timer_in_use(timer)) return false;
-    const bool done = timer->end_frame == g_game.frame;
+    const bool done = timer->end_frame == get_game()->frame;
     if (done) {
         timer->end_frame = TIMESTAMP_NOT_IN_USE;
         timer->start_frame = TIMESTAMP_NOT_IN_USE;
@@ -99,12 +99,12 @@ bool timer_tick(Timer *timer) {
 
 float timer_get_normalized(Timer *timer) {
     const float total = (float)timer->end_frame - (float)timer->start_frame;
-    const float left = (float)timer->end_frame - (float)g_game.frame;
+    const float left = (float)timer->end_frame - (float)get_game()->frame;
     return left / total;
 }
 
 bool timer_is_done(Timer *timer) {
-    return timer_in_use(timer) && timer->end_frame == g_game.frame;
+    return timer_in_use(timer) && timer->end_frame == get_game()->frame;
 }
 
 bool timer_in_use(Timer *timer) {
@@ -112,7 +112,7 @@ bool timer_in_use(Timer *timer) {
 }
 
 int32_t timer_frames_left(Timer *timer) {
-    return timer->end_frame - g_game.frame;
+    return timer->end_frame - get_game()->frame;
 }
 
 int32_t *add_pos(const Position lhs, const Position rhs, Position out) {
