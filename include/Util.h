@@ -37,6 +37,12 @@ int32_t tile_distance(Position p1, Position p2);
 // for an inverse parabola normalized to [0, 1]
 float hyperbolic_x(float normalized_x);
 
+// Returns true if a tile is within attack range of the player
+bool tile_in_range_of_player(Position target)
+
+// Returns true if between two tiles lies at least 1 wall
+bool tiles_have_walls_between(Position tile1, Position tile2)
+
 // for managing timers, once timer_tick is called on a complete timer the timer is no longer valid
 void timer_start(Timer *timer, int32_t duration_in_frames);
 bool timer_tick(Timer *timer); // does nothing if the timer is not set, returns true if this frame it goes off

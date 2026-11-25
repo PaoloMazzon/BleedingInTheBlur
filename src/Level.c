@@ -14,143 +14,6 @@
 #include "AttackAnimations.h"
 #include "PersistentEffects.h"
 
-// Returns true if a given tile is within range of the player's attack range
-static inline bool tile_in_range_of_player(Position target) {
-    return tile_distance(target, get_player()->pos) <= get_player_current_attack_range();
-}
-
-bool tiles_have_walls_between(Position tile1, Position tile2) {
-    int x0 = tile1[0];
-    int y0 = tile1[1];
-    int x1 = tile2[0];
-    int y1 = tile2[1];
-
-    int dx = abs(x1 - x0);
-    int dy = abs(y1 - y0);
-    int sx = (x0 < x1) ? 1 : -1;
-    int sy = (y0 < y1) ? 1 : -1;
-    int err = dx - dy;
-
-    while (x0 != x1 || y0 != y1) {
-        if (x0 != tile1[0] || y0 != tile1[1]) {
-            TileContents *t = level_get_tile((Position){x0, y0});
-            if (t == NULL || t->type == TILE_CONTENTS_TYPE_WALL) {
-                return true;
-            }
-        }
-
-        int e2 = 2 * err;
-        if (e2 > -dy) { err -= dy; x0 += sx; }
-        if (e2 <  dx) { err += dx; y0 += sy; }
-    }
-
-    return false;
-}
-
-// returns true if you should call it again
-bool characters_update() {
-    // FIXME: This should be made into a proper state machine. There are only 4 states: waiting to take turn (timer), taking turn (timer), in attack animation, take turn instantly
-    if (get_level()->world_turn && get_level()->state == LEVEL_STATE_ENEMY_TURN) {
-        Character *enemy = &get_level()->characters[get_level()->enemy_turn];
-
-        // Delayed turn is done
-        if (timer_tick(&get_level()->enemy_move_timer) && !level_in_attack_animation()) {
-            level_next_enemy_turn();
-            return true;
-        }
-
-        const bool done_turn_delay = timer_tick(&get_level()->enemy_delayed_turn_timer);
-        if (done_turn_delay) {
-            character_take_turn(enemy);
-            timer_start(&get_level()->enemy_move_timer, 30 / 2);
-        } else if (!timer_in_use(&get_level()->enemy_delayed_turn_timer) && !level_in_attack_animation() && !timer_in_use(&get_level()->enemy_move_timer)) {
-            // Enemy turns will happen instantly if they either
-            //  a) are > 5 tiles away from the player
-            //  b) they have a wall between the player and them (slightly janky)
-            //  c) the player has requested instant turns in the options TODO: This doesn't work
-            if (tile_distance(enemy->pos, get_player()->pos) > 5 || tiles_have_walls_between(enemy->pos, get_player()->pos) || !get_game()->options.animate_enemy_movement) {
-                // Take turn instantly
-                character_take_turn(enemy);
-                level_next_enemy_turn();
-                return true;
-            } else {
-                timer_start(&get_level()->enemy_delayed_turn_timer, 30 / 2);
-            }
-        } else if (!level_in_attack_animation() && (timer_in_use(&get_level()->enemy_move_timer) || timer_in_use(&get_level()->enemy_delayed_turn_timer))) {
-            // Center camera on the enemy thats moving around
-            look_at(enemy->pos, 1);
-        } else if (level_attack_animation_complete()) {
-            level_next_enemy_turn();
-        } // TODO: Only one enemy seems to be able to attack per turn sometimes
-    } else if (!get_level()->world_turn && get_level()->state == LEVEL_STATE_ENEMY_TURN && !level_in_attack_animation()) {
-        get_level()->state = LEVEL_STATE_PLAYER_INTERACTION;
-    }
-    return false;
-}
-
-// This will also move characters to where they are supposed to be in the game world
-void draw_characters() {
-    get_level()->known_character_location_count = 0;
-    for (int i = 0; i < MAX_CHARACTERS + 1; i++) {
-        // Accounts for player as the last character to draw
-        Character *c = nullptr;
-        if (i == MAX_CHARACTERS) c = get_player();
-        else c = &get_level()->characters[i];
-        ObjectInfo *c_info = &c->info;
-
-        if (!character_is_alive(c)) continue;
-        const float target_alpha = level_tile_seen_this_turn(c->pos) ? 1 : 0;
-        c_info->actual_alpha += (target_alpha - c_info->actual_alpha) * 0.4f;
-        // i dont know why clang thinks target_alpha is always false but testing proves this is incorrect
-        if (c != get_player() && target_alpha == 0 && character_is_aware_of_other_character(get_player(), c, false)) {
-            get_level()->known_character_locations[get_level()->known_character_location_count] = c;
-            get_level()->known_character_location_count += 1;
-        }
-
-        // Move character to where they should be
-        const Oct_Vec2 velocity = {
-                (c_info->target_position[0] - c_info->actual_position[0]) * 0.4f,
-                (c_info->target_position[1] - c_info->actual_position[1]) * 0.4f,
-        };
-        c_info->actual_position[0] += velocity[0];
-        c_info->actual_position[1] += velocity[1];
-
-        // Make sure the facing value accurately reflects where the character is pointing
-        if (!timer_in_use(&c->face_away_timer)) {
-            if (velocity[0] > 0.01)
-                c_info->facing_direction = 1;
-            else if (velocity[0] < -0.01)
-                c_info->facing_direction = -1;
-
-            // Lerp scale to match facing
-            c_info->scale_x += (c_info->facing_direction - c_info->scale_x) * 0.35f;
-        }
-
-        // Cool rotation effect
-        const float speed = sqrtf(powf(velocity[0], 2) + powf(velocity[1], 2));
-        c_info->rotation = speed * c_info->facing_direction * 0.15f;
-
-        character_draw(c, c_info->actual_position, c_info->actual_alpha);
-        timer_tick(&c->face_away_timer);
-    }
-
-    // Draw the attack animation
-    if (level_in_attack_animation()) {
-        draw_attack_animation();
-    }
-}
-
-// If the player is aware of a character for some reason but can't see them
-void draw_character_outlines() {
-    for (int32_t i = 0; i < get_level()->known_character_location_count; i++) {
-        Character *c = get_level()->known_character_locations[i];
-        oct_DrawTextureInt(
-                OCT_INTERPOLATE_ALL, c->info.id * OBJECT_ID_RESERVED_MULTIPLIER,
-                oct_GetAsset(get_assets(), "characters/sharpcharacter.png"),
-                (Oct_Vec2){c->info.actual_position[0], c->info.actual_position[1]});
-    }
-}
-
 void draw_ui() {
     static float actual_weapon_indicator_offset = 0;
     static float actual_movement_scale = 0;
@@ -776,6 +639,7 @@ static void draw_death_screen() {
 
 void level_begin() {
     memset(get_level(), 0, sizeof(Level));
+    slog_info("Starting level.");
 
     // Generate level
     LevelGenerationParameters params = {
@@ -901,6 +765,7 @@ void level_end() {
     oct_Free(get_game()->allocator, get_level()->tile_visibilities);
     oct_Free(get_game()->allocator, get_level()->tile_visibilities_turn);
     cleanup_level(get_level());
+    slog_info("Ended level");
 }
 
 void create_label(const char *text, const Position pos, Oct_Colour colour, bool needs_to_be_freed) {

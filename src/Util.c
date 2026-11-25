@@ -146,3 +146,36 @@ float *subtract_vec2(const Oct_Vec2 lhs, const Oct_Vec2 rhs, Oct_Vec2 out) {
 float dot_vec2(const Oct_Vec2 lhs, const Oct_Vec2 rhs) {
     return (lhs[0] * rhs[0]) + (lhs[1] * rhs[1]);
 }
+
+// Returns true if a given tile is within range of the player's attack range
+bool tile_in_range_of_player(Position target) {
+    return tile_distance(target, get_player()->pos) <= get_player_current_attack_range();
+}
+
+bool tiles_have_walls_between(Position tile1, Position tile2) {
+    int x0 = tile1[0];
+    int y0 = tile1[1];
+    int x1 = tile2[0];
+    int y1 = tile2[1];
+
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
+
+    while (x0 != x1 || y0 != y1) {
+        if (x0 != tile1[0] || y0 != tile1[1]) {
+            TileContents *t = level_get_tile((Position){x0, y0});
+            if (t == NULL || t->type == TILE_CONTENTS_TYPE_WALL) {
+                return true;
+            }
+        }
+
+        int e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x0 += sx; }
+        if (e2 <  dx) { err += dx; y0 += sy; }
+    }
+
+    return false;
+}
